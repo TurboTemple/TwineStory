@@ -71,13 +71,16 @@
 			 * Nested calls just run `fn`. The operation's return value is kept
 			 * as the last Result for the next passage to show.
 			 * @param {() => unknown} fn
+			 * @param {{keepQueue?: boolean}} [opts] keepQueue: keep events that are
+			 *   waiting their turn, and show the next one if nothing else is asked
+			 *   for (a choice in the middle of an event uses this).
 			 * @returns {unknown} Whatever fn returned.
 			 */
-			perform(fn) {
+			perform(fn, opts = {}) {
 				if (depth > 0) return fn();
 				depth++;
 				pending = null;
-				queue = [];
+				if (!opts.keepQueue) queue = [];
 				let out = null;
 				try {
 					out = fn();
@@ -89,6 +92,7 @@
 					depth--;
 				}
 				last = out ?? null;
+				if (!pending && opts.keepQueue && queue.length) pending = { passage: queue.shift(), priority: PRIORITY.event };
 				const target = pending ? pending.passage : flow.home;
 				if (target !== flow.home) setup.vars().meta.returnTo = flow.home;
 				pending = null;

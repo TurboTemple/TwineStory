@@ -51,7 +51,8 @@
 				const f = setup.inventory.find(uid);
 				return f ? registry.get("item", f.entry.item) : null;
 			};
-			const MINS_PER_CHANGE = 1;
+			/** Minutes per item put on or taken off (config.js → clothing.minsPerItem). */
+			const MINS_PER_CHANGE = setup.config.clothing?.minsPerItem ?? 1;
 
 			const clothing = {
 				/** @returns {object[]} Slot definitions in order. */
@@ -203,7 +204,7 @@
 						if (!f || !reach.includes(f.place)) missing++;
 						else if (f.place !== "worn") clothing.wear(uid, { force: true });
 					}
-					time.advance(MINS_PER_CHANGE * 3, { reason: "dress" });
+					time.advance(setup.config.clothing?.outfitMins ?? MINS_PER_CHANGE * 3, { reason: "dress" });
 					bus.emit("clothing:changed", {});
 					return { ok: true, missing };
 				},

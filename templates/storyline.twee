@@ -1,0 +1,29 @@
+:: Ev_my_story_meet
+<<view "event-media">>
+<h1>Someone needs a hand</h1>
+
+A woman is struggling with a stack of boxes outside the charity shop.
+<<when { stat: { id: "energy", max: 30 } }>>
+You're exhausted, but she looks desperate.
+<<otherwise>>
+She catches your eye hopefully.
+<</when>>
+
+"Any chance you could help out for a bit, <<name>>? I'm here most days."
+
+<<choice "Say yes" "Ev_my_story_yes" { effects: [{ storyline: { id: "my_story", to: "helping" } }] }>>
+<<choice "Not now" { effects: [{ stat: { mood: -1 } }] }>>
+
+:: Ev_my_story_yes
+<<view "event-media">>
+"Brilliant!" She hands you a box before you can change your mind. "Come back whenever you're passing."
+
+<<view "event-end">>
+
+:: Ev_my_story_done
+<<view "event-media">>
+<h1>Thank you</h1>
+
+"I couldn't have done it without you," she says, and means it.
+
+<<view "event-end">>

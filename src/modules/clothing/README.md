@@ -13,6 +13,7 @@ What you wear, the wardrobe and outfits.
 - You can only change in rooms tagged `changing` (your bedroom and bathroom, fitting rooms, gym changing rooms).
 - Each item takes a minute to put on or take off.
 - **Dressed to go out** (`setup.config.clothing.dressed`): something on top, on the bottom and on your feet, and no `sleepwear`. Walking, the bus and taxis all need it.
+- **Time to change** (`setup.config.clothing`): `minsPerItem` for each thing put on or taken off, `outfitMins` to change into a saved outfit.
 - Worn clothes are kept in a hidden `worn` storage place. What you take off goes back where the new item came from, or to the wardrobe if you're at home, otherwise your bag.
 
 ## Getting changed

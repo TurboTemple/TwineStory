@@ -38,7 +38,7 @@
 			});
 			registry.defineType("school", {
 				required: ["label", "room", "periods"],
-				defaults: { days: [1, 2, 3, 4, 5], terms: [], keyDates: [], timetable: "weekly", week: {}, status: null, lateMins: 5, lastEntryMins: 15, earlyMins: 5 },
+				defaults: { days: [1, 2, 3, 4, 5], terms: [], keyDates: [], timetable: "weekly", week: {}, status: null, lateMins: 5, lastEntryMins: 15, earlyMins: 5, homeworkDue: "08:40" },
 				refs: { room: "location", status: "statusEffect" },
 				check(def) {
 					const errs = [];
@@ -53,6 +53,12 @@
 					}
 					for (const [wd, row] of Object.entries(def.week)) {
 						for (const s of row) if (s != null && !registry.has("subject", s)) errs.push(`week ${wd}: unknown subject "${s}"`);
+					}
+					try {
+						time.parseHM(def.homeworkDue);
+					}
+					catch (ex) {
+						errs.push(`homeworkDue: ${ex.message}`);
 					}
 					return errs;
 				},
@@ -132,16 +138,21 @@
 					}
 					S().totals.attended += 1;
 					result.changes.push({ kind: "school", text: `${subj.label}${subj.teacher ? ` with ${subj.teacher}` : ""}: ${fmt.duration(elapsed)}${late ? " (you were late)" : ""}.` });
-					edu.setHomework(l.subject, result);
+					edu.setHomework(l.subject, result, id);
 					bus.emit("school:lesson", { school: id, subject: l.subject, period: l.period, late, ctx: { school: id, subject: l.subject }, result });
 					return result;
 				},
 
-				/** Set homework for a subject (if it sets homework and none is open). */
-				setHomework(subject, result) {
+				/**
+				 * Set homework for a subject (if it sets homework and none is open),
+				 * due at the school's `homeworkDue` time.
+				 * @param {string} subject @param {object} [result] @param {string} [school]
+				 */
+				setHomework(subject, result, school) {
 					const subj = registry.get("subject", subject);
 					if (subj.homeworkDays == null || S().homework.some((h) => h.subject === subject)) return;
-					const due = time.at(time.day(time.now()) + subj.homeworkDays, "08:40");
+					const dueAt = (school ? registry.get("school", school) : registry.all("school")[0])?.homeworkDue ?? "08:40";
+					const due = time.at(time.day(time.now()) + subj.homeworkDays, dueAt);
 					S().homework.push({ id: S().nextHw++, subject, set: time.now(), due });
 					result?.changes.push({ kind: "school", text: `${subj.label} homework, due ${fmt.date(due)}.` });
 					bus.emit("school:homeworkSet", { subject, due });

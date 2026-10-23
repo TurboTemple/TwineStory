@@ -8,12 +8,14 @@
 //    and boots the real engine with the real town content.
 // 3. Runs registry validation (refs, passages, condition/effect operators,
 //    per-type checks, module checks) and the age rules.
+// 4. Reads the story macros in passages (<<when>>, <<choice>>, <<name>>…)
+//    and checks their conditions, effects, passages and people.
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootGame, listFiles } from "./lib/load.mjs";
-import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources } from "./lib/rules.mjs";
+import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources, checkStoryMacros } from "./lib/rules.mjs";
 import { findPassageRefs, parseTwee } from "./lib/twee.mjs";
 import { buildManifest } from "./lib/media.mjs";
 
@@ -41,6 +43,7 @@ export function validate() {
 		const { setup } = bootGame(src, { includeTest: true, passages: names });
 		errors.push(...setup.validate({ hasPassage: (n) => names.has(n) }));
 		errors.push(...checkDefs(setup.registry.entries()));
+		errors.push(...checkStoryMacros(passages, setup, (n) => names.has(n)));
 		// A `media` path set on a definition must exist (web addresses are trusted).
 		const manifest = Object.values(buildManifest(root));
 		for (const { type, def } of setup.registry.entries()) {

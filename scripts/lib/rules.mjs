@@ -88,7 +88,8 @@ const BANNED = [
 	{ re: /\bDialog\.setup\b/, msg: "uses deprecated Dialog.setup; use Dialog.create" },
 	{ re: /\bUIBar\.update\b/, msg: "uses deprecated UIBar.update; use UI.update" },
 	{ re: /\$args\b/, msg: "uses deprecated $args; use _args" },
-	{ re: /<<(choice|actions)\b/, msg: "uses the deprecated <<choice>>/<<actions>> macros" },
+	// (<<choice>> is the game's own story macro now: src/modules/writing.)
+	{ re: /<<actions\b/, msg: "uses the deprecated <<actions>> macro" },
 	{ re: /\beval\s*\(|\bnew\s+Function\s*\(/, msg: "uses eval/new Function (§9)" },
 ];
 
@@ -179,6 +180,76 @@ export function checkFileNames(files) {
 		const base = f.split(/[\\/]/).pop();
 		if (seen.has(base)) errors.push(`Two files are both called "${base}" (${seen.get(base)} and ${f}); Tweego needs unique file names`);
 		else seen.set(base, f);
+	}
+	return errors;
+}
+
+/** The story macros (src/modules/writing) whose arguments the checker reads. */
+const PRONOUNS = ["they", "them", "their", "theirs", "themself"];
+const PERSON_MACROS = new Set(["name", "first", ...PRONOUNS, ...PRONOUNS.map((p) => p[0].toUpperCase() + p.slice(1))]);
+const CHOICE_OPTIONS = new Set(["effects", "conditions", "hidden", "npc"]);
+
+/**
+ * Check the story macros in every passage: <<when>>/<<orwhen>> conditions,
+ * <<choice>> labels, passages, options, conditions and effects, and the
+ * people named in <<name>>, <<they>>… Uses the booted engine's registered
+ * condition and effect names, so a typo fails the build.
+ * @param {{ name: string, text: string, file: string }[]} passages
+ * @param {object} setup  A booted engine.
+ * @param {(name: string) => boolean} hasPassage
+ * @returns {string[]}
+ */
+export function checkStoryMacros(passages, setup, hasPassage) {
+	const errors = [];
+	const macroRe = /<<([A-Za-z]+)((?:[^>]|>(?!>))*)>>/g;
+	for (const p of passages) {
+		const where = `${p.file}: passage "${p.name}"`;
+		const badConds = (c, what) => {
+			for (const op of setup.cond.ops(c)) if (!setup.cond.has(op)) errors.push(`${where}: ${what} uses unknown condition "${op}"`);
+		};
+		const npc = (id, what) => {
+			if (id != null && !setup.registry.has("npc", id)) errors.push(`${where}: ${what} names unknown person "${id}"`);
+		};
+		for (const m of p.text.matchAll(macroRe)) {
+			const [, name, raw] = m;
+			const what = `<<${name}>>`;
+			if (!["when", "orwhen", "choice"].includes(name) && !PERSON_MACROS.has(name)) continue;
+			let args;
+			try {
+				args = setup.util.parseData(raw);
+			}
+			catch (err) {
+				errors.push(`${where}: ${what}: ${err.message}`);
+				continue;
+			}
+			if (name === "when" || name === "orwhen") {
+				if (args.length !== 1) errors.push(`${where}: ${what} needs exactly one condition`);
+				else badConds(args[0], what);
+			}
+			else if (name === "choice") {
+				const [label, ...rest] = args;
+				if (typeof label !== "string") {
+					errors.push(`${where}: ${what} needs a label in quotes first`);
+					continue;
+				}
+				const target = typeof rest[0] === "string" ? rest.shift() : null;
+				if (target && !hasPassage(target)) errors.push(`${where}: ${what} "${label}" goes to missing passage "${target}"`);
+				const opts = rest[0] ?? {};
+				if (rest.length > 1 || typeof opts !== "object" || Array.isArray(opts) || opts === null) {
+					errors.push(`${where}: ${what} "${label}": expected { effects, conditions, hidden, npc } after the passage`);
+					continue;
+				}
+				for (const k of Object.keys(opts)) if (!CHOICE_OPTIONS.has(k)) errors.push(`${where}: ${what} "${label}": unknown option "${k}"`);
+				if (opts.conditions != null) badConds(opts.conditions, what);
+				for (const op of setup.effects.ops(opts.effects ?? [])) if (!setup.effects.has(op)) errors.push(`${where}: ${what} uses unknown effect "${op}"`);
+				for (const c of setup.effects.conds(opts.effects ?? [])) badConds(c, what);
+				npc(opts.npc, what);
+			}
+			else {
+				if (args.length > 1) errors.push(`${where}: ${what} takes one person's id`);
+				npc(args[0], what);
+			}
+		}
 	}
 	return errors;
 }
