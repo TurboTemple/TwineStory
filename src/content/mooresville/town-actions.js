@@ -44,8 +44,8 @@
  *   whileDoing  a hidden effect that is on only while it runs (town-needs.js,
  *               part 4: "relaxing", "asleep", "studying"…). This is how
  *               activities change your stats hour by hour.
- *   conditions  when it's allowed. If they fail, the button shows "Locked"
- *               with what's needed (decided by the user: not what it is).
+ *   conditions  when it's allowed. If they fail, the button is greyed out
+ *               with what's needed underneath (decided by the user).
  *   hidden      true = don't show it at all when it's not allowed
  *   effects     what happens at the end (see below)
  *   costs       things taken at the start (items, money…)
