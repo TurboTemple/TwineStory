@@ -1,50 +1,192 @@
 /*
- * Mooresville — where things are kept, and food and drink items.
- * Prices in pence.
+ * ============================================================================
+ *  Mooresville — storage, food and drink
+ * ============================================================================
+ *
+ * What's in this file:
+ *   1. Storage: your bag, your wardrobe and the kitchen cupboards, and what
+ *      is in them on a new game
+ *   2. Food and drink you can buy and carry
+ *   3. Groceries (for cooking at home)
+ *
+ * Clothes are items too, but they live in town-clothing.js. What each shop
+ * sells, and for how much, is in town-shops.js.
+ *
+ * Prices are placeholders: the user will set them by hand.
+ *
+ * ---------------------------------------------------------------------------
+ *  HOW TO ADD A SNACK
+ * ---------------------------------------------------------------------------
+ *   food({
+ *       id: "doughnut",
+ *       name: "Doughnut",
+ *       price: pounds(1.20),
+ *       use: { label: "Eat", mins: 3, effects: [{ stat: { food: 10, mood: 3 } }] },
+ *   });
+ *   Then add "doughnut" to a shop's stock in town-shops.js.
+ *
+ * ---------------------------------------------------------------------------
+ *  ITEM FIELDS
+ * ---------------------------------------------------------------------------
+ *   id, name, desc    the item and its description
+ *   price             what shops charge (unless the shop sets its own price)
+ *   category          "food", "drink", "groceries", "clothes"… (storage can
+ *                     accept only some categories, e.g. the cupboards)
+ *   use               the button on the item in your bag:
+ *                       label    the button text ("Eat", "Drink")
+ *                       mins     how long it takes
+ *                       effects  what it does (stat changes, effects…)
+ *                     Using it uses one up.
+ *   size              how much room it takes in a storage place (default 1)
+ *   stackable         false for things that are each unique (clothes)
+ *
+ *  STORAGE FIELDS
+ *   label, order      name and position in lists
+ *   carried: true     you have it with you everywhere (the bag)
+ *   at                where it is (you must be there to use it)
+ *   capacity          total `size` it holds (leave out for no limit)
+ *   accepts           only these item categories (leave out for anything)
+ *   start             what's in it on a new game: [{ item, qty }]
  */
 (function () {
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		/* ---- Storage -------------------------------------------------------- */
+		const { pounds } = setup.town;
 
-		R.define("storage", { id: "bag", label: "Bag", carried: true, capacity: 16, order: 0 });
+		/* ======================================================================
+		 *  1. Storage
+		 * ====================================================================== */
+
 		R.define("storage", {
-			id: "wardrobe", label: "Wardrobe", at: "home_bedroom", accepts: ["clothes"], order: 1,
+			id: "bag",
+			label: "Bag",
+			carried: true,
+			capacity: 16,
+			order: 0,
+		});
+
+		R.define("storage", {
+			id: "wardrobe",
+			label: "Wardrobe",
+			at: "home_bedroom",
+			accepts: ["clothes"],
+			order: 1,
 			// Decided by the user: pyjamas (worn on day one) and one outfit for going out.
 			start: [
-				{ item: "pyjamas" }, { item: "briefs" },
-				{ item: "white_tshirt" }, { item: "blue_jeans" }, { item: "socks" }, { item: "trainers" },
+				{ item: "pyjamas" },
+				{ item: "briefs" },
+				{ item: "white_tshirt" },
+				{ item: "blue_jeans" },
+				{ item: "socks" },
+				{ item: "trainers" },
 			],
 		});
+
 		R.define("storage", {
-			id: "cupboards", label: "Kitchen cupboards", at: "home_kitchen", accepts: ["food", "drink", "groceries"], order: 2,
+			id: "cupboards",
+			label: "Kitchen cupboards",
+			at: "home_kitchen",
+			accepts: ["food", "drink", "groceries"],
+			order: 2,
 			start: [{ item: "groceries", qty: 6 }],
 		});
 
-		/* ---- Food and drink -------------------------------------------------- */
+		/* ======================================================================
+		 *  2. Food and drink
+		 * ====================================================================== */
 
-		const eat = (mins, effects) => ({ label: "Eat", mins, effects });
-		const drink = (mins, effects) => ({ label: "Drink", mins, effects });
-		const food = (id, name, price, use, extra = {}) => R.define("item", { id, name, price, category: "food", use, ...extra });
-		const bev = (id, name, price, use, extra = {}) => R.define("item", { id, name, price, category: "drink", use, ...extra });
+		const food = (def) => R.define("item", { ...def, category: "food" });
+		const drink = (def) => R.define("item", { ...def, category: "drink" });
 
-		food("chocolate_bar", "Chocolate bar", 95, eat(2, [{ stat: { food: 8, mood: 2 } }]));
-		food("crisps", "Packet of crisps", 85, eat(2, [{ stat: { food: 8 } }]));
-		food("apple", "Apple", 45, eat(2, [{ stat: { food: 6, drink: 2 } }]));
-		food("banana", "Banana", 30, eat(2, [{ stat: { food: 8 } }]));
-		food("sandwich", "Sandwich", 285, eat(5, [{ stat: { food: 25 } }]), { desc: "A shop-bought sandwich." });
-		food("sausage_roll", "Sausage roll", 140, eat(3, [{ stat: { food: 18 } }]));
-		food("cereal_bar", "Cereal bar", 70, eat(1, [{ stat: { food: 7, energy: 2 } }]));
-		bev("water_bottle", "Bottle of water", 85, drink(2, [{ stat: { drink: 25, bladder: 5 } }]));
-		bev("cola", "Can of cola", 110, drink(2, [{ stat: { drink: 18, bladder: 6, energy: 3 } }]));
-		bev("energy_drink", "Energy drink", 175, drink(2, [{ stat: { drink: 15, bladder: 8 } }, { status: "caffeinated" }]));
-		bev("orange_juice", "Orange juice", 150, drink(2, [{ stat: { drink: 22, food: 3, bladder: 6 } }]));
+		// ---- Food ----
 
-		// Cooking at home uses groceries from the kitchen cupboards.
+		food({
+			id: "chocolate_bar",
+			name: "Chocolate bar",
+			price: pounds(0.95),
+			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8, mood: 2 } }] },
+		});
+		food({
+			id: "crisps",
+			name: "Packet of crisps",
+			price: pounds(0.85),
+			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8 } }] },
+		});
+		food({
+			id: "apple",
+			name: "Apple",
+			price: pounds(0.45),
+			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 6, drink: 2 } }] },
+		});
+		food({
+			id: "banana",
+			name: "Banana",
+			price: pounds(0.30),
+			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8 } }] },
+		});
+		food({
+			id: "sandwich",
+			name: "Sandwich",
+			desc: "A shop-bought sandwich.",
+			price: pounds(2.85),
+			use: { label: "Eat", mins: 5, effects: [{ stat: { food: 25 } }] },
+		});
+		food({
+			id: "sausage_roll",
+			name: "Sausage roll",
+			price: pounds(1.40),
+			use: { label: "Eat", mins: 3, effects: [{ stat: { food: 18 } }] },
+		});
+		food({
+			id: "cereal_bar",
+			name: "Cereal bar",
+			price: pounds(0.70),
+			use: { label: "Eat", mins: 1, effects: [{ stat: { food: 7, energy: 2 } }] },
+		});
+
+		// ---- Drinks ----
+
+		drink({
+			id: "water_bottle",
+			name: "Bottle of water",
+			price: pounds(0.85),
+			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 25, bladder: 5 } }] },
+		});
+		drink({
+			id: "cola",
+			name: "Can of cola",
+			price: pounds(1.10),
+			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 18, bladder: 6, energy: 3 } }] },
+		});
+		drink({
+			id: "energy_drink",
+			name: "Energy drink",
+			price: pounds(1.75),
+			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 15, bladder: 8 } }, { status: "caffeinated" }] },
+		});
+		drink({
+			id: "orange_juice",
+			name: "Orange juice",
+			price: pounds(1.50),
+			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 22, food: 3, bladder: 6 } }] },
+		});
+
+		/* ======================================================================
+		 *  3. Groceries
+		 * ======================================================================
+		 *
+		 * Cooking at home (town-actions.js) uses groceries from the kitchen
+		 * cupboards or your bag. One lot = one home-cooked meal.
+		 */
+
 		R.define("item", {
-			id: "groceries", name: "Groceries", price: 300, category: "groceries", size: 2,
+			id: "groceries",
+			name: "Groceries",
 			desc: "Enough food for one home-cooked meal. Keep them in the kitchen cupboards.",
+			price: pounds(3.00),
+			category: "groceries",
+			size: 2,
 		});
 	});
 })();
