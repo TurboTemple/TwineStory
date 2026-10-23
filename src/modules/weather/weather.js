@@ -6,8 +6,8 @@
  * temperature range. The "seasonal" generation hook picks one kind and a
  * temperature per day with rng.seeded("weather:<day>").
  *
- * Warmth is simple (decided by the user): a day is "cold" when it's below
- * the climate's `coldBelow` temperature, and an item of clothing is either
+ * Warmth is simple (decided by the user): a day is "cold" when it's at or
+ * below the climate's `coldAt` temperature (5°C in the town), and an item of clothing is either
  * warm (tagged "warm") or not. Outdoors on a cold day without anything warm
  * on, you're too cold.
  *
@@ -33,7 +33,7 @@
 			});
 			registry.defineType("climate", {
 				required: ["months"],
-				defaults: { generate: "seasonal", coldBelow: 10, warmTag: "warm" },
+				defaults: { generate: "seasonal", coldAt: 5, warmTag: "warm" },
 				check(def) {
 					const errs = [];
 					for (let m = 1; m <= 12; m++) {
@@ -70,10 +70,10 @@
 				/** @returns {object|null} The weather at time t. */
 				at: (t = time.now()) => weather.onDay(time.day(t)),
 
-				/** @returns {boolean} Is it a cold day (below the climate's `coldBelow` °C)? */
+				/** @returns {boolean} Is it a cold day (at or below the climate's `coldAt` °C)? */
 				isCold(t = time.now()) {
 					const w = weather.at(t);
-					return Boolean(w) && w.temp < climate().coldBelow;
+					return Boolean(w) && w.temp <= climate().coldAt;
 				},
 
 				/** @returns {boolean} Is the PC wearing anything warm (tagged "warm")? */

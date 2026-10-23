@@ -1,12 +1,15 @@
 /*
  * shops — buying items.
  *
- * A shop is data: where it is and what it sells. Prices come from a hook
- * (default: the item's own price, or a price set in the stock list).
- * Bought items go in your bag.
+ * A shop is data: where it is, and which tags it sells. It doesn't list its
+ * stock: every item tagged with the shop's id (or with one of the shop's
+ * `sells` tags) is for sale there, so adding an item to a shop is just
+ * adding a tag to the item. Prices come from a hook (default: the item's
+ * own price). Bought items go in your bag.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
- *   src/content/mooresville/town-shops.js (what each shop sells)
+ *   src/content/mooresville/town-shops.js (the shops)
+ *   town-items.js, town-clothing.js (each item's tags say which shops sell it)
  * Every field, condition, effect and event is listed in src/modules/shops/README.md.
  */
 (function () {
@@ -19,9 +22,11 @@
 
 		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
 			registry.defineType("shop", {
-				required: ["name", "at", "stock"],
-				defaults: { desc: "", conditions: null, price: "default", payWith: null, mins: 2 },
-				refs: { at: "location", "stock[].item": "item", payWith: "account" },
+				required: ["name", "at"],
+				// sells: extra tags whose items this shop sells, on top of items
+				// tagged with the shop's own id (e.g. sells: ["snack"]).
+				defaults: { desc: "", sells: [], conditions: null, price: "default", payWith: null, mins: 2 },
+				refs: { at: "location", payWith: "account" },
 				conditions: ["conditions"],
 			});
 
@@ -29,7 +34,7 @@
 
 			const shops = {
 				/**
-				 * Register a pricing rule: (shop, stockEntry, item) => whole pounds.
+				 * Register a pricing rule: (shop, item) => whole pounds.
 				 * @param {string} name @param {Function} fn
 				 */
 				registerPriceHook: (name, fn) => priceHooks.set(name, fn),
@@ -43,10 +48,22 @@
 					return registry.query("shop", (s) => setup.util.toArray(s.at).includes(loc));
 				},
 
-				/** @returns {number} What an item costs in a shop. */
-				price(shop, entry) {
+				/**
+				 * Everything a shop sells: items tagged with its id or one of its
+				 * `sells` tags, in the order the items are defined.
+				 * @returns {object[]} item definitions
+				 */
+				stock(shop) {
 					const def = typeof shop === "string" ? registry.get("shop", shop) : shop;
-					return priceHooks.get(def.price)(def, entry, registry.get("item", entry.item));
+					const tags = [def.id, ...def.sells];
+					return registry.all("item").filter((it) => it.tags.some((t) => tags.includes(t)));
+				},
+
+				/** @returns {number} What an item costs in a shop. */
+				price(shop, item) {
+					const def = typeof shop === "string" ? registry.get("shop", shop) : shop;
+					const it = typeof item === "string" ? registry.get("item", item) : item;
+					return priceHooks.get(def.price)(def, it);
 				},
 
 				/** Why you can't shop here now, or null. */
@@ -66,9 +83,8 @@
 				 */
 				buy(shopId, itemId) {
 					const def = registry.get("shop", shopId);
-					const entry = def.stock.find((s) => s.item === itemId);
-					if (!entry) throw new setup.GameError(`${def.name} doesn't sell ${itemId}`);
-					const item = registry.get("item", itemId);
+					const item = shops.stock(def).find((it) => it.id === itemId);
+					if (!item) throw new setup.GameError(`${def.name} doesn't sell ${itemId}`);
 					const result = Object.assign(effects.newResult(), { ok: false });
 					const fail = (text) => {
 						result.changes.push({ kind: "blocked", text });
@@ -78,7 +94,7 @@
 					if (closed) return fail(closed);
 					const room = setup.inventory.refuses("bag", itemId, 1);
 					if (room) return fail(room);
-					const cost = shops.price(def, entry);
+					const cost = shops.price(def, item);
 					const paid = setup.money.pay(cost, { from: def.payWith ?? undefined, reason: `${item.name} at ${def.name}` });
 					if (!paid.ok) return fail(paid.reason);
 					setup.inventory.add(itemId, 1, "bag");
@@ -100,8 +116,8 @@
 			};
 			setup.shops = shops;
 
-			// "default": the stock entry's price if set, else the item's price.
-			shops.registerPriceHook("default", (shop, entry, item) => entry.price ?? item.price);
+			// "default": the item's own price.
+			shops.registerPriceHook("default", (shop, item) => item.price);
 
 			/* ---- UI ------------------------------------------------------------ */
 
@@ -132,17 +148,18 @@
 				box.append(ui.el("p", { class: "note", text: `You have ${fmt.money(setup.money.balance())}.${space != null ? ` Bag space: ${space}.` : ""}` }));
 				const closed = shops.closedReason(id);
 				if (closed) box.append(ui.el("p", { class: "locked", text: closed }));
+				// Grouped under headings by each item's first tag ("food", "clothing"…).
+				const shopIds = new Set(registry.all("shop").map((s) => s.id));
 				const groups = new Map();
-				for (const entry of def.stock) {
-					const cat = registry.get("item", entry.item).category;
-					groups.set(cat, [...(groups.get(cat) ?? []), entry]);
+				for (const item of shops.stock(def)) {
+					const kind = item.tags[0] ?? "other";
+					groups.set(kind, [...(groups.get(kind) ?? []), item]);
 				}
-				for (const [cat, entries] of groups) {
-					box.append(ui.el("h2", { text: cat.charAt(0).toUpperCase() + cat.slice(1) }));
+				for (const [kind, items] of groups) {
+					box.append(ui.el("h2", { text: kind.charAt(0).toUpperCase() + kind.slice(1) }));
 					const ul = ui.el("ul", { class: "inv" });
-					for (const entry of entries) {
-						const item = registry.get("item", entry.item);
-						const cost = shops.price(def, entry);
+					for (const item of items) {
+						const cost = shops.price(def, item);
 						const owned = setup.inventory.count(item.id, Object.keys(setup.vars().inv.places));
 						const li = ui.el("li", { class: "inv-row" },
 							setup.media.thumb("item", item.id, item.name),
@@ -152,10 +169,12 @@
 								flow.request("Shops_Shop");
 								return shops.buy(id, item.id);
 							}, { disabled: Boolean(closed) || setup.money.balance() < cost }));
-						if (owned) li.append(ui.el("span", { class: "note", text: ` (you have ${owned})` }));
-						// Tags say what clothes do (warm, waterproof, smart…).
-						const tags = item.clothing ? item.tags : [];
-						if (item.desc || tags.length) li.append(ui.el("p", { class: "note", text: [tags.join(", "), item.desc].filter(Boolean).join(" · ") }));
+						// One note line: its qualities (every tag except its kind and the
+						// shops that sell it, so "warm, waterproof" on a coat), its
+						// description, and how many you already have.
+						const tags = item.tags.slice(1).filter((t) => !shopIds.has(t));
+						const note = [tags.join(", "), item.desc, owned ? `you have ${owned}` : ""].filter(Boolean).join(" · ");
+						if (note) li.append(ui.el("p", { class: "note", text: note }));
 						ul.append(li);
 					}
 					box.append(ul);
@@ -165,9 +184,12 @@
 		},
 
 		validate() {
-			return setup.registry.all("shop")
-				.filter((s) => !setup.shops.hasPriceHook(s.price))
-				.map((s) => `shop "${s.id}": unknown price hook "${s.price}"`);
+			const errs = [];
+			for (const s of setup.registry.all("shop")) {
+				if (!setup.shops.hasPriceHook(s.price)) errs.push(`shop "${s.id}": unknown price hook "${s.price}"`);
+				if (!setup.shops.stock(s).length) errs.push(`shop "${s.id}" sells nothing: tag some items "${s.id}"`);
+			}
+			return errs;
 		},
 	});
 })();

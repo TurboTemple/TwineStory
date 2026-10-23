@@ -193,3 +193,48 @@ test("exercise and big meals nudge your weight", () => {
 	setup.effects.apply([{ body: { weight: 0.3 } }]);
 	assert.equal(setup.body.display("weight"), "average", "crossed into the next band");
 });
+
+/* ---- Modular items ---------------------------------------------------------- */
+
+test("a shop sells every item tagged with its id", () => {
+	const { setup } = bootTown();
+	const ids = (shop) => setup.shops.stock(shop).map((i) => i.id);
+	assert.ok(ids("patels").includes("chocolate_bar"));
+	assert.ok(ids("canteen_machine").includes("cola"));
+	assert.ok(!ids("canteen_machine").includes("sandwich"), "not tagged for the vending machine");
+	assert.ok(ids("urban_thread").includes("puffer_jacket"));
+	assert.ok(!ids("urban_thread").includes("wool_coat"), "the wool coat is only at Threadline");
+	for (const s of setup.registry.all("shop")) assert.ok(setup.shops.stock(s).length > 0, `${s.id} sells something`);
+});
+
+test("an item is clothing by its tag; storage accepts items by tag", () => {
+	const { setup } = bootTown({
+		includeTest: true,
+		before(s) {
+			(s.__testContent ??= []).push((R) => {
+				R.define("item", { id: "t_scarf", name: "Scarf", price: 5, tags: ["clothing", "warm"], slots: ["accessory"], modifiers: [{ stat: "mood", op: "add", value: 1 }] });
+				R.define("item", { id: "t_badge", name: "Badge", price: 1, tags: ["clothing"] });
+			});
+		},
+	});
+	const errors = setup.validate({ hasPassage: () => true }).join("\n");
+	assert.match(errors, /t_badge.*need slots/, "clothing without slots is caught");
+	assert.equal(setup.clothing.isWearable(setup.registry.get("item", "t_scarf")), true);
+	assert.equal(setup.inventory.stackable(setup.registry.get("item", "t_scarf")), false, "clothing is unique");
+	assert.equal(setup.inventory.refuses("wardrobe", "t_scarf"), null, "the wardrobe takes anything tagged clothing");
+	assert.match(setup.inventory.refuses("wardrobe", "apple"), /doesn't go in the wardrobe/);
+});
+
+test("cold days are 5°C or below", () => {
+	const { setup } = bootTown();
+	const W = setup.weather;
+	let warm = null;
+	let cold = null;
+	for (let d = 0; d < 400 && (warm === null || cold === null); d++) {
+		const t = W.onDay(d).temp;
+		if (t === 6 && warm === null) warm = d;
+		if (t === 5 && cold === null) cold = d;
+	}
+	assert.equal(W.isCold(setup.time.at(warm, "12:00")), false, "6°C isn't cold");
+	assert.equal(W.isCold(setup.time.at(cold, "12:00")), true, "5°C is");
+});

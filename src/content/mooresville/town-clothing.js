@@ -5,41 +5,48 @@
  *
  * What's in this file:
  *   1. Clothing slots (where on the body something goes)
- *   2. Price tiers: what a piece of clothing costs and gives you
- *   3. Every piece of clothing
- *   4. The outfit you wake up in on day one
- *   5. Effects your clothes can switch on (Cosy, Smartly dressed…)
+ *   2. Every piece of clothing
+ *   3. The outfit you wake up in on day one
+ *   4. Effects your clothes can switch on (Cosy, Smartly dressed…)
  *
- * What's in your wardrobe at the start is in town-items.js (the wardrobe).
- * Which shop sells what is in town-shops.js.
+ * Each piece of clothing is one self-contained item: its price, which shops
+ * sell it, what it does for you and what it's like are all in its own
+ * definition. Nothing else needs changing to add, sell or remove one.
+ * (What's in your wardrobe at the start is in town-items.js.)
  *
  * ---------------------------------------------------------------------------
  *  HOW TO ADD A PIECE OF CLOTHING
  * ---------------------------------------------------------------------------
- *   wear({
+ *   item({
  *       id: "red_hoodie",
  *       name: "Red hoodie",
- *       tier: "cheap",           // sets the price and the mood boost (part 2)
- *       slots: ["top"],          // see the slots below; a dress uses ["top", "bottom"]
- *       tags: ["warm", "cosy"],  // optional: see TAGS below
+ *       price: 20,                                      // whole pounds
+ *       tags: ["clothing", "urban_thread", "warm", "cosy"],
+ *       slots: ["top"],
+ *       modifiers: [mod.add("mood", 1)],                // while you wear it
  *   });
- *   Then add "red_hoodie" to a shop in town-shops.js.
  *
  * ---------------------------------------------------------------------------
  *  FIELDS
  * ---------------------------------------------------------------------------
- *   tier        "basic" (£10), "cheap" (£20), "good" (£50) or "top" (£100).
- *               Better clothes cost more and lift your mood more while you
- *               wear them (decided by the user: price follows what it gives).
- *   slots       which slots it fills (it replaces whatever was there)
+ *   price       what it costs, in whole pounds (see the price guide in part 2)
+ *   tags        everything about it, as simple yes/no labels:
+ *                 "clothing"        it's something you wear (the wardrobe
+ *                                   takes it). Put this first: shops list
+ *                                   items under their first tag.
+ *                 a shop's id       that shop sells it: "urban_thread",
+ *                                   "threadline" (see town-shops.js)
+ *                 "warm"            keeps you from getting Cold outdoors on a
+ *                                   cold day (5°C or below)
+ *                 "waterproof"      keeps you from Getting wet in the rain
+ *                 "smart"           two or more smart things = "Smartly dressed"
+ *                 "cosy", "sportswear", "evening"   switch on effects (part 4)
+ *                 "sleepwear"       you can't go out in it
+ *   slots       where it's worn (it replaces whatever was there); a dress
+ *               uses ["top", "bottom"]
+ *   modifiers   stat changes while you wear it (see `mod` in town-kit.js)
  *   size        room it takes in your bag (default 1; coats and shoes 2)
- *   modifiers   extra stat changes while you wear it (see `mod` in town-kit.js)
- *   tags        simple yes/no labels (decided by the user):
- *                 warm        keeps you from getting Cold outdoors on a cold day
- *                 smart       two or more smart things = "Smartly dressed"
- *                 waterproof  keeps you from Getting wet in the rain
- *                 cosy, sportswear, evening   switch on effects (part 5)
- *                 sleepwear   you can't go out in it
+ *   desc        a line about it, shown in shops and your bag
  *
  *  Pictures: assets/media/item/<id>.webp (or .jpg/.png/.gif).
  *
@@ -68,109 +75,327 @@
 		slot({ id: "accessory", label: "Accessory", order: 7 });
 
 		/* ======================================================================
-		 *  2. Price tiers
+		 *  2. Clothes
 		 * ======================================================================
 		 *
-		 * Every piece of clothing is in one tier. The tier sets its price (whole
-		 * pounds) and how much it lifts your mood while you wear it.
+		 * Price guide (decided by the user: price follows what it gives you):
+		 *   £10  basics        no boost
+		 *   £20  cheap         Mood +1 while worn
+		 *   £50  good          Mood +2
+		 *   £100 top           Mood +4
 		 */
 
-		const TIERS = {
-			basic: { price: 10, mood: 0 },  // plain everyday basics
-			cheap: { price: 20, mood: 1 },  // a small boost
-			good: { price: 50, mood: 2 },   // a better boost
-			top: { price: 100, mood: 4 },   // the best
-		};
-
-		/* ======================================================================
-		 *  3. Clothes
-		 * ====================================================================== */
-
-		/** A piece of clothing (an item in the "clothes" category; each one is unique). */
-		const wear = ({ id, name, tier, slots, tags = [], modifiers = [], size = 1, ...extra }) => {
-			const t = TIERS[tier];
-			if (!t) throw new setup.GameError(`Clothing "${id}": tier must be one of ${Object.keys(TIERS).join(", ")}`);
-			return R.define("item", {
-				id,
-				name,
-				price: t.price,
-				category: "clothes",
-				stackable: false,
-				size,
-				tier,
-				tags,
-				clothing: { slots, modifiers: [...(t.mood ? [mod.add("mood", t.mood)] : []), ...modifiers] },
-				...extra,
-			});
-		};
+		const item = (def) => R.define("item", def);
 
 		// ---- Tops ----
-		wear({ id: "white_tshirt", name: "White T-shirt", tier: "basic", slots: ["top"] });
-		wear({ id: "black_tshirt", name: "Black T-shirt", tier: "basic", slots: ["top"] });
-		wear({ id: "striped_top", name: "Striped long-sleeve top", tier: "cheap", slots: ["top"] });
-		wear({ id: "crop_top", name: "Black crop top", tier: "cheap", slots: ["top"] });
-		wear({ id: "sports_top", name: "Sports top", tier: "cheap", slots: ["top"], tags: ["sportswear"] });
-		wear({ id: "grey_hoodie", name: "Grey hoodie", tier: "cheap", slots: ["top"], tags: ["warm", "cosy"] });
-		wear({ id: "knit_jumper", name: "Cream knit jumper", tier: "good", slots: ["top"], tags: ["warm", "cosy"] });
-		wear({ id: "oxford_shirt", name: "Blue Oxford shirt", tier: "good", slots: ["top"], tags: ["smart"] });
-		wear({ id: "silk_blouse", name: "Silk blouse", tier: "good", slots: ["top"], tags: ["smart"] });
+		item({
+			id: "white_tshirt",
+			name: "White T-shirt",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["top"],
+		});
+		item({
+			id: "black_tshirt",
+			name: "Black T-shirt",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["top"],
+		});
+		item({
+			id: "striped_top",
+			name: "Striped long-sleeve top",
+			price: 20,
+			tags: ["clothing", "threadline"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "crop_top",
+			name: "Black crop top",
+			price: 20,
+			tags: ["clothing", "urban_thread"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "sports_top",
+			name: "Sports top",
+			price: 20,
+			tags: ["clothing", "urban_thread", "sportswear"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "grey_hoodie",
+			name: "Grey hoodie",
+			price: 20,
+			tags: ["clothing", "urban_thread", "warm", "cosy"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "knit_jumper",
+			name: "Cream knit jumper",
+			price: 50,
+			tags: ["clothing", "threadline", "warm", "cosy"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "oxford_shirt",
+			name: "Blue Oxford shirt",
+			price: 50,
+			tags: ["clothing", "threadline", "smart"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "silk_blouse",
+			name: "Silk blouse",
+			price: 50,
+			tags: ["clothing", "threadline", "smart"],
+			slots: ["top"],
+			modifiers: [mod.add("mood", 2)],
+		});
 
 		// ---- Bottoms ----
-		wear({ id: "joggers", name: "Grey joggers", tier: "cheap", slots: ["bottom"], tags: ["cosy"] });
-		wear({ id: "denim_shorts", name: "Denim shorts", tier: "cheap", slots: ["bottom"] });
-		wear({ id: "leggings", name: "Black leggings", tier: "cheap", slots: ["bottom"], tags: ["sportswear"] });
-		wear({ id: "blue_jeans", name: "Blue jeans", tier: "good", slots: ["bottom"] });
-		wear({ id: "black_jeans", name: "Black skinny jeans", tier: "good", slots: ["bottom"] });
-		wear({ id: "chinos", name: "Beige chinos", tier: "good", slots: ["bottom"], tags: ["smart"] });
-		wear({ id: "pleated_skirt", name: "Pleated midi skirt", tier: "good", slots: ["bottom"], tags: ["smart"] });
+		item({
+			id: "joggers",
+			name: "Grey joggers",
+			price: 20,
+			tags: ["clothing", "urban_thread", "cosy"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "denim_shorts",
+			name: "Denim shorts",
+			price: 20,
+			tags: ["clothing", "urban_thread"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "leggings",
+			name: "Black leggings",
+			price: 20,
+			tags: ["clothing", "urban_thread", "sportswear"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "blue_jeans",
+			name: "Blue jeans",
+			price: 50,
+			tags: ["clothing", "urban_thread"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "black_jeans",
+			name: "Black skinny jeans",
+			price: 50,
+			tags: ["clothing", "urban_thread", "threadline"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "chinos",
+			name: "Beige chinos",
+			price: 50,
+			tags: ["clothing", "threadline", "smart"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "pleated_skirt",
+			name: "Pleated midi skirt",
+			price: 50,
+			tags: ["clothing", "threadline", "smart"],
+			slots: ["bottom"],
+			modifiers: [mod.add("mood", 2)],
+		});
 
 		// ---- One-piece (fills top and bottom) ----
-		wear({ id: "pyjamas", name: "Pyjamas", tier: "basic", slots: ["top", "bottom"], tags: ["sleepwear", "cosy"] });
-		wear({ id: "summer_dress", name: "Floral summer dress", tier: "good", slots: ["top", "bottom"] });
-		wear({ id: "black_dress", name: "Little black dress", tier: "top", slots: ["top", "bottom"], tags: ["smart", "evening"] });
+		item({
+			id: "pyjamas",
+			name: "Pyjamas",
+			price: 10,
+			tags: ["clothing", "urban_thread", "sleepwear", "cosy"],
+			slots: ["top", "bottom"],
+		});
+		item({
+			id: "summer_dress",
+			name: "Floral summer dress",
+			price: 50,
+			tags: ["clothing", "urban_thread", "threadline"],
+			slots: ["top", "bottom"],
+			modifiers: [mod.add("mood", 2)],
+		});
+		item({
+			id: "black_dress",
+			name: "Little black dress",
+			price: 100,
+			tags: ["clothing", "threadline", "smart", "evening"],
+			slots: ["top", "bottom"],
+			modifiers: [mod.add("mood", 4)],
+		});
 
 		// ---- Coats ----
-		wear({ id: "rain_jacket", name: "Navy rain jacket", tier: "good", slots: ["outer"], size: 2, tags: ["waterproof"] });
-		wear({ id: "denim_jacket", name: "Denim jacket", tier: "good", slots: ["outer"], size: 2 });
-		wear({ id: "wool_coat", name: "Wool coat", tier: "top", slots: ["outer"], size: 2, tags: ["warm", "smart"] });
-		wear({ id: "puffer_jacket", name: "Puffer jacket", tier: "top", slots: ["outer"], size: 2, tags: ["warm", "waterproof"] });
+		item({
+			id: "rain_jacket",
+			name: "Navy rain jacket",
+			price: 50,
+			tags: ["clothing", "urban_thread", "waterproof"],
+			slots: ["outer"],
+			modifiers: [mod.add("mood", 2)],
+			size: 2,
+		});
+		item({
+			id: "denim_jacket",
+			name: "Denim jacket",
+			price: 50,
+			tags: ["clothing", "threadline"],
+			slots: ["outer"],
+			modifiers: [mod.add("mood", 2)],
+			size: 2,
+		});
+		item({
+			id: "wool_coat",
+			name: "Wool coat",
+			price: 100,
+			tags: ["clothing", "threadline", "warm", "smart"],
+			slots: ["outer"],
+			modifiers: [mod.add("mood", 4)],
+			size: 2,
+		});
+		item({
+			id: "puffer_jacket",
+			name: "Puffer jacket",
+			price: 100,
+			tags: ["clothing", "urban_thread", "warm", "waterproof"],
+			slots: ["outer"],
+			modifiers: [mod.add("mood", 4)],
+			size: 2,
+		});
 
 		// ---- Underwear and socks ----
-		wear({ id: "briefs", name: "Cotton briefs", tier: "basic", slots: ["under_bottom"] });
-		wear({ id: "boxers", name: "Boxer shorts", tier: "basic", slots: ["under_bottom"] });
-		wear({ id: "socks", name: "Pair of socks", tier: "basic", slots: ["legs"] });
-		wear({ id: "tights", name: "Black tights", tier: "basic", slots: ["legs"] });
-		wear({ id: "sports_bra", name: "Sports bra", tier: "cheap", slots: ["under_top"], tags: ["sportswear"] });
-		wear({ id: "lace_bra", name: "Lace bra", tier: "good", slots: ["under_top"] });
+		item({
+			id: "briefs",
+			name: "Cotton briefs",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["under_bottom"],
+		});
+		item({
+			id: "boxers",
+			name: "Boxer shorts",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["under_bottom"],
+		});
+		item({
+			id: "socks",
+			name: "Pair of socks",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["legs"],
+		});
+		item({
+			id: "tights",
+			name: "Black tights",
+			price: 10,
+			tags: ["clothing", "urban_thread", "threadline"],
+			slots: ["legs"],
+		});
+		item({
+			id: "sports_bra",
+			name: "Sports bra",
+			price: 20,
+			tags: ["clothing", "urban_thread", "sportswear"],
+			slots: ["under_top"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "lace_bra",
+			name: "Lace bra",
+			price: 50,
+			tags: ["clothing", "threadline"],
+			slots: ["under_top"],
+			modifiers: [mod.add("mood", 2)],
+		});
 
 		// ---- Shoes ----
-		wear({ id: "sliders", name: "Sliders", tier: "basic", slots: ["feet"] });
-		wear({ id: "trainers", name: "White trainers", tier: "good", slots: ["feet"], size: 2, tags: ["sportswear"] });
-		wear({ id: "boots", name: "Ankle boots", tier: "good", slots: ["feet"], size: 2 });
-		wear({
+		item({
+			id: "sliders",
+			name: "Sliders",
+			price: 10,
+			tags: ["clothing", "urban_thread"],
+			slots: ["feet"],
+		});
+		item({
+			id: "trainers",
+			name: "White trainers",
+			price: 50,
+			tags: ["clothing", "urban_thread", "sportswear"],
+			slots: ["feet"],
+			modifiers: [mod.add("mood", 2)],
+			size: 2,
+		});
+		item({
+			id: "boots",
+			name: "Ankle boots",
+			price: 50,
+			tags: ["clothing", "threadline"],
+			slots: ["feet"],
+			modifiers: [mod.add("mood", 2)],
+			size: 2,
+		});
+		item({
 			id: "smart_shoes",
 			name: "Smart black shoes",
-			tier: "top",
+			price: 100,
+			tags: ["clothing", "threadline", "smart"],
 			slots: ["feet"],
+			modifiers: [mod.add("mood", 4), mod.perHour("energy", -0.5) /* not made for walking */],
 			size: 2,
-			tags: ["smart"],
-			// Smart, but not made for walking: you tire a little faster in them.
-			modifiers: [mod.perHour("energy", -0.5)],
 		});
 
 		// ---- Accessories ----
-		wear({ id: "beanie", name: "Beanie hat", tier: "cheap", slots: ["accessory"], tags: ["warm"] });
-		wear({ id: "scarf", name: "Wool scarf", tier: "cheap", slots: ["accessory"], tags: ["warm"] });
-		wear({ id: "baseball_cap", name: "Baseball cap", tier: "cheap", slots: ["accessory"] });
+		item({
+			id: "beanie",
+			name: "Beanie hat",
+			price: 20,
+			tags: ["clothing", "urban_thread", "warm"],
+			slots: ["accessory"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "scarf",
+			name: "Wool scarf",
+			price: 20,
+			tags: ["clothing", "threadline", "warm"],
+			slots: ["accessory"],
+			modifiers: [mod.add("mood", 1)],
+		});
+		item({
+			id: "baseball_cap",
+			name: "Baseball cap",
+			price: 20,
+			tags: ["clothing", "urban_thread"],
+			slots: ["accessory"],
+			modifiers: [mod.add("mood", 1)],
+		});
 
 		/* ======================================================================
-		 *  4. The outfit you wake up in on day one
+		 *  3. The outfit you wake up in on day one
 		 * ====================================================================== */
 
 		R.define("outfit", { id: "starting_outfit", label: "Pyjamas", items: ["pyjamas", "briefs"], start: true });
 
 		/* ======================================================================
-		 *  5. Effects from what you wear
+		 *  4. Effects from what you wear
 		 * ======================================================================
 		 *
 		 * Each is on whenever its `whileCond` is true. Conditions you can use:

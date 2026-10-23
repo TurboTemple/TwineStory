@@ -27,7 +27,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Things to do, their prices and what they do | `town-actions.js` |
 | Food, drink, groceries, the bag, wardrobe and cupboards | `town-items.js` |
 | Clothes, and effects clothes switch on | `town-clothing.js` |
-| What shops sell, and shop prices | `town-shops.js` |
+| The shops (what they sell comes from each item's tags) | `town-shops.js` |
 | People: who they are, their looks, where they are each day | `town-people.js` |
 | Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
 | The barista job: stages, shifts, pay, shift events | `town-work.js` |
@@ -47,11 +47,11 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 |---|---|
 | Starting cash and bank balance | `town-map.js`, part 7: `start: 35` |
 | Food and drink prices | `town-items.js`: `price: 3` (the price tiers are at the top of the file) |
-| Clothing prices and mood boosts | `town-clothing.js`, part 2: `TIERS` (£10 / £20 / £50 / £100) |
+| Clothing prices and mood boosts | `town-clothing.js`: each item's `price` and `modifiers` (price guide in part 2) |
 | Which clothes are warm, waterproof or smart | `town-clothing.js`: `tags` |
-| A shop's own price for an item | `town-shops.js`: `{ item: "sandwich", price: 4 }` |
+| Which shops sell an item | the item's `tags`: add or remove the shop's id, e.g. `"patels"` |
 | The price of a café drink, pub meal, haircut… | `town-actions.js`: `price: 3` (tiers at the top of the file) |
-| How cold a "cold day" is | `town-weather.js`: `coldBelow` |
+| How cold a "cold day" is | `town-weather.js`: `coldAt` (5°C or below) |
 | How a trait is earned, what it needs, when it fades | `town-traits.js` |
 | Bus and taxi fares | `town-map.js`, part 6: `fare` |
 | Barista pay, shift times | `town-work.js`, part 3b |

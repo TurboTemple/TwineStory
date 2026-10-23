@@ -12,9 +12,9 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 | `town-traits.js` | Traits earned through habits (Caffeine addicted, Gym regular) |
 | `town-people.js` | Every person's character sheet, looks and weekly schedule |
 | `town-actions.js` | Everything under "Things to do", with prices and stat changes |
-| `town-items.js` | Storage (bag, wardrobe, kitchen cupboards), what's in them at the start, food and drink, groceries |
-| `town-clothing.js` | Clothing slots, about 35 clothes, the starting outfit, effects clothes switch on |
-| `town-shops.js` | What each shop sells, and any shop-specific prices |
+| `town-items.js` | Storage (bag, wardrobe, kitchen cupboards), what's in them at the start, food and drink, groceries (each item says which shops sell it) |
+| `town-clothing.js` | Clothing slots, about 35 clothes (each with its price, shops, modifiers and qualities), the starting outfit, effects clothes switch on |
+| `town-shops.js` | The shops (what they sell comes from the items' tags) |
 | `town-body.js` | Body parts: height, weight, bust, skin tone, eye colour, hair colour and length |
 | `town-work.js` | Skills, and the barista job: its career stages, shifts, pay and events |
 | `town-school.js` | Subjects, the timetable, term dates, and your tutor's word about skipping |
