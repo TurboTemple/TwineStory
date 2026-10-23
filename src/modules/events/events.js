@@ -10,6 +10,8 @@
  *      one is picked by weight every time, with no game-wide limits.
  *   4. Otherwise random storylets (kind "random") go to the selection hook,
  *      unless the game-wide random limits say "not now".
+ * Kind "manual" storylets have no triggers: something fires them directly
+ * (e.g. a storyline stage's entry event).
  * At most one storylet fires per trigger. A storylet applies its effects
  * and its passage is shown through the flow controller.
  */
@@ -30,9 +32,9 @@
 
 		install({ registry, cond, effects, time, bus, rng, ui, flow, config }) {
 			registry.defineType("storylet", {
-				required: ["passage", "triggers"],
+				required: ["passage"],
 				defaults: {
-					kind: "random", conditions: null, chance: null, weight: 1, priority: 0,
+					kind: "random", triggers: [], conditions: null, chance: null, weight: 1, priority: 0,
 					cooldown: 0, maxPerDay: null, group: null, once: false, effects: [], tags: [],
 				},
 				passages: ["passage"],
@@ -40,8 +42,8 @@
 				effects: ["effects"],
 				check(def) {
 					const errs = [];
-					if (!Array.isArray(def.triggers) || !def.triggers.length) errs.push("triggers must be a non-empty list of bus event names");
-					if (!["random", "story", "pool"].includes(def.kind)) errs.push('kind must be "random", "story" or "pool"');
+					if (!Array.isArray(def.triggers) || (!def.triggers.length && def.kind !== "manual")) errs.push("triggers must be a non-empty list of bus event names");
+					if (!["random", "story", "pool", "manual"].includes(def.kind)) errs.push('kind must be "random", "story", "pool" or "manual"');
 					if (def.chance != null && !(def.chance >= 0 && def.chance <= 1)) errs.push("chance must be between 0 and 1");
 					if (!(def.weight > 0)) errs.push("weight must be > 0");
 					if (!Number.isInteger(def.cooldown) || def.cooldown < 0) errs.push("cooldown must be whole minutes ≥ 0");

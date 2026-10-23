@@ -13,6 +13,8 @@
 
 	function createFlow() {
 		let pending = null;
+		/** Event passages waiting their turn, shown one after another by continue(). */
+		let queue = [];
 		let depth = 0;
 		let last = null;
 
@@ -28,8 +30,22 @@
 			 * @param {number} [priority]
 			 */
 			request(passage, priority = PRIORITY.normal) {
+				// Two events in one go (a shift event, then a promotion): the later
+				// one waits and is shown when the player continues.
+				if (pending && priority >= PRIORITY.event && pending.priority >= PRIORITY.event) {
+					if (passage === pending.passage || queue.includes(passage)) return;
+					if (priority > pending.priority) {
+						queue.unshift(pending.passage);
+						pending = { passage, priority };
+					}
+					else queue.push(passage);
+					return;
+				}
 				if (!pending || priority > pending.priority) pending = { passage, priority };
 			},
+
+			/** @returns {string[]} Event passages waiting to be shown. */
+			queued: () => [...queue],
 
 			/** @returns {{passage: string, priority: number} | null} */
 			pending: () => pending,
@@ -45,6 +61,7 @@
 				if (depth > 0) return fn();
 				depth++;
 				pending = null;
+				queue = [];
 				let out = null;
 				try {
 					out = fn();
@@ -70,6 +87,7 @@
 
 			/** "Continue" after an interruption: back to where play left off. */
 			continue() {
+				if (queue.length) return setup.sc.play(queue.shift());
 				const meta = setup.vars().meta;
 				const target = meta.returnTo || flow.home;
 				meta.returnTo = null;
