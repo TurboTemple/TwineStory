@@ -4,16 +4,18 @@
  * ============================================================================
  *
  * Central character: Dennis, 71, at Calm Waters Hypnotherapy (High Street).
- * Starts with your first hypnotherapy session (decided by the user). What
- * unlocks the sessions isn't decided yet: for now they're open whenever
- * Dennis is in (DESIGN: put the unlock in the session's `showIf` or
- * `conditions`). Every session, the first included, adds 1 to the
- * progression: hypnotherapist progression 5 = five sessions.
+ * How it unlocks (decided by the user): come home late (out past the 10pm
+ * curfew, town-home.js) more than three times, and your parents send you
+ * to hypnotherapy as a punishment, to make you behave better. That event
+ * (part 2) plays when you next walk in the door, and unlocks the sessions.
+ * The story starts with your first session. Every session, the first
+ * included, adds 1 to the progression: hypnotherapist progression 5 =
+ * five sessions.
  *
  * Text: src/story/mooresville/stories/story-hypnotherapist.twee
  *
  *   1. The character
- *   2. The storyline (stages; add more as you write)
+ *   2. The storyline (stages; add more as you write), and the unlock
  *   3. The repeatable task (a session)
  */
 (function () {
@@ -53,6 +55,18 @@
 
 		R.define("storylet", { id: "hypnotherapist_start", kind: "manual", passage: "Ev_hypnotherapist_start" });
 
+		// The unlock: more than three late nights (the "late_home" counter), and
+		// your parents send you. Plays once, when you next get home.
+		R.define("storylet", {
+			id: "hypnotherapy_sent",
+			kind: "story",
+			passage: "Ev_hypnotherapy_sent",
+			triggers: ["world:enter"],
+			conditions: { at: "home", counter: { name: "late_home", min: 4 }, not: { flag: "hypnotherapy_unlocked" } },
+			once: true,
+			effects: [{ flag: "hypnotherapy_unlocked" }],
+		});
+
 		/* ---- 3. The repeatable task ------------------------------------------ */
 
 		R.define("action", {
@@ -60,7 +74,7 @@
 			label: "Have a session with Dennis",
 			at: "calm_waters_room",
 			mins: 60,
-			// DESIGN: what unlocks the sessions (e.g. showIf: { flag: "heard_about_dennis" }).
+			showIf: { flag: "hypnotherapy_unlocked" }, // once your parents have sent you (part 2)
 			conditions: { npcHere: "dennis" },
 			effects: [
 				// The first session starts the story (and shows its start screen).

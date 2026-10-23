@@ -26,6 +26,7 @@ function skipTo(setup, weekday, hm) {
 
 test("Dennis: the first session starts The Hypnotherapist and counts; meeting him doesn't", () => {
 	const { setup, played } = town();
+	setup.effects.apply([{ flag: "hypnotherapy_unlocked" }]);
 	skipTo(setup, 1, "11:00");
 	setup.flow.perform(() => setup.world.moveTo("calm_waters_room"));
 	assert.ok(!setup.storylines.started("hypnotherapist"), "meeting Dennis doesn't start it");
@@ -36,6 +37,28 @@ test("Dennis: the first session starts The Hypnotherapist and counts; meeting hi
 	setup.actions.do("hypnotherapist_session");
 	assert.equal(setup.storylines.progression("hypnotherapist"), 2);
 	assert.ok(setup.cond.test({ progression: { id: "hypnotherapist", min: 2 } }, {}));
+});
+
+test("hypnotherapy unlocks after more than three late nights: your parents send you", () => {
+	const { setup, played } = town();
+	const session = () => setup.actions.available().find((a) => a.def.id === "hypnotherapist_session");
+	skipTo(setup, 1, "11:00");
+	setup.world.moveTo("calm_waters_room");
+	assert.ok(!session(), "not offered yet");
+	// Stay out past 10pm four nights running, going home each time.
+	for (let night = 0; night < 4; night++) {
+		setup.world.moveTo("high_street");
+		setup.time.advance(setup.time.nextAt(setup.time.now() + 1, "22:30") - setup.time.now());
+		setup.flow.perform(() => setup.world.moveTo("home"));
+		if (night < 3) assert.ok(!setup.cond.test({ flag: "hypnotherapy_unlocked" }, {}), `not after ${night + 1}`);
+		setup.time.advance(setup.time.nextAt(setup.time.now() + 1, "09:00") - setup.time.now());
+	}
+	assert.equal(setup.vars().meta.counters.late_home, 4);
+	assert.ok(played.includes("Ev_hypnotherapy_sent"));
+	assert.equal(setup.events.seen("hypnotherapy_sent"), 1);
+	skipTo(setup, 1, "11:00");
+	setup.world.moveTo("calm_waters_room");
+	assert.ok(session()?.ok, "sessions are unlocked");
 });
 
 test("the cosplay club: invited at school by a random event, starts when you go", () => {

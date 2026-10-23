@@ -306,7 +306,7 @@ See `Ev_grind_barista_rude` in `work.twee` for a real example.
 Each key character has a storyline in `src/content/mooresville/stories/story-<name>.js`, which holds the character, the storyline and the task you repeat. Each also has a passage file in `src/story/mooresville/stories/`. The README in the stories folder lists who, where and when.
 
 - **How each starts** (decided by the user):
-  - Dennis: your first hypnotherapy session.
+  - Dennis: your first hypnotherapy session. Sessions unlock when your parents send you, after more than three nights out past the 10pm curfew (the `late_home` counter; the event is `Ev_hypnotherapy_sent`).
   - The cosplay club: you go to the club after one of them invites you at school (a random event).
   - Mark: you sign up for his volleyball class.
   - Lenny: you get the job at The Daily Grind.

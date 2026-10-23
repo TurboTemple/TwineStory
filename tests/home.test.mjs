@@ -108,7 +108,7 @@ test("chores make your parents happier, once every 12 hours", () => {
 	assert.ok(!setup.actions.available().find((a) => a.def.id === "chore_washing_up").ok, "not again yet");
 });
 
-test("the curfew: out after 11pm while living at home, Mum texts", () => {
+test("the curfew: out after 10pm while living at home, Mum texts", () => {
 	const { setup } = town();
 	setup.world.moveTo("high_street");
 	setup.time.advance(setup.time.nextAt(setup.time.now() + 1, "23:30") - setup.time.now());

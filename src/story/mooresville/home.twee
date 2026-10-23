@@ -4,7 +4,7 @@
 
 Your phone buzzes. It's <<name "mum">>.
 
-//It's gone 11. Where are you? Home. Now, please.//
+//It's gone 10. Where are you? Home. Now, please.//
 
 <<choice "Reply that you're on your way">>
 <<choice "Text back that you're fine" { effects: [{ rel: { npc: "mum", friendship: -1 } }] }>>

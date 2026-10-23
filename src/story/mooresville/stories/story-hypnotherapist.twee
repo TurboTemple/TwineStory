@@ -2,3 +2,8 @@
 [The Hypnotherapist edit here]
 
 <<view "event-end">>
+
+:: Ev_hypnotherapy_sent
+[Sent to hypnotherapy (your parents' punishment) edit here]
+
+<<view "event-end">>
