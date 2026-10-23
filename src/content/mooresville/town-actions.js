@@ -36,7 +36,7 @@
 			desc: "Get into bed. You'll wake early if you really need the toilet.",
 		}));
 		act(during("reading", { id: "read_book", label: "Read a book", at: "home_bedroom", mins: 60 }));
-		act(during("studying", { id: "homework", label: "Do homework", at: "home_bedroom", mins: 60 }));
+		act(during("studying", { id: "homework", label: "Do homework", at: "home_bedroom", mins: 60, conditions: { stat: { id: "stress", max: 85 } }, desc: "Too stressed (85+) and you can't focus on it." }));
 		act(during("scrolling", { id: "scroll_phone", label: "Scroll on your phone", at: ["home_bedroom", "home_living_room"], mins: 30 }));
 		act({ id: "brush_teeth", label: "Brush your teeth", at: "home_bathroom", mins: 3, effects: [{ stat: { hygiene: 4 } }] });
 

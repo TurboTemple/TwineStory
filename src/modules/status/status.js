@@ -24,6 +24,8 @@
 				defaults: {
 					desc: "", mins: null, stacking: "refresh", maxStacks: 1, stackLabels: null, expire: "all",
 					modifiers: [], while: null, whileCond: null, onExpire: [], tags: [], hidden: false, good: null,
+					// Multipliers other systems ask for by name: { actionTime: 1.25, relGain: 0.5 }.
+					factors: {},
 				},
 				refs: { "modifiers[].stat": "stat", "while.stat": "stat" },
 				effects: ["onExpire"],
@@ -123,6 +125,20 @@
 						if (on && !status.has(def.id)) status.add(def.id);
 						else if (!on && status.has(def.id)) status.remove(def.id);
 					}
+				},
+
+				/**
+				 * Combined multiplier from every active status's `factors[name]`
+				 * (1 when none). E.g. factor("actionTime"), factor("relGain").
+				 * @param {string} name @returns {number}
+				 */
+				factor(name) {
+					let f = 1;
+					for (const [id, a] of Object.entries(A())) {
+						const v = registry.tryGet("statusEffect", id)?.factors[name];
+						if (typeof v === "number") f *= v ** a.stacks;
+					}
+					return f;
 				},
 
 				/** Expire timed statuses whose time is up. */

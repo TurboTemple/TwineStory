@@ -137,6 +137,13 @@
 				box.append(ul);
 			});
 
+			/** Extra menu buttons from modules (Phone…): fn() => { label, passage } | null. */
+			const menuButtons = [];
+			shell.addMenuButton = (name, order, fn) => {
+				menuButtons.push({ name, order, fn });
+				menuButtons.sort((a, b) => a.order - b.order);
+			};
+
 			shell.addSection("menu", 90, (box) => {
 				const nav = ui.el("nav", { class: "menu", attrs: { "aria-label": "Game menu" } });
 				const go = (label, passage) => ui.button(label, () => {
@@ -145,6 +152,10 @@
 				});
 				if (setup.sc.hasPassage("Character_Me") && setup.vars().pc) nav.append(go("Me", "Character_Me"));
 				if (has("inventory") && setup.vars().inv) nav.append(go("Bag", "Inventory_Bag"));
+				for (const b of menuButtons) {
+					const spec = b.fn();
+					if (spec) nav.append(go(spec.label, spec.passage));
+				}
 				nav.append(
 					ui.button("Saves", () => {
 						close();
@@ -230,6 +241,14 @@
 				for (const s of list) {
 					const left = s.remaining != null ? ` · ${setup.status.shortDuration(s.remaining)} left` : "";
 					const does = s.def.modifiers.map((m) => setup.stats.describeModifier({ ...m, value: m.op === "mul" || m.op === "rateMul" ? m.value ** s.stacks : m.value * s.stacks }));
+					// Factors other systems use (actionTime, relGain…).
+					const FACTOR_TEXT = { actionTime: "Things take", relGain: "People warm to you" };
+					for (const [k, v] of Object.entries(s.def.factors ?? {})) {
+						const pct = Math.round(Math.abs(v - 1) * 100);
+						if (k === "actionTime") does.push(`${FACTOR_TEXT[k]} ${pct}% ${v > 1 ? "longer" : "less time"}`);
+						else if (k === "relGain") does.push(`${FACTOR_TEXT[k]} ${pct}% ${v < 1 ? "more slowly" : "faster"}`);
+						else does.push(`${k} ×${v}`);
+					}
 					const icon = setup.media.render("statusEffect", s.def.id, { class: "thumb", alt: s.label });
 					ul.append(ui.el("li", { class: `effect effect-${s.def.good === true ? "good" : s.def.good === false ? "bad" : "neutral"}` },
 						ui.el("div", { class: "inv-row" }, icon, ui.el("strong", { text: s.label }), ui.el("span", { class: "note", text: left })),

@@ -254,6 +254,26 @@
 				}
 			});
 
+			// Map app (for the phone): every place by district, open or closed now.
+			ui.view("app-map", (box) => {
+				const now = time.now();
+				const mySite = world.loc() ? world.site(world.loc()) : null;
+				for (const d of registry.all("district")) {
+					const sites = registry.query("location", (l) => !l.parent && l.district === d.id);
+					if (!sites.length) continue;
+					box.append(ui.el("h2", { text: d.name }));
+					box.append(ui.el("ul", { class: "map-list" }, ...sites.map((l) => {
+						const hours = world.hoursOf(l.id);
+						const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(now))) ?? null;
+						const when = !hours ? "Always open" : today.length ? today.map((h) => `${h.from}–${h.to}`).join(", ") : "Closed today";
+						const open = world.isOpen(l.id, now);
+						return ui.el("li", { class: l.id === mySite ? "map-here" : null },
+							ui.el("strong", { text: l.name }), l.id === mySite ? " (you're here)" : "",
+							ui.el("p", { class: "note", text: `${hours ? (open ? "Open now" : "Closed now") + " · " : ""}${when}` }));
+					})));
+				}
+			});
+
 			world.addHereSection("areas", 25, (box) => {
 				const list = world.nearby();
 				if (!list.length) return;

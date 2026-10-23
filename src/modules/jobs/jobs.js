@@ -284,6 +284,18 @@
 			});
 		},
 
+		ready() {
+			// Shifts in the phone's calendar.
+			if (!setup.modules.has("phone")) return;
+			setup.phone.addCalendarSource((from, to) => setup.jobs.current().flatMap((j) => {
+				const out = [];
+				for (let d = setup.time.day(from); d <= setup.time.day(to - 1); d++) {
+					for (const s of setup.jobs.shiftsOn(j.id, d)) out.push({ t: s.from, end: s.to, text: `Shift: ${j.label}${setup.jobs.worked(j.id, d) ? " (done)" : ""}` });
+				}
+				return out;
+			}));
+		},
+
 		validate() {
 			const errs = [];
 			for (const j of setup.registry.all("job")) {

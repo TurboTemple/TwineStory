@@ -22,8 +22,8 @@
 
 		/* ---- Effects that follow a stat ----------------------------------- */
 
-		const need = (id, label, desc, when, modifiers) =>
-			R.define("statusEffect", { id, label, desc, while: when, modifiers, good: false });
+		const need = (id, label, desc, when, modifiers, factors = {}) =>
+			R.define("statusEffect", { id, label, desc, while: when, modifiers, factors, good: false });
 		need("needs_toilet", "Needs the toilet", "You could really do with a wee.", { stat: "bladder", min: 70, max: 89.999 }, [{ stat: "mood", op: "add", value: -6 }]);
 		need("bursting", "Bursting", "You need the toilet right now.", { stat: "bladder", min: 90 }, [{ stat: "mood", op: "add", value: -15 }, { stat: "stress", op: "add", value: 10 }]);
 		need("hungry", "Hungry", "Your stomach is rumbling.", { stat: "food", min: 5.001, max: 25 }, [{ stat: "mood", op: "add", value: -5 }]);
@@ -31,8 +31,10 @@
 		need("thirsty", "Thirsty", "Your mouth is dry.", { stat: "drink", min: 5.001, max: 25 }, [{ stat: "mood", op: "add", value: -5 }, { stat: "energy", op: "rateAdd", value: -1 }]);
 		need("dehydrated", "Dehydrated", "You badly need a drink. It's hurting your health.", { stat: "drink", max: 5 }, [{ stat: "mood", op: "add", value: -12 }, { stat: "health", op: "rateAdd", value: -3 }]);
 		need("tired", "Tired", "Your eyelids are heavy.", { stat: "energy", min: 8.001, max: 25 }, [{ stat: "mood", op: "add", value: -5 }]);
-		need("exhausted", "Exhausted", "You can barely keep your eyes open.", { stat: "energy", max: 8 }, [{ stat: "mood", op: "add", value: -12 }, { stat: "stress", op: "add", value: 8 }]);
-		need("unwashed", "Unwashed", "You're starting to feel grubby.", { stat: "hygiene", max: 25 }, [{ stat: "mood", op: "add", value: -4 }]);
+		need("exhausted", "Exhausted", "You can barely keep your eyes open. Everything takes longer.", { stat: "energy", max: 8 }, [{ stat: "mood", op: "add", value: -12 }, { stat: "stress", op: "add", value: 8 }],
+			// Everything takes longer when you're this tired.
+			{ actionTime: 1.25 });
+		need("unwashed", "Unwashed", "You're starting to feel grubby, and people notice: they warm to you more slowly.", { stat: "hygiene", max: 25 }, [{ stat: "mood", op: "add", value: -4 }], { relGain: 0.5 });
 		need("stressed", "Stressed out", "Everything feels like too much.", { stat: "stress", min: 70 }, [{ stat: "mood", op: "add", value: -8 }]);
 
 		/* ---- Timed effects ------------------------------------------------ */

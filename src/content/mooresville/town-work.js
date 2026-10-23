@@ -54,6 +54,10 @@
 				{
 					id: "hired", label: "New starter", desc: "Jess has put you on the weekend rota. Your first shift is coming up.",
 					enter: "grind_interview",
+					onEnter: [
+						{ contact: "jess_marlow" },
+						{ message: { from: "jess_marlow", text: "Hi, it's Jess from the Grind! Saturday 8am, don't be late. Wear something comfy and closed-toe shoes 😊" } },
+					],
 					events: ["grind_first_day"],
 					gates: [{ to: "trainee", when: { storylineCount: { key: "shifts", min: 1 } } }, missedThree],
 				},

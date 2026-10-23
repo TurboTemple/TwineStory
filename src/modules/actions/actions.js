@@ -117,7 +117,10 @@
 					if (running) throw new setup.GameError(`Can't start "${id}" while "${running.def.id}" is running`);
 					const def = registry.get("action", id);
 					if (def.durations && opts.mins != null && !def.durations.includes(opts.mins)) throw new setup.GameError(`"${id}" can't last ${opts.mins} minutes`);
-					const mins = minsFor(opts.mins ?? def.mins);
+					// Fixed-length actions go slower or faster with status factors
+					// (e.g. exhausted: actionTime 1.25). Chosen durations stay as chosen.
+					const factor = !def.durations && setup.modules.has("status") ? setup.status.factor("actionTime") : 1;
+					const mins = Math.round(minsFor(opts.mins ?? def.mins) * factor);
 					const ctx = ctxFor(def);
 					const result = Object.assign(effects.newResult(), { ok: false, action: id, elapsed: 0 });
 

@@ -43,6 +43,8 @@
 			});
 
 			const N = () => setup.vars().npcs;
+			/** Extra parts of the character sheet (relationship, Talk…). */
+			const sheetSections = [];
 			let cache = { t: null, map: null };
 
 			const npcs = {
@@ -111,6 +113,16 @@
 
 				/** The NPC whose sheet is open (not saved). */
 				viewing: null,
+
+				/**
+				 * Add a section to NPC character sheets. Lower order first; the
+				 * sheet's own details are order 0.
+				 * @param {string} name @param {number} order @param {(box: HTMLElement, id: string) => void} fn
+				 */
+				addSheetSection(name, order, fn) {
+					sheetSections.push({ name, order, fn });
+					sheetSections.sort((a, b) => a.order - b.order);
+				},
 
 				/** Open an NPC's character sheet. */
 				openSheet(id) {
@@ -190,6 +202,8 @@
 					box.append(ui.el("p", { text: "No one selected." }));
 				}
 				else {
+					const r = ui.result(flow.lastResult());
+					if (r) box.append(r);
 					const def = registry.get("npc", id);
 					const where = npcs.whereIs(id);
 					const rows = [
@@ -221,6 +235,16 @@
 						box.append(ul);
 					}
 					if (def.passage) ui.wiki(box, def.passage);
+					for (const sec of sheetSections) {
+						const part = ui.el("section", { class: `sheet-${sec.name}` });
+						try {
+							sec.fn(part, id);
+						}
+						catch (err) {
+							setup.reportError(err, `npc sheet ${sec.name}`);
+						}
+						if (part.childNodes.length) box.append(part);
+					}
 				}
 				box.append(ui.button("Back", () => flow.go(flow.home)));
 			});
