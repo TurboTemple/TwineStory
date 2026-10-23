@@ -57,8 +57,14 @@
 					let to = value;
 					if (def.kind === "number") to = round(def, clamp(Number(value), def.min, def.max));
 					else if (!def.options.includes(value)) throw new setup.GameError(`${def.label} can't be "${value}"`);
+					const bandBefore = def.bands ? body.band(id) : null;
 					B()[id] = to;
 					if (to !== from) bus.emit("body:changed", { id, from, to });
+					// Moving into a new band is worth telling the player about.
+					if (def.bands && body.band(id) !== bandBefore) {
+						bus.emit("body:band", { id, from: bandBefore, to: body.band(id) });
+						ui.notify(`${def.label}: ${bandBefore} → ${body.band(id)}.`);
+					}
 				},
 
 				/** Add to a number part. */

@@ -11,6 +11,8 @@
 	function createUi() {
 		/** @type {Map<string, Function>} */
 		const views = new Map();
+		/** Notices waiting to be shown (not saved): level-ups, messages, … */
+		let notices = [];
 
 		const ui = {
 			/**
@@ -73,6 +75,22 @@
 				// The action's picture or clip, if it has one.
 				const pic = result.action && result.ok !== false ? setup.media.render("action", result.action, { class: "media-wide" }) : null;
 				return ui.el("div", { class: "result", attrs: { role: "status" } }, pic, ui.el("ul", {}, ...lines.map((l) => ui.el("li", { text: l }))));
+			},
+
+			/**
+			 * Queue a short notice ("Barista skill is now 5", "New message from
+			 * Jess"). Shown with the next result on the Here screen.
+			 * @param {string} text
+			 */
+			notify(text) {
+				if (text && !notices.includes(text)) notices.push(text);
+			},
+
+			/** @returns {string[]} Pending notices, emptying the queue. */
+			takeNotices() {
+				const out = notices;
+				notices = [];
+				return out;
 			},
 
 			/**

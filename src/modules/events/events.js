@@ -6,7 +6,9 @@
  *      cooldown, its group's cooldown or its daily limit.
  *   2. Story storylets (kind "story") fire first: the highest-priority
  *      eligible one fires, every time it's eligible.
- *   3. Otherwise random storylets (kind "random") go to the selection hook,
+ *   3. Then pool storylets (kind "pool": e.g. the events of a job stage):
+ *      one is picked by weight every time, with no game-wide limits.
+ *   4. Otherwise random storylets (kind "random") go to the selection hook,
  *      unless the game-wide random limits say "not now".
  * At most one storylet fires per trigger. A storylet applies its effects
  * and its passage is shown through the flow controller.
@@ -39,7 +41,7 @@
 				check(def) {
 					const errs = [];
 					if (!Array.isArray(def.triggers) || !def.triggers.length) errs.push("triggers must be a non-empty list of bus event names");
-					if (!["random", "story"].includes(def.kind)) errs.push('kind must be "random" or "story"');
+					if (!["random", "story", "pool"].includes(def.kind)) errs.push('kind must be "random", "story" or "pool"');
 					if (def.chance != null && !(def.chance >= 0 && def.chance <= 1)) errs.push("chance must be between 0 and 1");
 					if (!(def.weight > 0)) errs.push("weight must be > 0");
 					if (!Number.isInteger(def.cooldown) || def.cooldown < 0) errs.push("cooldown must be whole minutes ≥ 0");
@@ -48,6 +50,14 @@
 			});
 
 			const selectors = new Map();
+			/** Extra eligibility rules other modules add (e.g. storyline stages). */
+			const filters = [];
+			/** Highest-priority pool storylets, one picked by weight. */
+			const pickPool = (pool) => {
+				if (!pool.length) return undefined;
+				const top = Math.max(...pool.map((s) => s.priority));
+				return rng.weighted(pool.filter((s) => s.priority === top));
+			};
 			/** @type {Map<string, boolean>} Debug overrides: true = force, false = suppress. */
 			const forced = new Map();
 			let byTrigger = new Map();
@@ -76,6 +86,12 @@
 
 				/** @returns {boolean} */
 				hasSelector: (name) => selectors.has(name),
+
+				/**
+				 * Add an eligibility rule: (storylet, ctx) => boolean. All must pass.
+				 * @param {Function} fn
+				 */
+				addFilter: (fn) => filters.push(fn),
 
 				/** @returns {string} The active selection hook's name. */
 				selector: () => config.events?.selector ?? "none",
@@ -114,7 +130,7 @@
 				 * @returns {object[]}
 				 */
 				eligible(trigger, ctx) {
-					return (byTrigger.get(trigger) ?? []).filter((s) => !events.blockedBy(s) && cond.test(s.conditions, ctx));
+					return (byTrigger.get(trigger) ?? []).filter((s) => !events.blockedBy(s) && filters.every((f) => f(s, ctx)) && cond.test(s.conditions, ctx));
 				},
 
 				/** @returns {string|null} Why no random event may fire now (game-wide limits). */
@@ -139,6 +155,7 @@
 					const pick =
 						eligible.filter((s) => forced.get(s.id) === true).sort(byPriority)[0] ??
 						eligible.filter((s) => s.kind === "story").sort(byPriority)[0] ??
+						pickPool(eligible.filter((s) => s.kind === "pool")) ??
 						(events.randomBlockedBy() ? undefined : (selectors.get(events.selector()) ?? (() => []))(eligible.filter((s) => s.kind === "random"), ctx)[0]);
 					if (!pick) return null;
 					events.fire(pick.id, ctx, payload.result);

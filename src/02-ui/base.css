@@ -336,3 +336,34 @@
 .inv-slot {
 	margin-right: 0.3em;
 }
+
+/* ---- "Go to" travel buttons ------------------------------------------ */
+
+.go-group {
+	margin-bottom: 0.6rem;
+}
+
+.go-mode {
+	margin: 0.4rem 0 0.1rem;
+	font-size: 0.8em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+}
+
+.notices {
+	border-left-color: var(--warn);
+}
+
+.change-list li {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.change-list input[type="checkbox"] {
+	width: 24px;
+	height: 24px;
+	flex: none;
+}

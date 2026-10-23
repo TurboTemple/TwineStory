@@ -234,6 +234,8 @@
 			world.addHereSection("result", 5, (box) => {
 				const r = ui.result(flow.lastResult());
 				if (r) box.append(r);
+				const notes = ui.takeNotices();
+				if (notes.length) box.append(ui.el("div", { class: "result notices", attrs: { role: "status" } }, ui.el("ul", {}, ...notes.map((n) => ui.el("li", { text: n })))));
 			});
 
 			world.addHereSection("description", 10, (box, here) => {
