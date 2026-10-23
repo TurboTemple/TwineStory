@@ -1,7 +1,22 @@
 // The real Mooresville content: sanity checks and a day in the life.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bootTown, plain } from "./helpers.mjs";
+import { bootTown as bootRaw, plain } from "./helpers.mjs";
+
+/** Wear everyday clothes from the wardrobe (instantly). */
+function dress(setup) {
+	for (const id of ["white_tshirt", "blue_jeans", "trainers", "socks"]) {
+		const e = setup.inventory.entries("wardrobe").find((x) => x.item === id);
+		setup.clothing.wear(e.uid, { force: true });
+	}
+}
+
+/** A new game in the town, already dressed (most tests are about other things). */
+function bootTown(opts) {
+	const g = bootRaw(opts);
+	dress(g.setup);
+	return g;
+}
 
 test("a new game starts in your bedroom at 07:00 with £215", () => {
 	const { setup } = bootTown();
@@ -29,12 +44,12 @@ test("every place can be reached on foot from home", () => {
 	assert.deepEqual(plain(sites.filter((s) => !seen.has(s))), []);
 });
 
-test("every place and room has something to do or somewhere to go", () => {
+test("every place and room has something to do, a shop, or somewhere to go", () => {
 	const { setup } = bootTown();
 	const actions = setup.registry.all("action");
 	for (const loc of setup.registry.all("location")) {
 		const hasAction = actions.some((a) => setup.util.toArray(a.at).includes(loc.id) || (a.atTag && loc.tags.includes(a.atTag)));
-		const hasRooms = setup.world.children(loc.id).length > 0;
+		const hasRooms = setup.world.children(loc.id).length > 0 || setup.registry.query("shop", (sh) => setup.util.toArray(sh.at).includes(loc.id)).length > 0;
 		const hasRoutes = setup.registry.query("route", (r) => r.from === loc.id || r.to === loc.id).length > 0;
 		assert.ok(hasAction || hasRooms || hasRoutes, `${loc.id} is a dead end`);
 	}
@@ -70,6 +85,7 @@ test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
 	go("home_kitchen");
 	S.actions.do("make_breakfast");
 	assert.ok(S.stats.get("food") > 85);
+	assert.equal(S.inventory.count("groceries"), 5, "breakfast used one lot of groceries");
 	S.travel.go("elm_road", "walk");
 	const bus = S.travel.go("academy", "bus7");
 	assert.equal(bus.ok, true);

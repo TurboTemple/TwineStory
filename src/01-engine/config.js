@@ -26,7 +26,7 @@
 	 * Save-schema version. Bump whenever any module's `version` bumps (§6.10).
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 3;
+	setup.SCHEMA_VERSION = 4;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -65,6 +65,12 @@
 			maxRandomPerDay: 4,
 			// At least this many minutes between two random events.
 			minGapMins: 60,
+		},
+		// Clothing (proposed by Claude): to go out you need something on top,
+		// something on the bottom (or a dress covering both) and shoes, and
+		// no sleepwear.
+		clothing: {
+			dressed: { cover: [["top"], ["bottom"], ["feet"]], notOutside: ["sleepwear"] },
 		},
 		// Decided by the user: manual save slots in the Menu.
 		saves: { slots: 12 },

@@ -126,7 +126,14 @@
 			});
 
 			shell.addSection("menu", 90, (box) => {
-				const nav = ui.el("nav", { class: "menu", attrs: { "aria-label": "Game menu" } },
+				const nav = ui.el("nav", { class: "menu", attrs: { "aria-label": "Game menu" } });
+				const go = (label, passage) => ui.button(label, () => {
+					close();
+					flow.go(passage);
+				});
+				if (setup.sc.hasPassage("Character_Me") && setup.vars().pc) nav.append(go("Me", "Character_Me"));
+				if (has("inventory") && setup.vars().inv) nav.append(go("Bag", "Inventory_Bag"));
+				nav.append(
 					ui.button("Saves", () => {
 						close();
 						setup.sc.openSaves();

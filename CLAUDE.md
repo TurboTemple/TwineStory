@@ -523,6 +523,7 @@ Keep this up to date so a new session knows where things stand.
 
 | 2026-10-23 | Travel rules, `money` (early), event rules, locked actions, NPC meeting | Built from the user's answers to the PR #1 decisions. |
 | 2026-10-23 | Test fixture removed; debug tools for the real game | The user asked for everything to be part of the real game. |
+| 2026-10-23 | `inventory`, `shops`, `clothing` (wardrobe), `body`; items, clothes, shops, a hair salon; one duration for everyday tasks | Asked for by the user. |
 | 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
@@ -537,4 +538,7 @@ User decisions so far:
 - Travel times should be sensible for the distance (e.g. 5 minutes to a house on the same street, much longer across town).
 - An NPC is met at the first encounter.
 - The game has a sidebar with the player portrait, stats, money, active effects and menu buttons (saves, settings…).
+- Everyday tasks (homework, reading, TV…) get one sensible duration, not a choice. Choices stay only where they matter (sleep, waiting).
+- The body is modular: one data definition per part (weight, bust, eye colour, height…), and parts can change over time.
+- Claude's proposals in the same spirit, open to change: you start in pyjamas and must be dressed (top, bottoms, shoes, no sleepwear) to go out; you can only change in bedrooms, bathrooms, fitting rooms and changing rooms; home cooking uses groceries.
 - Claude was asked to design the town (Mooresville), its places and rooms, actions, location text, stats and effects. These are content and can be tuned freely.
