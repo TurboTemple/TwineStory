@@ -1,9 +1,16 @@
 /*
  * inventory — items and where they're kept.
  *
+ * Every item describes itself in one definition: its name, price, tags,
+ * stat modifiers and what using it does. Tags do the sorting:
+ *   - which shop sells it (a tag with the shop's id, e.g. "patels")
+ *   - what kind of thing it is ("food", "drink", "clothing"…): storage
+ *     places accept items by tag (the wardrobe takes "clothing")
+ *   - qualities other systems check ("warm", "waterproof", "smart"…)
+ *
  * Storage places are data: your bag (carried everywhere), a wardrobe or
  * kitchen cupboard at home (only reachable when you're there). Stackable
- * items share one entry with a quantity; others (clothes) are separate
+ * items share one entry with a quantity; unique ones (clothes) are separate
  * instances with their own uid.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
@@ -23,7 +30,12 @@
 		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
 			registry.defineType("item", {
 				required: ["name"],
-				defaults: { desc: "", category: "misc", tags: [], price: 0, stackable: true, size: 1, use: null },
+				// stackable: null = decided by the unique rules (clothing makes
+				// wearable things unique); true/false to say so yourself.
+				// modifiers: stat changes the item gives while it's in use (worn,
+				// for clothing).
+				defaults: { desc: "", tags: [], price: 0, stackable: null, size: 1, use: null, modifiers: [] },
+				refs: { "modifiers[].stat": "stat" },
 				conditions: ["use.conditions"],
 				effects: ["use.effects"],
 				check(def) {
@@ -45,11 +57,25 @@
 			// A stackable item (snacks) has one entry per place with a qty; an
 			// unstackable one (each piece of clothing) has its own entry and uid,
 			// so the game can tell your two pairs of socks apart.
+			/** Rules that make an item unique (one entry per thing): (def) => boolean. */
+			const uniqueRules = [];
+			/** @returns {boolean} Whether copies of an item share one entry with a qty. */
+			const stackable = (def) => def.stackable ?? !uniqueRules.some((fn) => fn(def));
+
 			const I = () => setup.vars().inv;
 			const P = (place) => (I().places[place] ??= []);
 			const item = (id) => registry.get("item", id);
 
 			const inventory = {
+				/**
+				 * Make some items unique, e.g. clothing: (def) => boolean.
+				 * @param {Function} fn
+				 */
+				addUniqueRule: (fn) => uniqueRules.push(fn),
+
+				/** @returns {boolean} Whether an item stacks (see addUniqueRule). */
+				stackable,
+
 				/** @returns {object[]} Storage definitions in display order. */
 				storages: () => registry.all("storage").sort((a, b) => a.order - b.order),
 
@@ -77,7 +103,8 @@
 				refuses(place, itemId, qty = 1) {
 					const s = registry.get("storage", place);
 					const def = item(itemId);
-					if (s.accepts && !s.accepts.includes(def.category)) return `${def.name} doesn't go in the ${s.label.toLowerCase()}`;
+					// `accepts` lists tags; an item goes in if it has any of them.
+					if (s.accepts && !s.accepts.some((t) => def.tags.includes(t))) return `${def.name} doesn't go in the ${s.label.toLowerCase()}`;
 					const space = inventory.space(place);
 					if (space != null && def.size * qty > space) return `Not enough room in your ${s.label.toLowerCase()}`;
 					return null;
@@ -112,7 +139,7 @@
 					if (why) return { ok: false, reason: why };
 					const list = P(place);
 					const uids = [];
-					if (def.stackable) {
+					if (stackable(def)) {
 						let e = list.find((x) => x.item === itemId);
 						if (!e) {
 							e = { uid: `i${++I().seq}`, item: itemId, qty: 0 };
@@ -171,9 +198,9 @@
 					const why = inventory.refuses(to, f.entry.item, n);
 					if (why) return { ok: false, reason: why };
 					const def = item(f.entry.item);
-					if (!def.stackable || n >= f.entry.qty) {
+					if (!stackable(def) || n >= f.entry.qty) {
 						P(f.place).splice(P(f.place).indexOf(f.entry), 1);
-						if (def.stackable) {
+						if (stackable(def)) {
 							const into = P(to).find((e) => e.item === f.entry.item);
 							if (into) {
 								into.qty += f.entry.qty;

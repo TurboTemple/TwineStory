@@ -1,11 +1,15 @@
 /*
  * clothing — what you wear, the wardrobe and outfits.
  *
- * Clothes are items with a `clothing` block. Worn clothes live in the hidden
- * "worn" storage place; $wear maps each body slot to the item worn there.
- * You can change only where it makes sense (rooms tagged "changing").
- * Clothes can carry stat modifiers (`clothing.modifiers`), which apply while
- * they're worn; statuses can switch on from what you wear (`whileCond`).
+ * An item is clothing when it has the "clothing" tag and `slots` (where on
+ * the body it goes). That's all the wardrobe needs. Everything else about
+ * it is an ordinary item field: price, `modifiers` (stat changes that apply
+ * while it's worn) and tags for its qualities ("warm", "waterproof",
+ * "smart"…), which other systems and effects check.
+ *
+ * Worn clothes live in the hidden "worn" storage place; $wear maps each
+ * body slot to the item worn there. You can change only where it makes
+ * sense (rooms tagged "changing").
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-clothing.js (slots, clothes, outfit effects)
@@ -14,6 +18,13 @@
  */
 (function () {
 	"use strict";
+
+	/** The tag that marks an item as clothing. */
+	const TAG = "clothing";
+	/** @returns {boolean} Can this item be worn? (tagged "clothing", with slots) */
+	const isWearable = (def) => Boolean(def?.tags?.includes(TAG) && def.slots?.length);
+	/** An item's qualities for display: its tags minus "clothing" and shop ids ("warm, waterproof"). */
+	const qualities = (def) => def.tags.filter((t) => t !== TAG && !setup.registry.has("shop", t));
 
 	(setup.__modules ??= []).push({
 		id: "clothing",
@@ -26,9 +37,12 @@
 			registry.defineType("clothingSlot", { required: ["label"], defaults: { order: 0 } });
 			registry.defineType("outfit", { required: ["label", "items"], defaults: { start: false }, refs: { items: "item" } });
 			registry.extendType("item", {
-				refs: { "clothing.slots": "clothingSlot" },
-				check: (def) => (def.clothing && !(Array.isArray(def.clothing.slots) && def.clothing.slots.length) ? ["clothing needs at least one slot"] : []),
+				defaults: { slots: null },
+				refs: { slots: "clothingSlot" },
+				check: (def) => (def.tags.includes(TAG) && !(Array.isArray(def.slots) && def.slots.length) ? [`items tagged "${TAG}" need slots (where they're worn)`] : []),
 			});
+			// Each piece of clothing is its own thing (no stacks of jeans).
+			setup.inventory.addUniqueRule((def) => isWearable(def));
 			// Where worn clothes are kept: always with you, never listed in the bag.
 			registry.define("storage", { id: "worn", label: "Worn", carried: true, hidden: true, order: 99 });
 
@@ -78,20 +92,6 @@
 				},
 
 				/**
-				 * Sum any number attributes in the items' `clothing` blocks over what
-				 * you're wearing (none are used at the moment: warmth and smartness
-				 * are tags, decided by the user).
-				 * @returns {Object<string, number>}
-				 */
-				outfitStats() {
-					const out = {};
-					for (const { item } of clothing.wornItems()) {
-						for (const [k, v] of Object.entries(item.clothing)) if (typeof v === "number") out[k] = (out[k] ?? 0) + v;
-					}
-					return out;
-				},
-
-				/**
 				 * Put something on. Anything in the way goes back where the new
 				 * item came from (or your bag).
 				 * @returns {{ok: boolean, reason?: string}}
@@ -100,16 +100,16 @@
 					const f = setup.inventory.find(uid);
 					if (!f) return { ok: false, reason: "It isn't there any more" };
 					const def = registry.get("item", f.entry.item);
-					if (!def.clothing) return { ok: false, reason: `${def.name} isn't something you wear` };
+					if (!isWearable(def)) return { ok: false, reason: `${def.name} isn't something you wear` };
 					if (!opts.force && !clothing.canChangeHere()) return { ok: false, reason: "You can't get changed here" };
 					const back = f.place === "worn" ? "bag" : f.place;
-					for (const s of def.clothing.slots) {
+					for (const s of def.slots) {
 						const old = W().slots[s];
 						if (old && old !== uid) clothing.takeOff(old, back, { force: true });
 					}
 					const moved = setup.inventory.move(uid, "worn");
 					if (!moved.ok) return moved;
-					for (const s of def.clothing.slots) W().slots[s] = moved.uid;
+					for (const s of def.slots) W().slots[s] = moved.uid;
 					if (!opts.force) time.advance(MINS_PER_CHANGE, { reason: "dress" });
 					bus.emit("clothing:changed", {});
 					return { ok: true };
@@ -208,6 +208,7 @@
 					return { ok: true, missing };
 				},
 			};
+			clothing.isWearable = isWearable;
 			setup.clothing = clothing;
 
 			// { wearing: "item_id" } — you have it on.
@@ -224,15 +225,6 @@
 					: `Wearing ${spec.min > 1 ? `${spec.min} things` : "something"} ${spec.tag}`),
 			});
 
-			// { outfit: { <attribute>: { min, max } } } — totals of number attributes in range.
-			cond.register("outfit", {
-				test(spec) {
-					const totals = clothing.outfitStats();
-					return Object.entries(spec).every(([k, r]) => (r.min == null || (totals[k] ?? 0) >= r.min) && (r.max == null || (totals[k] ?? 0) <= r.max));
-				},
-				describe: (spec) => Object.entries(spec).map(([k, r]) => `Outfit ${k}${r.min != null ? ` at least ${r.min}` : ""}${r.max != null ? ` at most ${r.max}` : ""}`).join(", "),
-			});
-
 			// { dressed: true } — decently dressed (see clothing.dressed()).
 			cond.register("dressed", {
 				test: (spec) => clothing.dressed() === (spec !== false),
@@ -243,7 +235,7 @@
 
 			// Clothes in the bag point you to the wardrobe screen to change.
 			setup.inventory.rowButtons.push((e, place, def) => {
-				if (!def.clothing || place === "worn" || !clothing.canChangeHere()) return [];
+				if (!isWearable(def) || place === "worn" || !clothing.canChangeHere()) return [];
 				return [ui.button("Get changed", () => flow.go("Clothing_Wardrobe"))];
 			});
 
@@ -263,7 +255,7 @@
 					} } });
 					return cb;
 				};
-				const slotsOf = (def) => def.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
+				const slotsOf = (def) => def.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
 
 				box.append(ui.el("h2", { text: "Wearing (tick to take off)" }));
 				const worn = ui.el("ul", { class: "inv change-list" });
@@ -283,7 +275,7 @@
 
 				if (canChange) {
 					for (const place of setup.inventory.accessible().filter((p) => p !== "worn")) {
-						const clothes = setup.inventory.entries(place).filter((e) => registry.get("item", e.item).clothing);
+						const clothes = setup.inventory.entries(place).filter((e) => isWearable(registry.get("item", e.item)));
 						if (!clothes.length) continue;
 						box.append(ui.el("h2", { text: `In your ${registry.get("storage", place).label.toLowerCase()} (tick to put on)` }));
 						const list = ui.el("ul", { class: "inv change-list" });
@@ -293,7 +285,7 @@
 								tick("wear", e.uid, `Put on ${def.name}`),
 								setup.media.thumb("item", def.id, def.name),
 								ui.el("span", { class: "inv-name", text: def.name }),
-								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)}${def.tags.length ? `; ${def.tags.join(", ")}` : ""})` }))));
+								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)}${qualities(def).length ? `; ${qualities(def).join(", ")}` : ""})` }))));
 						}
 						box.append(list);
 					}
@@ -327,14 +319,14 @@
 				if (!items.length) box.append(ui.el("p", { text: "Nothing at all." }));
 				const ul = ui.el("ul", { class: "parts" });
 				for (const w of items) {
-					const slots = w.item.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
+					const slots = w.item.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
 					ul.append(ui.el("li", { class: "inv-row", attrs: { title: w.item.desc || null } },
 						setup.media.thumb("item", w.item.id, w.item.name),
 						ui.el("span", { class: "inv-slot", text: `${slots}: ` }), ui.el("span", { text: w.item.name })));
 				}
 				if (items.length) box.append(ul);
 				// What your outfit adds up to: its tags (warm, smart, waterproof…).
-				const tags = [...new Set(items.flatMap((w) => w.item.tags))];
+				const tags = [...new Set(items.flatMap((w) => qualities(w.item)))];
 				if (tags.length) box.append(ui.el("p", { class: "note", text: `Your outfit: ${tags.join(", ")}.` }));
 				if (!clothing.dressed()) box.append(ui.el("p", { class: "locked", text: "You're not dressed to go out." }));
 				if (clothing.canChangeHere()) box.append(ui.button("Get changed", () => flow.go("Clothing_Wardrobe")));
@@ -349,7 +341,7 @@
 		ready() {
 			// Clothes' own stat modifiers apply while they're worn.
 			if (setup.modules.has("stats")) {
-				setup.stats.addModifierSource(() => setup.clothing.wornItems().flatMap((w) => (w.item.clothing.modifiers ?? []).map((m) => ({ ...m, source: `item:${w.item.id}` }))));
+				setup.stats.addModifierSource(() => setup.clothing.wornItems().flatMap((w) => w.item.modifiers.map((m) => ({ ...m, source: `item:${w.item.id}` }))));
 			}
 		},
 
