@@ -1,0 +1,3 @@
+:: Inventory_Bag [nobr]
+<h1>Your things</h1>
+<<view "bag">>

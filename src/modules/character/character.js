@@ -72,6 +72,40 @@
 			};
 			setup.character = character;
 
+			/* ---- The "Me" screen --------------------------------------------- */
+
+			/** @type {{name: string, order: number, fn: Function}[]} */
+			const meSections = [];
+
+			/**
+			 * Add a section to the Me screen (body, clothes, …). Lower order first.
+			 * @param {string} name @param {number} order @param {(box: HTMLElement) => void} fn
+			 */
+			character.addMeSection = (name, order, fn) => {
+				meSections.push({ name, order, fn });
+				meSections.sort((a, b) => a.order - b.order);
+			};
+
+			ui.view("me", (box) => {
+				box.classList.add("m-character");
+				box.append(ui.el("div", { class: "side-who" },
+					character.portrait(),
+					ui.el("div", {},
+						ui.el("h1", { text: character.name() }),
+						ui.el("p", { class: "note", text: `${character.age()} · ${character.pronouns()}` }))));
+				for (const s of meSections) {
+					const part = ui.el("section", { class: `me-${s.name}` });
+					try {
+						s.fn(part);
+					}
+					catch (err) {
+						setup.reportError(err, `me ${s.name}`);
+					}
+					if (part.childNodes.length) box.append(part);
+				}
+				box.append(ui.button("Back", () => flow.go(flow.home)));
+			});
+
 			/* ---- New game screen -------------------------------------------- */
 
 			ui.view("new-game", (box) => {
@@ -79,12 +113,18 @@
 				const nameInput = ui.el("input", { attrs: { id: "pc-name", type: "text", maxlength: NAME_MAX, autocomplete: "off", value: character.name() } });
 				const pronounSelect = ui.el("select", { attrs: { id: "pc-pronouns" } },
 					...config.pc.pronounOptions.map((p) => ui.el("option", { text: p, attrs: { value: p, selected: p === pc().pronouns } })));
+				// Appearance fields come from the body module, if it's installed.
+				const looks = setup.modules.has("body") ? setup.body.creationFields() : { elements: [], save() {} };
 				box.append(
 					ui.el("label", { attrs: { for: "pc-name" }, text: "Your name" }), nameInput,
 					ui.el("label", { attrs: { for: "pc-pronouns" }, text: "Pronouns" }), pronounSelect,
+				);
+				if (looks.elements.length) box.append(ui.el("h2", { text: "Appearance" }), ...looks.elements);
+				box.append(
 					ui.el("p", { class: "note", text: `You're ${character.age()}, in your final year at school in ${config.city}.` }),
 					ui.button("Begin", () => {
 						character.setIdentity({ name: nameInput.value || config.pc.defaultName, pronouns: pronounSelect.value });
+						looks.save();
 						flow.go(flow.home);
 					}, { class: "btn-primary" }),
 				);

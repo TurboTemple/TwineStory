@@ -85,13 +85,43 @@ async function playTown(page, label) {
 	await click(page, "Have a shower");
 	await expectPassage(page, "Here", /Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Bathroom/, `${label}: shower`);
 	if (!(await sidebar(page)).includes("Refreshed")) failures.push(`${label}: Refreshed effect not in sidebar`);
+	// In pyjamas you can't go out.
+	await click(page, "Go somewhere else");
+	await expectPassage(page, "Travel_Pick", /You need to get dressed/, `${label}: not dressed`);
+	await click(page, "Stay here");
+	await click(page, "Your Bedroom");
+	await click(page, "Get changed");
+	await expectPassage(page, "Clothing_Wardrobe", /not dressed to go out[\s\S]*In your wardrobe/, `${label}: wardrobe`);
+	for (const item of ["Black T-shirt", "Blue jeans", "Pair of socks", "White trainers"]) {
+		await page.locator("#passages li", { hasText: item }).locator("button", { hasText: "Wear" }).first().click();
+		await page.waitForSelector('[data-passage="Here"], [data-passage="Clothing_Wardrobe"]');
+		await page.evaluate(() => window.SugarCube.Engine.play("Clothing_Wardrobe"));
+	}
+	await expectPassage(page, "Clothing_Wardrobe", /You're dressed to go out/, `${label}: dressed`);
+	await click(page, "Back");
+	// The Me page shows your body and clothes.
+	await page.evaluate(() => window.SugarCube.Engine.play("Character_Me"));
+	await expectPassage(page, "Character_Me", /Height\s*168 cm[\s\S]*Hair length[\s\S]*Wearing[\s\S]*black t-shirt/, `${label}: me page`);
+	await click(page, "Back");
 	await click(page, "Go somewhere else");
 	await expectPassage(page, "Travel_Pick", /Leaving Your House \(1 minute to get outside\)/, `${label}: travel from a room`);
 	await click(page, "Elm Road (1 minute)");
+	// Shopping and eating from your bag.
+	await click(page, "Go somewhere else");
+	await click(page, "Patel's Corner Shop (3 minutes)");
+	await click(page, "Browse Patel's Corner Shop");
+	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Buy" }).click();
+	await expectPassage(page, "Shops_Shop", /Bought Chocolate bar for £0\.95/, `${label}: buy`);
+	await click(page, "Done");
+	await page.evaluate(() => window.SugarCube.Engine.play("Inventory_Bag"));
+	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Eat" }).click();
+	await expectPassage(page, "Here", /Eat: Chocolate bar/, `${label}: eat`);
+	await click(page, "Go somewhere else");
+	await click(page, "Elm Road (3 minutes)");
 	await click(page, "Go somewhere else");
 	await click(page, "Mooresville High Street (13 minutes, £1.80)");
 	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£1\.80\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
-	if (!(await sidebar(page)).includes("£33.20")) failures.push(`${label}: fare not taken from cash`);
+	if (!(await sidebar(page)).includes("£32.25")) failures.push(`${label}: cash should be £32.25 after the chocolate and the fare`);
 }
 
 /** Use the Debug tools page: pick `value` in the row whose button is `button`. */

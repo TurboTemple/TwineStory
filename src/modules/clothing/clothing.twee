@@ -1,0 +1,3 @@
+:: Clothing_Wardrobe [nobr]
+<h1>Getting changed</h1>
+<<view "wardrobe">>

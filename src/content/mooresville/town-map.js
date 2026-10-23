@@ -33,8 +33,8 @@
 		/* ---- Elm Park ---------------------------------------------------- */
 
 		place("home", "Your House", "elm_park", { tags: ["home"] });
-		room("home_bedroom", "Your Bedroom", "home", { tags: ["home", "bed", "start"] });
-		room("home_bathroom", "Bathroom", "home", { tags: ["home", "toilet", "sink", "shower"] });
+		room("home_bedroom", "Your Bedroom", "home", { tags: ["home", "bed", "start", "changing"] });
+		room("home_bathroom", "Bathroom", "home", { tags: ["home", "toilet", "sink", "shower", "changing"] });
 		room("home_kitchen", "Kitchen", "home", { tags: ["home", "kitchen"] });
 		room("home_living_room", "Living Room", "home", { tags: ["home", "sofa", "tv"] });
 
@@ -76,15 +76,17 @@
 		room("wellbeing_therapy", "Therapy Room", "wellbeing", { innerMins: 1 });
 		room("wellbeing_toilets", "Toilets", "wellbeing", { tags: ["toilet", "sink"] });
 
+		place("snips", "Snips Hair Salon", "town_centre", { tags: ["shop", "salon"], hours: [on(MON_SAT, "09:00", "18:00")] });
+
 		const shopHours = [on(MON_SAT, "09:00", "17:30"), on(SUN, "10:30", "16:30")];
 		place("threadline", "Threadline", "town_centre", { tags: ["shop", "clothes"], hours: shopHours });
 		room("threadline_floor", "Shop Floor", "threadline", { tags: ["clothes"] });
-		room("threadline_fitting", "Fitting Rooms", "threadline", { tags: ["clothes", "fitting_room"] });
+		room("threadline_fitting", "Fitting Rooms", "threadline", { tags: ["clothes", "fitting_room", "changing"] });
 
 		place("pulsefit", "PulseFit Gym", "town_centre", { tags: ["gym"], hours: [daily("06:00", "22:00")] });
 		room("pulsefit_reception", "Reception", "pulsefit", { tags: ["gym"] });
 		room("pulsefit_floor", "Gym Floor", "pulsefit", { tags: ["gym"] });
-		room("pulsefit_changing", "Changing Rooms", "pulsefit", { tags: ["gym", "toilet", "sink", "shower"] });
+		room("pulsefit_changing", "Changing Rooms", "pulsefit", { tags: ["gym", "toilet", "sink", "shower", "changing"] });
 
 		/* ---- Westgate ---------------------------------------------------- */
 
@@ -94,7 +96,7 @@
 		room("arcade_food_court", "Food Court", "arcade", { tags: ["shopping", "seating"], innerMins: 2 });
 		room("arcade_freshway", "FreshWay Supermarket", "arcade", { tags: ["shopping", "supermarket"], innerMins: 2 });
 		room("arcade_urban_thread", "Urban Thread", "arcade", { tags: ["shopping", "clothes"], innerMins: 2 });
-		room("urban_thread_fitting", "Fitting Rooms", "arcade_urban_thread", { tags: ["clothes", "fitting_room"] });
+		room("urban_thread_fitting", "Fitting Rooms", "arcade_urban_thread", { tags: ["clothes", "fitting_room", "changing"] });
 		// The cinema has its own entrance and stays open after the centre shuts.
 		room("arcade_cinema", "Arcade Cinema", "arcade", { tags: ["cinema"], innerMins: 3, hours: [daily("11:00", "23:00")] });
 		room("arcade_toilets", "Toilets", "arcade", { tags: ["toilet", "sink"] });
@@ -117,6 +119,7 @@
 		walk("high_street", "daily_grind", 1);
 		walk("high_street", "red_lion", 2);
 		walk("high_street", "threadline", 2);
+		walk("high_street", "snips", 3);
 		walk("high_street", "wellbeing", 4);
 		walk("high_street", "pulsefit", 6);
 		walk("high_street", "arcade", 10);
@@ -132,11 +135,14 @@
 
 		/* ---- Travel modes ------------------------------------------------ */
 
-		R.define("travelMode", { id: "walk", label: "Walk", order: 0 });
+		// You need to be dressed to go out (see setup.config.clothing).
+		const dressed = { dressed: true };
+		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed });
 		R.define("travelMode", {
 			id: "bus7",
 			label: "Bus (Route 7)",
 			order: 1,
+			conditions: dressed,
 			network: "bus7",
 			multiHop: true,
 			cost: "flat",
@@ -146,6 +152,7 @@
 			id: "taxi",
 			label: "Taxi",
 			order: 2,
+			conditions: dressed,
 			multiHop: true,
 			destTag: "hub",
 			stopsOnWay: false,

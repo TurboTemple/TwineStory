@@ -9,6 +9,10 @@ The real game town. Everything here is content: all of it can be changed without
 | `town-people.js` | Every NPC's character sheet and weekly schedule |
 | `town-actions.js` | Everything you can do, with prices and stat changes |
 | `town-events.js` | Events (therapy interruption, waking up bursting, bus traffic, closing time) |
+| `town-items.js` | Storage (bag, wardrobe, kitchen cupboards), starting kit, food and drink, groceries |
+| `town-clothing.js` | Clothing slots, about 35 clothes, the starting outfit (pyjamas) |
+| `town-shops.js` | What each shop sells: Patel's, FreshWay, the school vending machine, Threadline, Urban Thread |
+| `town-body.js` | Body parts: height, weight, build, bust, skin tone, eye colour, hair colour and length |
 | `src/story/mooresville/*.twee` | The text for each place and event |
 
 ## Places (walking minutes)
@@ -21,6 +25,7 @@ Your House —1— Elm Road —3— Patel's Corner Shop
           Mooresville Academy —15—'
                                  |— 1 The Daily Grind      — 2 The Red Lion
                                  |— 2 Threadline           — 4 Wellbeing Centre
+                                 |— 3 Snips Hair Salon
                                  |— 6 PulseFit Gym         —10 The Arcade —15— Riverside Park
                                  '—12 Riverside Park
 Bus (Route 7, £1.80): Elm Road – Academy – High Street – Arcade
