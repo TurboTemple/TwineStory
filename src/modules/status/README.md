@@ -17,6 +17,9 @@ Active effects on the PC, shown in the sidebar's **Effects** list. They feed mod
 - `hidden`: not shown in the sidebar (used for "what you're doing right now", like Asleep)
 - `good`: `true`, `false` or `null`. Used to colour the chip.
 
+## Factors
+`factors: { name: multiplier }` on a status are read by other systems with `setup.status.factor(name)` (the product over active statuses). In use: `actionTime` (actions with a fixed length take longer: Exhausted ×1.25) and `relGain` (relationship gains: Unwashed ×0.5).
+
 ## State
 `$status.active = { [id]: { stacks, since, until } }`
 

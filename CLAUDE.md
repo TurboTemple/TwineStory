@@ -527,6 +527,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | `inventory`, `shops`, `clothing` (wardrobe), `body`; items, clothes, shops, a hair salon; one duration for everyday tasks | Asked for by the user. |
 | 2026-10-23 | Media framework, sidebar Profile tab, body bands, clothing effects, starting wardrobe trimmed | Asked for by the user. |
 | 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
+| 2026-10-23 | `skills`, `storylines` (progression), `jobs` (barista at The Daily Grind), `relationships` + Talk, `phone` + apps, `education` (timetable, homework), `journal` (daily summary + autosave), `weather`, ambient lines, stat consequences, inline travel buttons, multi-select dressing | Asked for by the user ("implement all of that except walking through every place"). |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -550,3 +551,8 @@ User decisions so far:
 - Everything (places, actions, events, items, NPCs and each of their body parts, the PC's body parts, effects, the PC) can have an image, GIF or video.
 - The sidebar has a Profile tab with full detail (body and clothes with pictures, stats with modifiers, money, effects and what they do).
 - Claude was asked to design the town (Mooresville), its places and rooms, actions, location text, stats and effects. These are content and can be tuned freely.
+- Progression (jobs and other stories) uses storylines: stages with an entry event, events that only happen in that stage, and gates (skill levels, counters, relationships…) to the next stage. The barista job: interview → first day → trainee (Barista 0–19) → promotion → barista (20–49) → supervisor (50+).
+- Travel: every place shows one-tap **Go to** buttons for everywhere reachable from it (walking still goes one neighbouring place at a time).
+- Getting changed: tick everything, then one **Change** that takes time and returns you to where you were.
+- Stats stay as they are for now.
+- Autosave happens when you wake up to the daily summary.

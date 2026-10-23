@@ -17,7 +17,7 @@
 		state: "money",
 		defaultState: () => ({ balances: {}, log: [] }),
 
-		install({ registry, cond, effects, time, fmt, bus }) {
+		install({ registry, cond, effects, time, fmt, bus, ui }) {
 			registry.defineType("account", {
 				required: ["label"],
 				defaults: { kind: "cash", start: 0, order: 0 },
@@ -110,6 +110,18 @@
 					result.changes.push({ kind: "money", text: paid.ok ? `−${fmt.money(-spec.amount)}` : paid.reason });
 				},
 				describe: (spec) => (spec.amount >= 0 ? `Gain ${fmt.money(spec.amount)}` : `Costs ${fmt.money(-spec.amount)}`),
+			});
+
+			// Banking app (for the phone): balances and recent transactions.
+			ui.view("app-bank", (box) => {
+				const accounts = registry.all("account").sort((a, b) => a.order - b.order);
+				box.append(ui.el("dl", { class: "sheet" }, ...accounts.flatMap((a) => [ui.el("dt", { text: a.label }), ui.el("dd", { text: fmt.money(money.balance(a.id)) })])));
+				const log = money.log().slice(-15).reverse();
+				box.append(ui.el("h2", { text: "Recent" }));
+				if (!log.length) box.append(ui.el("p", { class: "note", text: "Nothing yet." }));
+				else box.append(ui.el("ul", { class: "ledger" }, ...log.map((e) => ui.el("li", {},
+					ui.el("span", { text: `${fmt.date(e.t)} ${fmt.time(e.t)} · ${e.reason || "—"}` }), " ",
+					ui.el("strong", { text: `${e.amount >= 0 ? "+" : "−"}${fmt.money(Math.abs(e.amount))}` })))));
 			});
 		},
 

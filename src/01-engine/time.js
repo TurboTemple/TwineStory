@@ -40,6 +40,16 @@
 			/** @returns {number} Current time in minutes since the epoch. */
 			now: () => setup.vars().time.t,
 
+			/**
+			 * Day number of a calendar date.
+			 * @param {string} ymd "YYYY-MM-DD" @returns {number}
+			 */
+			dayOf(ymd) {
+				const ms = Date.parse(`${ymd}T00:00:00Z`);
+				if (Number.isNaN(ms)) throw new setup.GameError(`Bad date "${ymd}" (use YYYY-MM-DD)`);
+				return Math.floor((ms - epochMs()) / 86400000);
+			},
+
 			/** @returns {number} Day number (0 = epoch day). */
 			day: (t) => Math.floor(t / MIN_PER_DAY),
 
@@ -51,6 +61,9 @@
 
 			/** @returns {number} 0 = Sunday … 6 = Saturday. */
 			weekday: (t) => new Date(epochMs() + t * 60000).getUTCDay(),
+
+			/** @returns {number} Month, 1 = January … 12 = December. */
+			month: (t) => new Date(epochMs() + t * 60000).getUTCMonth() + 1,
 
 			/** @returns {{year: number, month: number, day: number, weekday: number}} month is 1–12. */
 			date(t) {

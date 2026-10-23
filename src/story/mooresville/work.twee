@@ -1,0 +1,167 @@
+:: Ev_grind_interview
+<<view "event-media">>
+<h1>Weekend staff wanted</h1>
+
+You point at the card in the window and ask if the job's still going. Jess looks you up and down, then grins and wipes her hands on her apron.
+
+"It is if you want it. Saturdays eight till two, Sundays ten till four. Ever used a coffee machine? Doesn't matter. I'll teach you. Can you be on time?"
+
+You say you can. She asks a few more questions between customers: school, whether you mind early starts, whether you can carry four cups at once. Then she sticks out a hand.
+
+"Right. You're on the rota. Don't be late on your first day."
+
+<<view "event-end">>
+
+:: Ev_grind_first_day
+<<view "event-media">>
+<h1>First day</h1>
+
+Jess hands you an apron and a name badge with your name spelled slightly wrong. "We'll fix that. Watch me for an hour, then you're on the till."
+
+The machine hisses and clanks like it has opinions. You learn where the cups live, how to tamp the coffee and how much milk is too much. You burn your thumb on the steam wand once, and only once.
+
+By the end of the shift your feet ache, but you've made a flat white that Jess drinks without pulling a face. "Not bad," she says. "See you next weekend."
+
+<<view "event-end">>
+
+:: Ev_grind_trainee_rush
+<<view "event-media">>
+<h1>The rush</h1>
+
+A coach party arrives all at once. The queue reaches the door, and every order is different: oat milk, extra hot, half-caff, no foam. Jess calls the drinks and you make them as fast as your hands will go.
+
+When it finally clears, she slides a jar of coins your way. "Your share of the tips. You kept up. Mostly."
+
+<<view "event-end">>
+
+:: Ev_grind_trainee_spill
+<<view "event-media">>
+<h1>Spill</h1>
+
+You turn too quickly with a full tray and four lattes go everywhere, mostly over you. The café goes quiet for a second.
+
+Jess just hands you a mop. "Everyone does it once. Twice, if they're me."
+
+<<view "event-end">>
+
+:: Ev_grind_trainee_regular
+<<view "event-media">>
+<h1>A regular</h1>
+
+An old man in a flat cap comes in at the same time he always does, according to Jess, and orders "the usual". You panic. Jess mouths *americano, splash of cold milk*.
+
+He tastes it, nods, and leaves a pound on the counter. "You'll do," he says.
+
+<<view "event-end">>
+
+:: Ev_grind_trainee_milk
+<<view "event-media">>
+<h1>Milk practice</h1>
+
+It's quiet, so Jess makes you steam jug after jug of milk until it comes out glossy instead of bubbly. "Listen to it," she says. "It should sound like paper tearing, not screaming."
+
+By the tenth jug, it does.
+
+<<view "event-end">>
+
+:: Ev_grind_promotion
+<<view "event-media">>
+<h1>Off the training wheels</h1>
+
+At the end of your shift Jess calls you over and peels the TRAINEE sticker off your badge.
+
+"You don't need me watching any more. You're a proper barista now, so there's a bit more an hour in it for you." She pauses. "And you can do the latte art for the window photos."
+
+<<view "event-end">>
+
+:: Ev_grind_barista_art
+<<view "event-media">>
+<h1>Latte art</h1>
+
+You pour a rosetta so neat that the customer takes a photo of it before drinking. Then her friend wants one. Then the next table does.
+
+The tip jar is noticeably heavier by lunchtime.
+
+<<view "event-end">>
+
+:: Ev_grind_barista_rude
+<<view "event-media">>
+<h1>Difficult customer</h1>
+
+A man in a suit snaps that his coffee is too hot, then too cold, then that he asked for skimmed. He didn't. You remake it with a smile that hurts.
+
+Jess appears at your shoulder after he's gone. "You handled that better than I would have."
+
+<<view "event-end">>
+
+:: Ev_grind_barista_newbie
+<<view "event-media">>
+<h1>The new starter</h1>
+
+There's a new weekend starter, and Jess asks you to show them the ropes. Explaining how to tamp, how to steam and where the cups live, you realise how much you've picked up.
+
+<<view "event-end">>
+
+:: Ev_grind_barista_quiet
+<<view "event-media">>
+<h1>Quiet Sunday</h1>
+
+Rain keeps everyone at home. You wipe down the tables twice, rearrange the cakes and chat to Sam about the playlist. The few customers who do come in tip well, glad to be somewhere warm.
+
+<<view "event-end">>
+
+:: Ev_grind_supervisor
+<<view "event-media">>
+<h1>Keys to the shop</h1>
+
+Jess hands you a set of keys on a coffee-bean keyring. "I'm cutting back my weekends. I need someone I trust to run the shift: the till, opening up, the new starters."
+
+She looks at you. "That's you, if you want it. Supervisor pay, too."
+
+You take the keys.
+
+<<view "event-end">>
+
+:: Ev_grind_supervisor_keys
+<<view "event-media">>
+<h1>Opening up</h1>
+
+You're first in, in the half-dark: alarm off, lights on, machine warming up, float counted. For twenty minutes the whole café is yours and very quiet.
+
+Then the first customer taps on the glass.
+
+<<view "event-end">>
+
+:: Ev_grind_supervisor_rota
+<<view "event-media">>
+<h1>The rota</h1>
+
+Two people want the same Sunday off and a third has exams. You juggle the rota on the back of a receipt until everyone is more or less happy.
+
+<<view "event-end">>
+
+:: Ev_grind_supervisor_complaint
+<<view "event-media">>
+<h1>Complaint</h1>
+
+A customer wants to speak to the manager. Today, that's you. You listen, apologise, replace the drink and offer a free pastry. They leave happy, and you learn something about staying calm.
+
+<<view "event-end">>
+
+:: Ev_grind_fired
+<<view "event-media">>
+<h1>Let go</h1>
+
+Jess catches you as you come in, and she isn't smiling. "I can't keep holding shifts for you when you don't turn up. I'm sorry. I've had to give your hours to someone else."
+
+She doesn't say it unkindly. That almost makes it worse.
+
+<<view "event-end">>
+
+:: Ev_grind_quit
+<<view "event-media">>
+<h1>Handing in your notice</h1>
+
+You tell Jess you're leaving. She nods slowly. "Fair enough. You were good at this, you know. Door's open if you ever want to come back for a coffee."
+
+<<view "event-end">>

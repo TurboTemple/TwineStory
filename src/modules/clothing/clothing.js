@@ -123,6 +123,42 @@
 					return { ok: true };
 				},
 
+				/**
+				 * Change several things at once (decided by the user): take off
+				 * `remove`, put on `wear`, then spend a minute per item.
+				 * @param {{wear?: string[], remove?: string[]}} sel  item uids
+				 * @returns {object} Result
+				 */
+				change(sel) {
+					const result = effects.newResult();
+					if (!clothing.canChangeHere()) {
+						result.changes.push({ kind: "blocked", text: "You can't get changed here." });
+						return result;
+					}
+					const name = (uid) => itemOf(uid)?.name ?? "?";
+					const off = [];
+					const on = [];
+					for (const uid of sel.remove ?? []) {
+						const n = name(uid);
+						if (clothing.takeOff(uid, undefined, { force: true }).ok) off.push(n);
+					}
+					for (const uid of sel.wear ?? []) {
+						const before = new Set(clothing.wornItems().map((w) => w.uid));
+						const n = name(uid);
+						if (!clothing.wear(uid, { force: true }).ok) continue;
+						on.push(n);
+						// Anything this replaced counts as taken off.
+						for (const u of before) if (!clothing.wornItems().some((w) => w.uid === u)) off.push(name(u));
+					}
+					const mins = (on.length + off.length) * MINS_PER_CHANGE;
+					if (mins) time.advance(mins, { reason: "dress" });
+					if (on.length) result.changes.push({ kind: "dress", text: `Put on: ${setup.text.list(on)}.` });
+					if (off.length) result.changes.push({ kind: "dress", text: `Took off: ${setup.text.list([...new Set(off)])}.` });
+					result.changes.push({ kind: "dress", text: mins ? `Getting changed took ${setup.fmt.duration(mins)}.${clothing.dressed() ? "" : " You're not dressed to go out."}` : "You didn't change anything." });
+					bus.emit("clothing:changed", {});
+					return result;
+				},
+
 				/** Best place for clothes you take off: a reachable store that takes them, else the bag. */
 				homeFor(uid) {
 					const item = itemOf(uid);
@@ -188,10 +224,10 @@
 
 			/* ---- UI ------------------------------------------------------------ */
 
-			// "Wear" on clothes in the bag or wardrobe, where you can change.
+			// Clothes in the bag point you to the wardrobe screen to change.
 			setup.inventory.rowButtons.push((e, place, def) => {
 				if (!def.clothing || place === "worn" || !clothing.canChangeHere()) return [];
-				return [ui.action("Wear", () => clothing.wear(e.uid))];
+				return [ui.button("Get changed", () => flow.go("Clothing_Wardrobe"))];
 			});
 
 			ui.view("wardrobe", (box) => {
@@ -199,44 +235,52 @@
 				const canChange = clothing.canChangeHere();
 				if (!canChange) box.append(ui.el("p", { class: "note", text: "You can't get changed here. Find a bedroom, fitting room or changing room." }));
 				box.append(ui.el("p", { class: clothing.dressed() ? "note" : "locked", text: clothing.dressed() ? "You're dressed to go out." : "You're not dressed to go out." }));
+				if (canChange) box.append(ui.el("p", { class: "note", text: "Tick what to take off and what to put on, then tap Change." }));
 
-				box.append(ui.el("h2", { text: "Wearing" }));
-				const ul = ui.el("ul", { class: "inv" });
+				const picks = { wear: [], remove: [] };
+				const tick = (list, uid, label) => {
+					const cb = ui.el("input", { attrs: { type: "checkbox", "aria-label": label, disabled: !canChange }, on: { change: (ev) => {
+						const arr = picks[list];
+						if (ev.target.checked) arr.push(uid);
+						else arr.splice(arr.indexOf(uid), 1);
+					} } });
+					return cb;
+				};
+				const slotsOf = (def) => def.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
+
+				box.append(ui.el("h2", { text: "Wearing (tick to take off)" }));
+				const worn = ui.el("ul", { class: "inv change-list" });
 				const shown = new Set();
 				for (const { slot, uid, item } of clothing.worn()) {
 					if (uid && shown.has(uid)) continue;
 					if (uid) shown.add(uid);
-					// A dress or pyjamas covers several slots: name them all.
-					const label = item ? item.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ") : slot.label;
-					const li = ui.el("li", { class: "inv-row" },
-						item ? setup.media.thumb("item", item.id, item.name) : setup.ui.el("span", { class: "thumb thumb-none" }),
+					const label = item ? slotsOf(item) : slot.label;
+					// The whole row is a <label>, so tapping anywhere on it ticks the box.
+					worn.append(ui.el("li", {}, ui.el(item && canChange ? "label" : "div", { class: "inv-row" },
+						item ? tick("remove", uid, `Take off ${item.name}`) : ui.el("span", { class: "tick-none" }),
+						item ? setup.media.thumb("item", item.id, item.name) : ui.el("span", { class: "thumb thumb-none" }),
 						ui.el("span", { class: "inv-slot", text: `${label}: ` }),
-						ui.el("span", { class: "inv-name", text: item ? item.name : "—" }));
-					if (item && canChange) li.append(ui.action("Take off", () => clothing.takeOff(uid)));
-					ul.append(li);
+						ui.el("span", { class: "inv-name", text: item ? item.name : "—" }))));
 				}
-				box.append(ul);
+				box.append(worn);
 
 				if (canChange) {
 					for (const place of setup.inventory.accessible().filter((p) => p !== "worn")) {
 						const clothes = setup.inventory.entries(place).filter((e) => registry.get("item", e.item).clothing);
 						if (!clothes.length) continue;
-						box.append(ui.el("h2", { text: `In your ${registry.get("storage", place).label.toLowerCase()}` }));
-						const list = ui.el("ul", { class: "inv" });
-						// Identical items (three pairs of socks) share one row.
-						const byItem = new Map();
-						for (const e of clothes) byItem.set(e.item, [...(byItem.get(e.item) ?? []), e]);
-						for (const [id, copies] of byItem) {
-							const def = registry.get("item", id);
-							const slots = def.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
-							list.append(ui.el("li", { class: "inv-row" },
+						box.append(ui.el("h2", { text: `In your ${registry.get("storage", place).label.toLowerCase()} (tick to put on)` }));
+						const list = ui.el("ul", { class: "inv change-list" });
+						for (const e of clothes) {
+							const def = registry.get("item", e.item);
+							list.append(ui.el("li", {}, ui.el("label", { class: "inv-row" },
+								tick("wear", e.uid, `Put on ${def.name}`),
 								setup.media.thumb("item", def.id, def.name),
-								ui.el("span", { class: "inv-name", text: copies.length > 1 ? `${def.name} × ${copies.length}` : def.name }),
-								ui.el("span", { class: "inv-slot", text: ` (${slots})` }),
-								ui.action("Wear", () => clothing.wear(copies[0].uid))));
+								ui.el("span", { class: "inv-name", text: def.name }),
+								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)})` }))));
 						}
 						box.append(list);
 					}
+					box.append(ui.action("Change", () => clothing.change(picks), { class: "btn-primary" }));
 
 					box.append(ui.el("h2", { text: "Outfits" }));
 					const outfits = ui.el("ul", { class: "inv" });
@@ -244,12 +288,16 @@
 						outfits.append(ui.el("li", { class: "inv-row" },
 							ui.el("span", { class: "inv-name", text: o.name }),
 							ui.action("Wear", () => clothing.wearOutfit(o.name)),
-							ui.action("Delete", () => clothing.deleteOutfit(o.name))));
+							ui.button("Delete", () => {
+								clothing.deleteOutfit(o.name);
+								flow.go("Clothing_Wardrobe");
+							})));
 					}
 					box.append(outfits);
 					const name = ui.el("input", { attrs: { type: "text", maxlength: 24, placeholder: "Outfit name", "aria-label": "Outfit name" } });
-					box.append(ui.el("div", { class: "debug-row" }, name, ui.action("Save what I'm wearing", () => {
+					box.append(ui.el("div", { class: "debug-row" }, name, ui.button("Save what I'm wearing", () => {
 						if (name.value.trim()) clothing.saveOutfit(name.value.trim());
+						flow.go("Clothing_Wardrobe");
 					})));
 				}
 				box.append(ui.button("Back", () => flow.go(flow.home)));

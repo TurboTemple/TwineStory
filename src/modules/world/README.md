@@ -17,6 +17,11 @@ A location with a `parent` is a room (sub-location): a pub's bar and toilets, a 
   - `entry`: entry condition (stored; enforced once travel rules for it are designed)
   - tag `start`: the new-game start location
 
+## Atmosphere
+`ambient: [text | { text, when }]` on a location: one line is shown under its description and stays for the hour. Lines whose `when` passes (weather, time, a status) take priority while they apply. `setup.world.ambientLine(id)`.
+
+The phone's Map app view (`app-map`) lists every place by district with today's hours and whether it's open now.
+
 ## State
 `$world = { visited: { [locId]: count } }`. The current location is `$pc.loc` (owned by `character`).
 

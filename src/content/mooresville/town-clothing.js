@@ -55,10 +55,10 @@
 		wear("pyjamas", "Pyjamas", 1500, ["top", "bottom"], { warmth: 2 }, { tags: ["sleepwear", "cosy"] });
 
 		// Coats
-		wear("rain_jacket", "Navy rain jacket", 3500, ["outer"], { warmth: 2, size: 2 });
+		wear("rain_jacket", "Navy rain jacket", 3500, ["outer"], { warmth: 2, size: 2 }, { tags: ["waterproof"] });
 		wear("denim_jacket", "Denim jacket", 4000, ["outer"], { warmth: 2, formality: 1, size: 2 });
 		wear("wool_coat", "Wool coat", 8500, ["outer"], { warmth: 5, formality: 4, size: 2 });
-		wear("puffer_jacket", "Puffer jacket", 6000, ["outer"], { warmth: 5, size: 2 });
+		wear("puffer_jacket", "Puffer jacket", 6000, ["outer"], { warmth: 5, size: 2 }, { tags: ["waterproof"] });
 
 		// Underwear and socks
 		wear("briefs", "Cotton briefs", 600, ["under_bottom"]);

@@ -248,9 +248,27 @@
 
 			/* ---- UI --------------------------------------------------------- */
 
+			// Decided by the user: every place is a hub. All the places you can get
+			// to from here are buttons at the bottom of the page; one tap goes there.
 			setup.world.addHereSection("travel", 40, (box) => {
-				if (!travel.options().length) return;
-				box.append(ui.button("Go somewhere else", () => flow.go("Travel_Pick")));
+				const opts = travel.options();
+				if (!opts.length) return;
+				const loc = setup.world.loc();
+				const exit = setup.world.exitMins(loc);
+				box.append(ui.el("h2", { text: "Go to" }));
+				if (exit) box.append(ui.el("p", { class: "note", text: `Includes ${fmt.duration(exit)} to get outside.` }));
+				const byMode = new Map();
+				for (const o of opts) byMode.set(o.mode, [...(byMode.get(o.mode) ?? []), o]);
+				for (const [mode, list] of byMode) {
+					const group = ui.el("div", { class: "go-group" }, ui.el("p", { class: "go-mode", text: mode.label }));
+					for (const o of list) {
+						const meta = [fmt.duration(o.mins), o.cost ? fmt.money(o.cost) : null].filter(Boolean).join(", ");
+						group.append(ui.action(`${registry.get("location", o.to).name} (${meta})`, () => travel.go(o.to, mode.id), { disabled: !o.ok, title: o.reasons.join("; ") || null }));
+					}
+					const blocked = [...new Set(list.filter((o) => !o.ok).flatMap((o) => o.reasons))];
+					if (blocked.length) group.append(ui.el("p", { class: "locked", text: blocked.join("; ") }));
+					box.append(group);
+				}
 			});
 
 			ui.view("travel", (box) => {

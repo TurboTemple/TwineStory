@@ -20,12 +20,13 @@
 			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false, ambient: [] },
 				refs: { district: "district", parent: "location" },
 				passages: ["passage"],
-				conditions: ["entry"],
+				conditions: ["entry", "ambient[].when"],
 				check(def) {
 					const errs = [];
+					if (!def.ambient.every((a) => typeof a === "string" || typeof a?.text === "string")) errs.push('ambient lines must be text or { text, when }');
 					for (const h of def.hours ?? []) {
 						try {
 							time.parseHM(h.from);
@@ -75,6 +76,22 @@
 
 				/** @returns {string} The top-level location (site) containing `id`. */
 				site: (id) => world.chain(id).at(-1),
+
+				/**
+				 * A line of atmosphere for a place: one of its `ambient` lines whose
+				 * `when` condition passes (weather, time, how you feel…). The same
+				 * line stays for the hour, so it doesn't change on every tap.
+				 * @returns {string|null}
+				 */
+				ambientLine(id, t = time.now()) {
+					const ctx = { t, loc: id };
+					const lines = L(id).ambient.map((a) => (typeof a === "string" ? { text: a } : a)).filter((a) => cond.test(a.when ?? null, ctx));
+					if (!lines.length) return null;
+					// Lines with a condition are about right now, so they come first.
+					const specific = lines.filter((a) => a.when);
+					const pool = specific.length ? specific : lines;
+					return setup.rng.seeded(`ambient:${id}:${time.day(t)}:${time.hour(t)}`).pick(pool).text;
+				},
 
 				/** @returns {boolean} Whether `inner` is `outer` or inside it. */
 				within: (inner, outer) => world.chain(inner).includes(outer),
@@ -234,6 +251,8 @@
 			world.addHereSection("result", 5, (box) => {
 				const r = ui.result(flow.lastResult());
 				if (r) box.append(r);
+				const notes = ui.takeNotices();
+				if (notes.length) box.append(ui.el("div", { class: "result notices", attrs: { role: "status" } }, ui.el("ul", {}, ...notes.map((n) => ui.el("li", { text: n })))));
 			});
 
 			world.addHereSection("description", 10, (box, here) => {
@@ -244,11 +263,33 @@
 				box.append(ui.el("h1", { text: here.name }));
 				if (here.passage) ui.wiki(box, here.passage);
 				else if (here.desc) box.append(ui.el("p", { text: here.desc }));
+				const line = world.ambientLine(here.id);
+				if (line) box.append(ui.el("p", { class: "ambient", text: line }));
 				if (!world.isOpen(here.id)) {
 					const hours = world.hoursOf(here.id);
 					const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(time.now())));
 					const when = today?.length ? ` Today: ${today.map((h) => `${h.from}–${h.to}`).join(", ")}.` : " Not open today.";
 					box.append(ui.el("p", { class: "note", text: `It's closed right now.${when}` }));
+				}
+			});
+
+			// Map app (for the phone): every place by district, open or closed now.
+			ui.view("app-map", (box) => {
+				const now = time.now();
+				const mySite = world.loc() ? world.site(world.loc()) : null;
+				for (const d of registry.all("district")) {
+					const sites = registry.query("location", (l) => !l.parent && l.district === d.id);
+					if (!sites.length) continue;
+					box.append(ui.el("h2", { text: d.name }));
+					box.append(ui.el("ul", { class: "map-list" }, ...sites.map((l) => {
+						const hours = world.hoursOf(l.id);
+						const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(now))) ?? null;
+						const when = !hours ? "Always open" : today.length ? today.map((h) => `${h.from}–${h.to}`).join(", ") : "Closed today";
+						const open = world.isOpen(l.id, now);
+						return ui.el("li", { class: l.id === mySite ? "map-here" : null },
+							ui.el("strong", { text: l.name }), l.id === mySite ? " (you're here)" : "",
+							ui.el("p", { class: "note", text: `${hours ? (open ? "Open now" : "Closed now") + " · " : ""}${when}` }));
+					})));
 				}
 			});
 

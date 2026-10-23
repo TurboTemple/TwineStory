@@ -51,7 +51,8 @@ test("every place and room has something to do, a shop, or somewhere to go", () 
 		const hasAction = actions.some((a) => setup.util.toArray(a.at).includes(loc.id) || (a.atTag && loc.tags.includes(a.atTag)));
 		const hasRooms = setup.world.children(loc.id).length > 0 || setup.registry.query("shop", (sh) => setup.util.toArray(sh.at).includes(loc.id)).length > 0;
 		const hasRoutes = setup.registry.query("route", (r) => r.from === loc.id || r.to === loc.id).length > 0;
-		assert.ok(hasAction || hasRooms || hasRoutes, `${loc.id} is a dead end`);
+		const hasLessons = setup.registry.query("school", (sc) => sc.room === loc.id).length > 0;
+		assert.ok(hasAction || hasRooms || hasRoutes || hasLessons, `${loc.id} is a dead end`);
 	}
 });
 
@@ -75,6 +76,9 @@ test("all students in form 12B are 18; every NPC appears somewhere", () => {
 test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
 	const { setup } = bootTown();
 	const S = setup;
+	// Thursday 3 September, the first day of term.
+	S.time.advance(S.time.at(2, "07:00") - S.time.now());
+	for (const [k, v] of Object.entries({ bladder: 20, food: 60, drink: 60, energy: 80, hygiene: 60 })) S.stats.set(k, v);
 	const go = (id) => S.world.walkTo(id);
 	go("home");
 	go("home_bathroom");
@@ -97,9 +101,12 @@ test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
 	go("academy_form_room");
 	assert.equal(S.world.loc(), "academy_form_room");
 	assert.ok(S.npcs.peopleAt("academy_form_room").includes("mr_hale"));
-	const lesson = S.actions.do("attend_lesson");
-	assert.equal(lesson.ok, true);
-	assert.equal(S.vars().meta.counters.lessons_attended, 1);
+	S.time.advance(S.time.at(2, "08:56") - S.time.now());
+	assert.equal(S.education.lessonNow("academy").subject, "history");
+	S.education.attend("academy");
+	assert.equal(S.fmt.time(S.time.now()), "10:00");
+	assert.equal(S.education.totals().attended, 1);
+	assert.equal(S.education.homework()[0].subject, "history", "history sets homework");
 	assert.equal(S.npcs.hasMet("priya_shah"), true, "met classmates on the way in");
 });
 

@@ -17,6 +17,8 @@ Things the PC can do that take time.
 conditions → costs → `action:start` → advance time in pieces up to each checkpoint → `action:checkpoint` (an event may interrupt) → effects (if not interrupted) → Result → `action:end`.
 An interrupted action stops the clock where it was interrupted.
 
+Fixed-length actions are multiplied by the `actionTime` status factor. Actions you pick a duration for (sleep, waiting) aren't.
+
 ## API (`setup.actions`)
 `available()`, `do(id, { mins? })`, `isRunning()`
 

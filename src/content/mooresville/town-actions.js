@@ -8,7 +8,6 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const WEEKDAYS = [1, 2, 3, 4, 5];
 		const act = (def) => R.define("action", def);
 		/** Pay up front. */
 		const pay = (pence, reason) => ({ money: { amount: -pence, reason } });
@@ -32,11 +31,11 @@
 		/* ---- Home ----------------------------------------------------------- */
 
 		act(during("asleep", {
-			id: "sleep", label: "Sleep", atTag: "bed", durations: [60, 120, 240, 480, "07:00"],
+			id: "sleep", label: "Sleep", atTag: "bed", durations: [60, 120, 240, 480, "07:00"], tags: ["sleep"],
 			desc: "Get into bed. You'll wake early if you really need the toilet.",
 		}));
 		act(during("reading", { id: "read_book", label: "Read a book", at: "home_bedroom", mins: 60 }));
-		act(during("studying", { id: "homework", label: "Do homework", at: "home_bedroom", mins: 60 }));
+		act(during("studying", { id: "homework", label: "Do homework", at: "home_bedroom", mins: 60, conditions: { stat: { id: "stress", max: 85 } }, effects: [{ homework: true }], desc: "Finishes the homework due soonest. Too stressed (85+) and you can't focus." }));
 		act(during("scrolling", { id: "scroll_phone", label: "Scroll on your phone", at: ["home_bedroom", "home_living_room"], mins: 30 }));
 		act({ id: "brush_teeth", label: "Brush your teeth", at: "home_bathroom", mins: 3, effects: [{ stat: { hygiene: 4 } }] });
 
@@ -50,7 +49,7 @@
 		act({ id: "make_coffee", label: "Make a coffee", atTag: "kitchen", mins: 5, effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }] });
 
 		act(during("watching_tv", { id: "watch_tv", label: "Watch TV", atTag: "tv", mins: 60 }));
-		act(during("asleep", { id: "nap_sofa", label: "Nap on the sofa", atTag: "sofa", mins: 30 }));
+		act(during("asleep", { id: "nap_sofa", label: "Nap on the sofa", atTag: "sofa", mins: 30, tags: ["sleep"] }));
 
 		/* ---- Elm Road and the green ---------------------------------------- */
 
@@ -65,13 +64,8 @@
 
 		/* ---- Mooresville Academy ------------------------------------------- */
 
-		act(during("in_lessons", {
-			id: "attend_lesson", label: "Attend a lesson", at: "academy_form_room", mins: 60,
-			conditions: { weekday: WEEKDAYS, time: { from: "08:40", to: "15:20" }, npcHere: "mr_hale" },
-			effects: [{ counter: { name: "lessons_attended", add: 1 } }],
-			desc: "Sit through a lesson with form 12B.",
-		}));
-		act(during("studying", { id: "study_library", label: "Study", at: "academy_library", mins: 60 }));
+		// Lessons are on the school timetable (see town-school.js).
+		act(during("studying", { id: "study_library", label: "Study", at: "academy_library", mins: 60, effects: [{ homework: true }], desc: "Finishes the homework due soonest, if you have any." }));
 		act(during("reading", { id: "read_library", label: "Read quietly", at: "academy_library", mins: 30 }));
 		buy("canteen_lunch", "Buy school lunch", "academy_canteen", 260, 20, [{ stat: { food: 40, drink: 10 } }], { conditions: { time: { from: "11:45", to: "13:45" } } });
 		act(during("exercising", { id: "shoot_hoops", label: "Shoot some hoops", at: "academy_sports_hall", mins: 30, effects: [{ body: { weight: -0.2 } }] }));
