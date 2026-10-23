@@ -27,7 +27,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Things to do, their prices and what they do | `town-actions.js` |
 | Food, drink, groceries, the bag, wardrobe and cupboards | `town-items.js` |
 | Clothes, and effects clothes switch on | `town-clothing.js` |
-| The shops (what they sell comes from each item's tags) | `town-shops.js` |
+| The shops (what they sell comes from each item's `shops`) | `town-shops.js` |
 | People: who they are, their looks, where they are each day | `town-people.js` |
 | Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
 | The barista job: stages, shifts, pay, shift events | `town-work.js` |
@@ -47,9 +47,9 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 |---|---|
 | Starting cash and bank balance | `town-map.js`, part 7: `start: 35` |
 | Food and drink prices | `town-items.js`: `price: 3` (the price tiers are at the top of the file) |
-| Clothing prices and mood boosts | `town-clothing.js`: each item's `price` and `modifiers` (price guide in part 2) |
-| Which clothes are warm, waterproof or smart | `town-clothing.js`: `tags` |
-| Which shops sell an item | the item's `tags`: add or remove the shop's id, e.g. `"patels"` |
+| Clothing prices and mood boosts | `town-clothing.js`: each item's `price` and `stats` (price guide in part 2) |
+| Which clothes are warm, waterproof or smart | `town-clothing.js`: each item's `attributes` |
+| Which shops sell an item | the item's `shops`: add or remove the shop's id, e.g. `"patels"` |
 | The price of a café drink, pub meal, haircut… | `town-actions.js`: `price: 3` (tiers at the top of the file) |
 | How cold a "cold day" is | `town-weather.js`: `coldAt` (5°C or below) |
 | How a trait is earned, what it needs, when it fades | `town-traits.js` |
@@ -86,6 +86,28 @@ mod.perHour("energy", -3)            // Energy drops 3 more each hour
 mod.speed("food", 0.5)               // Food changes half as fast
 ```
 
+## Items
+
+Every item (food, drink, clothing…) is one block with labelled sections, so everything about it is in one place:
+
+```js
+item({
+	id: "puffer_jacket",
+	name: "Puffer jacket",
+	price: 100,
+
+	kind: "clothing",                  // WHAT IT IS (the wardrobe takes clothing)
+	shops: ["urban_thread"],           // WHERE IT'S SOLD (shop ids from town-shops.js)
+	attributes: ["warm", "waterproof"],// WHAT IT'S LIKE
+	stats: [mod.add("mood", 4)],       // WHAT IT DOES FOR YOU (while worn)
+
+	slots: ["outer"],                  // WHERE IT'S WORN (clothing only)
+	size: 2,
+});
+```
+
+Food and drink use `use: { label: "Eat", mins: 2, effects: [ … ] }` for what eating it does. To sell an item somewhere new, add the shop to its `shops`; to stop selling it, take the shop out.
+
 ## Conditions: when something is allowed
 
 Used in `conditions`, `when`, `whileCond` and `showIf`. Put several in one `{ }` and they must **all** be true.
@@ -105,8 +127,8 @@ Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: �
 | `{ skill: { id: "barista", min: 20 } }` | a skill is at least that level |
 | `{ money: { min: 10 } }` | you have at least £10 |
 | `{ has: "groceries" }` or `{ has: { item: "groceries", qty: 2 } }` | you have it with you (bag, or storage where you are) |
-| `{ wearing: "rain_jacket" }` or `{ wearing: { tag: "cosy" } }` | you're wearing it |
-| `{ wearing: { tag: "smart", min: 2 } }` | at least 2 things you're wearing have that tag |
+| `{ wearing: "rain_jacket" }` or `{ wearing: { attribute: "cosy" } }` | you're wearing it, or something with that attribute |
+| `{ wearing: { attribute: "smart", min: 2 } }` | at least 2 things you're wearing have that attribute |
 | `{ trait: "caffeine_addicted" }` | you have that trait |
 | `{ habit: { id: "coffee", days: 3, within: 7 } }` | you did that habit on 3 of the last 7 days |
 | `{ dressed: true }` | you're dressed to go out |

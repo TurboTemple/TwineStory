@@ -80,7 +80,7 @@
 		// Clothing (proposed by Claude, agreed by the user): to go out you need
 		// something on top, something on the bottom (or a dress covering both)
 		// and shoes, and no sleepwear. `cover` lists slot groups that must each
-		// be filled; `notOutside` lists clothing tags you can't go out in.
+		// be filled; `notOutside` lists clothing attributes you can't go out in.
 		clothing: {
 			dressed: { cover: [["top"], ["bottom"], ["feet"]], notOutside: ["sleepwear"] },
 		},

@@ -27,7 +27,8 @@ test("getting dressed from the wardrobe; pyjamas go back in it", () => {
 	assert.equal(setup.clothing.dressed(), true);
 	assert.ok(uidOf(setup, "wardrobe", "pyjamas"), "pyjamas were swapped back into the wardrobe");
 	assert.equal(setup.cond.test({ wearing: "blue_jeans" }), true);
-	assert.equal(setup.cond.test({ wearing: { tag: "warm" } }), false, "a T-shirt and jeans aren't warm");
+	assert.equal(setup.cond.test({ wearing: { attribute: "warm" } }), false, "a T-shirt and jeans aren't warm");
+	assert.equal(setup.cond.test({ wearing: { attribute: "sportswear" } }), true, "the trainers are sportswear");
 });
 
 test("a dress covers top and bottom; you can only change in the right places", () => {
@@ -196,7 +197,7 @@ test("exercise and big meals nudge your weight", () => {
 
 /* ---- Modular items ---------------------------------------------------------- */
 
-test("a shop sells every item tagged with its id", () => {
+test("a shop sells every item that lists it in shops", () => {
 	const { setup } = bootTown();
 	const ids = (shop) => setup.shops.stock(shop).map((i) => i.id);
 	assert.ok(ids("patels").includes("chocolate_bar"));
@@ -207,18 +208,19 @@ test("a shop sells every item tagged with its id", () => {
 	for (const s of setup.registry.all("shop")) assert.ok(setup.shops.stock(s).length > 0, `${s.id} sells something`);
 });
 
-test("an item is clothing by its tag; storage accepts items by tag", () => {
+test("an item is clothing by its kind; storage accepts items by kind", () => {
 	const { setup } = bootTown({
 		includeTest: true,
 		before(s) {
 			(s.__testContent ??= []).push((R) => {
-				R.define("item", { id: "t_scarf", name: "Scarf", price: 5, tags: ["clothing", "warm"], slots: ["accessory"], modifiers: [{ stat: "mood", op: "add", value: 1 }] });
-				R.define("item", { id: "t_badge", name: "Badge", price: 1, tags: ["clothing"] });
+				R.define("item", { id: "t_scarf", name: "Scarf", price: 5, kind: "clothing", shops: ["urban_thread"], attributes: ["warm"], slots: ["accessory"], stats: [{ stat: "mood", op: "add", value: 1 }] });
+				R.define("item", { id: "t_badge", name: "Badge", price: 1, kind: "clothing" });
 			});
 		},
 	});
 	const errors = setup.validate({ hasPassage: () => true }).join("\n");
 	assert.match(errors, /t_badge.*need slots/, "clothing without slots is caught");
+	assert.ok(setup.shops.stock("urban_thread").some((i) => i.id === "t_scarf"), "listed in shops → sold there");
 	assert.equal(setup.clothing.isWearable(setup.registry.get("item", "t_scarf")), true);
 	assert.equal(setup.inventory.stackable(setup.registry.get("item", "t_scarf")), false, "clothing is unique");
 	assert.equal(setup.inventory.refuses("wardrobe", "t_scarf"), null, "the wardrobe takes anything tagged clothing");

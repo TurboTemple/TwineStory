@@ -1,12 +1,14 @@
 /*
  * inventory — items and where they're kept.
  *
- * Every item describes itself in one definition: its name, price, tags,
- * stat modifiers and what using it does. Tags do the sorting:
- *   - which shop sells it (a tag with the shop's id, e.g. "patels")
- *   - what kind of thing it is ("food", "drink", "clothing"…): storage
- *     places accept items by tag (the wardrobe takes "clothing")
- *   - qualities other systems check ("warm", "waterproof", "smart"…)
+ * Every item describes itself in one definition, in labelled sections:
+ *   kind        what it is: "food", "drink", "groceries", "clothing"…
+ *               (storage places accept items by kind; shops group by it)
+ *   shops       where it's sold: shop ids, e.g. ["patels", "freshway"]
+ *   attributes  its qualities, which other systems check: ["warm", "smart"]
+ *   stats       stat modifiers it gives while in use (worn, for clothing)
+ *   use         what using it does (eat, drink…)
+ *   price, size, desc, and `tags` for anything else you want to label
  *
  * Storage places are data: your bag (carried everywhere), a wardrobe or
  * kitchen cupboard at home (only reachable when you're there). Stackable
@@ -32,10 +34,11 @@
 				required: ["name"],
 				// stackable: null = decided by the unique rules (clothing makes
 				// wearable things unique); true/false to say so yourself.
-				// modifiers: stat changes the item gives while it's in use (worn,
-				// for clothing).
-				defaults: { desc: "", tags: [], price: 0, stackable: null, size: 1, use: null, modifiers: [] },
-				refs: { "modifiers[].stat": "stat" },
+				defaults: {
+					desc: "", kind: "misc", shops: [], attributes: [], stats: [], tags: [],
+					price: 0, stackable: null, size: 1, use: null,
+				},
+				refs: { "stats[].stat": "stat", shops: "shop" },
 				conditions: ["use.conditions"],
 				effects: ["use.effects"],
 				check(def) {
@@ -103,8 +106,8 @@
 				refuses(place, itemId, qty = 1) {
 					const s = registry.get("storage", place);
 					const def = item(itemId);
-					// `accepts` lists tags; an item goes in if it has any of them.
-					if (s.accepts && !s.accepts.some((t) => def.tags.includes(t))) return `${def.name} doesn't go in the ${s.label.toLowerCase()}`;
+					// `accepts` lists kinds of item ("clothing", "food"…).
+					if (s.accepts && !s.accepts.includes(def.kind)) return `${def.name} doesn't go in the ${s.label.toLowerCase()}`;
 					const space = inventory.space(place);
 					if (space != null && def.size * qty > space) return `Not enough room in your ${s.label.toLowerCase()}`;
 					return null;

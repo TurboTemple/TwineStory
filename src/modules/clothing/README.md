@@ -4,9 +4,9 @@ What you wear, the wardrobe and outfits.
 
 ## Data
 - `clothingSlot` — `{ id, label, order }` (coat, top, bottoms, bra, underwear, socks, shoes, accessory)
-- An item is clothing when it has the tag `"clothing"` and `slots` (where it's worn; a dress uses `["top", "bottom"]`). Its `modifiers` apply while it's worn. Validation fails for a `"clothing"` item without slots. Clothing is always unique (one entry per piece).
-- What clothes *are* is told by simple yes/no **tags** on the item (decided by the user): `warm` (keeps the cold off), `waterproof`, `smart`, `cosy`, `sportswear`, `evening`, `sleepwear`. The shop and wardrobe show them.
-- Effects from what you wear are statuses with `whileCond`, e.g. "Cosy" while wearing anything tagged `cosy`, "Smartly dressed" while wearing two or more `smart` things. Events can check these with `{ status: "smartly_dressed" }` or `{ wearing: { tag: "evening" } }`.
+- An item is clothing when its `kind` is `"clothing"` and it has `slots` (where it's worn; a dress uses `["top", "bottom"]`). Its `stats` apply while it's worn. Validation fails for a clothing item without slots. Clothing is always unique (one entry per piece).
+- What clothes are like is told by simple yes/no **attributes** on the item (decided by the user): `warm` (keeps the cold off), `waterproof`, `smart`, `cosy`, `sportswear`, `evening`, `sleepwear`. The shop and wardrobe show them.
+- Effects from what you wear are statuses with `whileCond`, e.g. "Cosy" while wearing anything `cosy`, "Smartly dressed" while wearing two or more `smart` things. Events can check these with `{ status: "smartly_dressed" }` or `{ wearing: { attribute: "evening" } }`.
 - `outfit` — `{ id, label, items[], start }`. The `start` outfit is put on at a new game (pyjamas).
 
 ## Rules
@@ -25,7 +25,7 @@ The wardrobe lists what you're wearing and what you could put on, each with a ti
 `wear(uid)`, `takeOff(uid, to?)`, `worn()`, `wornItems()`, `isWearable(def)`, `dressed()`, `canChangeHere()`, `saveOutfit(name)`, `wearOutfit(name)`, `deleteOutfit(name)`
 
 ## Conditions
-`{ wearing: "item" }` / `{ wearing: { tag, min? } }` (at least `min` things with the tag, default 1), `{ dressed: true }`
+`{ wearing: "item" }` / `{ wearing: { attribute, min? } }` (at least `min` things with the attribute, default 1), `{ dressed: true }`
 
 ## UI
 "Get changed" on Here (where you can change) and on the Me page → `Clothing_Wardrobe`.

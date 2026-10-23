@@ -3,21 +3,21 @@
  *  Mooresville — shops
  * ============================================================================
  *
- * A shop doesn't list what it sells. Every item tagged with the shop's id is
- * for sale there, at the item's own price. To sell something in a shop, add
- * the shop's id to the item's tags (in town-items.js or town-clothing.js):
+ * A shop doesn't list what it sells. Every item that names the shop in its
+ * `shops` is for sale there, at the item's own price. To sell something in a
+ * shop, add the shop's id to the item (in town-items.js or town-clothing.js):
  *
- *   tags: ["food", "patels", "freshway"]   → sold at Patel's and FreshWay
+ *   shops: ["patels", "freshway"]   → sold at Patel's and FreshWay
  *
  * Items are listed in the order they're defined, under headings from each
- * item's first tag ("Food", "Drink", "Clothing").
+ * item's kind ("Food", "Drink", "Clothing").
  *
  * ---------------------------------------------------------------------------
  *  SHOP FIELDS
  * ---------------------------------------------------------------------------
- *   id, name, desc   the shop (its id is the tag items use) and the line at the top
+ *   id, name, desc   the shop (items use its id in their `shops`) and the line at the top
  *   at               the place or room where you can browse it
- *   sells            optional: also sell every item with these tags, e.g.
+ *   sells            optional: also sell every item of these kinds, e.g.
  *                    sells: ["food"] for a shop that stocks all food
  *   mins             minutes each purchase takes (default 2)
  *   conditions       who may shop here (leave out for anyone)
