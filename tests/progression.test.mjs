@@ -86,7 +86,6 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 
 	// First shift: the first-day event, then trainee. One tap = one 2-hour shift.
 	assert.ok(setup.jobs.canWork("grind_barista").ok);
-	assert.deepEqual(plain(L.progress("barista_job").map((p) => p.text)), ["Shifts worked 0 / 1"]);
 	const bank = setup.money.balance("bank");
 	const before = setup.time.now();
 	const r = setup.jobs.work("grind_barista");
@@ -96,7 +95,6 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 	assert.equal(setup.money.balance("bank") - bank, 20, "2 hours at £10");
 	assert.match(plain(r.changes).map((c) => c.text).join(" "), /worked a shift: 2 hours/);
 	assert.equal(L.count("barista_job", "shifts"), 1);
-	assert.match(L.progress("barista_job")[0].text, /^Barista skill \d+ \/ 20$/);
 
 	// No rota: work again straight away, as often as you like.
 	assert.ok(setup.jobs.canWork("grind_barista").ok, "another shift right away");
@@ -123,6 +121,7 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 	assert.equal(L.stage("barista_job"), "barista");
 	assert.equal(setup.events.seen("grind_promotion"), 1);
 	assert.equal(setup.jobs.rate("grind_barista"), 11);
+	assert.ok(setup.actions.available().some((a) => a.def.id === "grind_staff_coffee" && a.ok), "the staff perk unlocks");
 	const trainee = seenTrainee();
 	const seenBarista = () => setup.registry.all("storylet").filter((s) => s.id.startsWith("grind_barista_")).reduce((n, s) => n + setup.events.seen(s.id), 0);
 	for (let i = 0; i < 40 && !seenBarista(); i++) {
@@ -243,4 +242,37 @@ test("only things you wear can carry stats", () => {
 		includeTest: true,
 	});
 	assert.ok(setup.registry.validate().some((e) => /t_lucky_coin.*only things you wear/.test(e)));
+});
+
+test("a second storyline from data only: getting fit at the gym", () => {
+	const { setup } = town();
+	const L = setup.storylines;
+	assert.equal(L.stage("fitness"), "beginner", "in the Diary from the start");
+	assert.match(L.stageDef("fitness").hint, /work out/);
+	skipTo(setup, 1, "07:00");
+	setup.world.moveTo("pulsefit_floor");
+	let n = 0;
+	while (L.stage("fitness") === "beginner" && n < 30) {
+		setup.status.add("gym_pass");
+		setup.stats.set("energy", 100);
+		setup.actions.do("gym_workout");
+		n++;
+	}
+	assert.equal(L.stage("fitness"), "regular");
+	assert.equal(setup.events.seen("fitness_regular"), 1);
+	assert.ok(L.count("fitness", "workouts") >= 5);
+});
+
+test("crossovers: Barista skill and Beauty open up new things to say", () => {
+	const { setup } = town();
+	const R = setup.rel;
+	const has = (npc, id) => R.interactions(npc).find((x) => x.def.id === id);
+	assert.ok(!has("jess_marlow", "talk_coffee").ok);
+	setup.skills.set("barista", 10);
+	assert.ok(has("jess_marlow", "talk_coffee").ok);
+	assert.ok(!has("jess_marlow", "hang_out"), "only with students");
+	assert.ok(!has("priya_shah", "hang_out").ok);
+	setup.stats.set("beauty", 40);
+	R.add("priya_shah", "friendship", 20);
+	assert.ok(has("priya_shah", "hang_out").ok);
 });

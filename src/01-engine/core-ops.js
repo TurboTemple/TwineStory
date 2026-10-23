@@ -66,10 +66,17 @@
 			describe: () => "Depends on the situation",
 		});
 
-		// { random: [{ weight, then: [...] }, ...] } — weighted branches.
+		// { random: [{ weight, weightIf?, then: [...] }, ...] } — weighted branches.
+		// weightIf: [{ when: CONDITION, add: n }] changes a branch's weight while
+		// the condition is true (e.g. a rough shift is likelier when you're tired).
+		// A weight that ends up below 0 counts as 0.
 		effects.register("random", {
 			apply(spec, ctx, result) {
-				const branch = setup.rng.weighted(Array.isArray(spec) ? spec : spec.branches);
+				const branches = (Array.isArray(spec) ? spec : spec.branches).map((b) => ({
+					...b,
+					weight: Math.max(0, (b.weight ?? 1) + (b.weightIf ?? []).reduce((n, w) => n + (cond.test(w.when, ctx) ? w.add ?? 0 : 0), 0)),
+				}));
+				const branch = setup.rng.weighted(branches.filter((b) => b.weight > 0));
 				if (branch) effects.run(branch.then, ctx, result);
 			},
 			describe: () => "Something random happens",

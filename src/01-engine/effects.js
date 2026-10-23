@@ -34,6 +34,12 @@
 		random: (s) => (Array.isArray(s) ? s : s.branches ?? []).map((b) => b.then),
 	};
 
+	/** Effect ops whose spec contains conditions, and where (for the checker). */
+	const NESTED_CONDS = {
+		if: (s) => [s.cond],
+		random: (s) => (Array.isArray(s) ? s : s.branches ?? []).flatMap((b) => (b.weightIf ?? []).map((w) => w.when)),
+	};
+
 	/** @returns {object} A fresh, empty Result. */
 	const newResult = () => ({ changes: [], toasts: [], goto: null, interrupted: false, mins: 0 });
 
@@ -145,6 +151,25 @@
 						out.push(name);
 						const nested = nestedOf[name];
 						if (nested && spec) for (const sub of nested(spec)) out.push(...effects.ops(sub));
+					}
+				}
+				return out;
+			},
+
+			/**
+			 * Every condition inside an effect list (e.g. an `if`'s cond), including
+			 * nested lists, so the checker can catch misspelt condition names.
+			 * @returns {unknown[]}
+			 */
+			conds(list) {
+				const out = [];
+				for (const item of setup.util.toArray(list)) {
+					if (!item || typeof item !== "object") continue;
+					for (const [name, spec] of Object.entries(item)) {
+						if (!spec) continue;
+						if (NESTED_CONDS[name]) out.push(...NESTED_CONDS[name](spec).filter((c) => c != null));
+						const nested = nestedOf[name];
+						if (nested) for (const sub of nested(spec)) out.push(...effects.conds(sub));
 					}
 				}
 				return out;

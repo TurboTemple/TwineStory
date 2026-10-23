@@ -31,6 +31,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | People: who they are, their looks, where they are each day | `town-people.js` |
 | Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
 | The barista job: stages, shifts, pay, shift events | `town-work.js` |
+| Getting fit: a second storyline (the gym) | `town-fitness.js` |
 | Event text for the job | `src/story/mooresville/work.twee` |
 | School subjects, timetable, term dates | `town-school.js` |
 | Events around town | `town-events.js` |
@@ -149,7 +150,7 @@ Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: �
 | `{ hasContact: true }` | you have their number |
 | `{ ageAtLeast: 18 }` | you and the person involved are 18+ (**required on anything romantic**) |
 | `{ storyline: { id: "barista_job", stage: "trainee" } }` | a storyline is at that stage (`started: false` = not begun) |
-| `{ storylineCount: { id: "barista_job", key: "shifts", min: 3 } }` | a storyline counter is in range (add `label: "Shifts worked"` to show progress as "Shifts worked 1 / 3") |
+| `{ storylineCount: { id: "barista_job", key: "shifts", min: 3 } }` | a storyline counter is in range |
 | `{ employed: "grind_barista" }` | you have that job |
 | `{ schoolDay: true }`, `{ homeworkDue: true }`, `{ schoolTrouble: { min: 1 } }` | school checks |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", min: 3 } }` | your own story flags and counters |
@@ -184,17 +185,22 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ interrupt: "reason" }` | stop what you're doing (sleep, an action, a journey) |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", add: 1 } }` | set your own flags and counters |
 | `{ if: { cond: { … }, then: [ … ], else: [ … ] } }` | do one thing or another |
-| `{ random: [{ weight: 2, then: [ … ] }, { weight: 1, then: [ … ] }] }` | pick one at random (by weight) |
+| `{ random: [{ weight: 2, then: [ … ] }, { weight: 1, then: [ … ] }] }` | pick one at random (by weight); `weightIf: [{ when: { … }, add: 2 }]` on a branch changes its weight while the condition is true |
+| `{ storylineCount: { id: "fitness", key: "workouts" } }` | add 1 to a storyline counter (`add: -1` takes one away) |
 
 ## The story loop
 
-The game's core loop (decided by the user): **a story event → a task you repeat while a counter goes up → at a set point, the next story event → a new task.** Storylines (`town-work.js` is the example) are built for exactly this:
+The game's core loop (decided by the user): **a story event → a task you repeat while a counter goes up → at a set point, the next story event → a new task.** Storylines are built for exactly this. `town-work.js` (the café) and `town-fitness.js` (the gym) are examples; a new storyline needs only data and text, no code.
 
 1. **A stage** has an `enter` event (the story moment) and `gates` that say when it moves on.
 2. **The repeatable task** is an action or a job shift. Its effects raise a counter: a skill (`{ skill: { barista: 1 } }`) or a storyline counter (`{ storylineCount: { key: "sessions" } }`).
-3. **The gate** moves to the next stage at a set point: `gates: [{ to: "next", when: { skill: { id: "barista", min: 20 } } }]`. The game shows "Next: Barista skill 12 / 20" so you can see how far you are.
-4. **Random outcomes** make each go different: `{ random: [{ weight: 6, then: [] }, { weight: 1, then: [{ note: "A rough shift." }, { skill: { barista: -0.5 } }] }] }`. Negative amounts take away from the counter.
-5. **Occasional events** during the task: list them in the stage's `events`, with `kind: "pool"` and a `chance` (0.15 = 15% each time).
+3. **The gate** moves to the next stage at a set point: `gates: [{ to: "next", when: { skill: { id: "barista", min: 20 } } }]`. The numbers are never shown (decided by the user): when the next stage comes is a surprise.
+4. **The Diary** on the phone lists every storyline you've started, with its stage's `label`, `desc` and `hint` (what to do next: `hint: "Keep working at the café."`).
+5. **Random outcomes** make each go different: `{ random: [{ weight: 6, then: [] }, { weight: 1, then: [{ note: "A rough shift." }, { skill: { barista: -0.5 } }] }] }`. Negative amounts take away from the counter.
+6. **Stats change the odds:** give a branch `weightIf: [{ when: CONDITION, add: 2 }]` to make it likelier while the condition is true (or `add: -1` for less likely). The café's rough shifts are likelier when you're tired or stressed, and big tips when your Beauty is 50+.
+7. **Occasional events** during the task: list them in the stage's `events`, with `kind: "pool"` and a `chance` (0.15 = 15% each time).
+8. **Rewards:** a stage can unlock things. Give an action, interaction or anything with `conditions` the condition `{ storyline: { id: "barista_job", stage: ["barista", "supervisor"] } }` (and `hidden: true` to keep it secret until then). The café's staff coffee is the example. `onEnter` effects can also give things straight away (money, an item, a text).
+9. **Crossovers:** anything can depend on another storyline's progress: a skill, a stat, a stage. See "Talk about coffee" (needs Barista skill) and "Suggest hanging out" (needs Beauty) in `town-social.js`.
 
 ## Writing text (`.twee` files)
 

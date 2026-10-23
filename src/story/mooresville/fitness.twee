@@ -1,0 +1,15 @@
+:: Ev_fitness_regular
+<<view "event-media">>
+<h1>Finding your feet</h1>
+
+The woman on reception nods at you as you come in, like she knows you. You realise you don't need to look at the machines to work out how they go any more.
+
+<<view "event-end">>
+
+:: Ev_fitness_fit
+<<view "event-media">>
+<h1>In good shape</h1>
+
+You catch yourself in the changing-room mirror and stop. You look different: stronger, steadier. The stairs at school haven't left you out of breath in weeks.
+
+<<view "event-end">>

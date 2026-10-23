@@ -276,7 +276,7 @@ As in §5.2.
 - `apply(list, ctx)` returns a **Result**: `{ changes:[…], toasts:[…], goto, interrupted }`. The UI can render it as a summary.
 - Generic built-in operators:
   - `if` (`{cond, then, else}`)
-  - `random` (weighted branches)
+  - `random` (weighted branches; `weightIf: [{ when, add }]` changes a branch's weight while a condition holds)
   - `time` (advance the clock; queued and applied once at the end of the list)
   - `flag`, `counter`
   - `goto` (via flow)
@@ -543,7 +543,8 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Modular items: self-contained definitions, shop stock from item tags, clothing by tag + slots; cold at 5°C or below | Asked for by the user. |
 | 2026-10-23 | Simplified: whole-pound money with prices by tier, warm/smart as yes-or-no tags; new `traits` module (habits → traits), kept apart from effects | Asked for by the user. `money` and `journal` are at version 2 (pence → pounds); SCHEMA_VERSION 5. |
 | 2026-10-23 | Readability pass: content rewritten with edit guides and named fields (definitions proven identical), `town-kit.js` shorthand, plain-English headers across the engine and modules, `EDITING.md`, `src/README.md` | Asked for by the user. No gameplay changes. |
-| 2026-10-23 | Shift-based jobs (one tap = one 2-hour shift, no rota), random shift outcomes, occasional shift events (`chance` on pool storylets), storyline progress ("Next: Barista skill 12 / 20"), Beauty stat and makeup kit, only worn items carry stats | Asked for by the user. `jobs` is at version 2; SCHEMA_VERSION 6. |
+| 2026-10-23 | Shift-based jobs (one tap = one 2-hour shift, no rota), random shift outcomes, occasional shift events (`chance` on pool storylets), Beauty stat and makeup kit, only worn items carry stats | Asked for by the user. `jobs` is at version 2; SCHEMA_VERSION 6. |
+| 2026-10-23 | Phone Diary (storylines with a `hint` per stage; no progress numbers), `weightIf` on random branches (stats change the odds), checker validates conditions inside effects; examples: staff-coffee perk, two crossover interactions, a "Getting fit" storyline | Asked for by the user, who then asked to stop adding scope: from here, build reusable, easily edited frameworks; existing content is only examples for testing. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -575,7 +576,9 @@ User decisions so far:
 - The core gameplay loop is storylines: a story event, then a repeatable task that raises a counter (skill, sessions…), with random outcomes that can add or take away, then at a set point the next event and a new task.
 - Jobs are shift-based: tapping "Work a shift" completes one shift (2 hours at the café). Work as many as you like while the place is open, as long as the shift ends before closing. No rota, no missed shifts.
 - Only worn items carry stats. Makeup: a Beauty stat, a makeup kit (not used up) lets you do your makeup in any bathroom for a timed Beauty boost, which a shower removes.
-- Keep things simple where possible, and build frameworks with examples rather than lots of content (the user felt the scope had crept).
+- Keep things simple where possible, and build frameworks with examples rather than lots of content (the user felt the scope had crept). **No more scope creep:** the goal is a very good, scalable, easily editable foundation of reusable frameworks and modules. The current content (the café, the gym…) is only examples to test with. Every variable (story, pay, stats…) must be easy for the user to change when they write the story. Don't propose new features unless asked.
+- Progress towards the next stage is never shown (it's a surprise). The phone's Diary shows each storyline's stage and a `hint` of what to do next ("Keep working at the café").
+- Stats can change the odds of random outcomes (`weightIf`); stages can unlock rewards (conditions on stage); storylines can cross over (conditions on another storyline's skill, stat or stage).
 - Items are modular and self-contained, in labelled sections: `kind` (what it is), `shops` (where it's sold), `attributes` (what it's like: warm, smart…), `stats` (stat modifiers) and `use`. Clothing is an item of kind `clothing` with `slots`. Shops have no stock lists.
 - Warmth is yes/no: an item has the attribute `warm` or not, and wearing one warm thing keeps the Cold effect off on a cold day (5°C or below). Smartness is the same (`smart`; two smart things = Smartly dressed).
 - Money is whole pounds, no pennies. Prices follow what something gives you, in tiers: clothing £10 basic / £20 cheap (small boost) / £50 good / £100 top; food and drink in steps of £1–£8. Claude set these at the user's request; they can be tuned.

@@ -176,12 +176,15 @@ async function playJob(page) {
 	await click(page, "Work a shift (2 hours, £20)");
 	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");
 	await click(page, "Continue");
-	await expectPassage(page, "Here", /You worked a shift: 2 hours[\s\S]*Paid £20\.[\s\S]*Next: Barista skill \d+ \/ 20/, "after the first shift");
+	await expectPassage(page, "Here", /You worked a shift: 2 hours[\s\S]*Paid £20\./, "after the first shift");
 	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
 	await click(page, "Messages");
 	await expectPassage(page, "Phone_Home", /Jess Marlow \(1 new\)/, "messages");
 	await click(page, "Jess Marlow");
 	await expectPassage(page, "Phone_Home", /whenever we're open/, "Jess's text");
+	await click(page, "Home screen");
+	await click(page, "Diary");
+	await expectPassage(page, "Phone_Home", /The Daily Grind: Trainee barista[\s\S]*Next: Keep working shifts[\s\S]*Getting fit: Out of shape/, "diary");
 	await click(page, "Home screen");
 	await click(page, "Put the phone away");
 	await debugRow(page, "Go", "home_bedroom");
