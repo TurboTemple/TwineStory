@@ -32,6 +32,8 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
 | The barista job: stages, shifts, pay, shift events | `town-work.js` |
 | Getting fit: a second storyline (the gym) | `town-fitness.js` |
+| **The key story characters and their storylines** (Dennis, the cosplay club, Mark, Lenny, xXWolfHowlXx, the mystery donator) | `src/content/mooresville/stories/` (one file per story; see its README) |
+| **Their story text** (each starts with a `[… edit here]` start screen) | `src/story/mooresville/stories/` |
 | Home and family: where you live, the flat to rent, rent and pocket money, furniture, chores, the curfew | `town-home.js` |
 | Things on in town on set days (the Saturday market, fireworks night) | `town-events.js`, part 2 |
 | How busy a place is at different times, and dress codes | `town-map.js`: each place's `crowd` and `dressCode` |
@@ -165,6 +167,7 @@ When an action's or a choice's conditions aren't met, it's still shown, greyed o
 | `{ ageAtLeast: 18 }` | you and the person involved are 18+ (**required on anything romantic**) |
 | `{ storyline: { id: "barista_job", stage: "trainee" } }` | a storyline is at that stage (`started: false` = not begun) |
 | `{ storylineCount: { id: "barista_job", key: "shifts", min: 3 } }` | a storyline counter is in range |
+| `{ progression: { id: "hypnotherapist", min: 5 } }` | a storyline's progression is in range (e.g. 5+ sessions) |
 | `{ employed: "grind_barista" }`, `{ employed: true }` | you have that job, or any job |
 | `{ livesAt: "family_home" }`, `{ atHome: true }` | you live there; you're at home now |
 | `{ renting: true }`, `{ renting: "riverside_flat" }` | you rent somewhere (or that place) |
@@ -211,6 +214,8 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ if: { cond: { … }, then: [ … ], else: [ … ] } }` | do one thing or another |
 | `{ random: [{ weight: 2, then: [ … ] }, { weight: 1, then: [ … ] }] }` | pick one at random (by weight); `weightIf: [{ when: { … }, add: 2 }]` on a branch changes its weight while the condition is true |
 | `{ storylineCount: { id: "fitness", key: "workouts" } }` | add 1 to a storyline counter (`add: -1` takes one away) |
+| `{ progression: "hypnotherapist" }` | add 1 to a storyline's progression (`{ progression: { id, add: -1 } }` takes one away) |
+| `{ meet: "wolfhowl" }` | count as having met someone (online friends) |
 
 ## The story loop
 
@@ -295,6 +300,15 @@ See `Ev_grind_barista_rude` in `work.twee` for a real example.
 | `<<they "jess_marlow">>`, `<<them …>>`, `<<their …>>`, `<<theirs …>>`, `<<themself …>>` | her pronouns ("she", "her"…) |
 | `<<they>>`, `<<their>>`… (no name) | the player's pronouns |
 | `<<They "jess_marlow">>` | the same with a capital letter ("She") |
+
+## The key story characters
+
+Each key character has a storyline in `src/content/mooresville/stories/story-<name>.js`, which holds the character, the storyline and the task you repeat. Each also has a passage file in `src/story/mooresville/stories/`. The README in the stories folder lists who, where and when.
+
+- **How each starts:** the first time you meet the character (`begin: { on: ["npc:met"], when: { withNpc: "dennis" } }`). The two online stories start the first time you play online or go live from the computer in your bedroom.
+- **The start screen:** `Ev_<story>_start` in the passage file. It contains only `[<story title> edit here]` and the Continue button, so you can find it and replace the line with your text.
+- **Progression:** each session, meeting or stream adds 1 (`{ progression: "hypnotherapist" }`). Gates, events, choices and `<<when>>` can test it: `{ progression: { id: "hypnotherapist", min: 5 } }`.
+- **The task** shows once the story has started (`showIf`). It's greyed out while its character isn't there.
 
 ## Writing a storyline from scratch
 

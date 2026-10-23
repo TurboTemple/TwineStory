@@ -29,11 +29,14 @@
 					costs: [], effects: [], perHour: [], always: [], interruptible: true, passage: null,
 					// Decided by the user: a locked action shows what it is, greyed out,
 					// with what's needed. `hidden: true` hides it completely instead.
+					// `showIf`: only listed at all while this is true (e.g. once a
+					// storyline has started); `conditions` then grey it out.
 					hidden: false,
+					showIf: null,
 				},
 				refs: { at: "location" },
 				passages: ["passage"],
-				conditions: ["conditions"],
+				conditions: ["conditions", "showIf"],
 				effects: ["costs", "effects", "perHour", "always"],
 				check(def) {
 					const errs = [];
@@ -100,6 +103,7 @@
 					if (!setup.world.here()) return [];
 					return registry.all("action")
 						.filter(offeredHere)
+						.filter((def) => def.showIf == null || cond.test(def.showIf, ctxFor(def)))
 						.map((def) => {
 							const reasons = blockers(def, ctxFor(def));
 							return { def, ok: !reasons.length, reasons, price: priceOf(def) };

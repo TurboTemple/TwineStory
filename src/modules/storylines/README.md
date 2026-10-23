@@ -3,7 +3,8 @@
 Progression through **stages**: a job career, a friendship, therapy… Each stage can have an entry event, a pool of events that only happen in that stage, and gates that move it on.
 
 ## Data
-`storyline` — `{ id, label, desc, start, hidden, order, stages: [stage] }`
+`storyline` — `{ id, label, desc, start, begin, hidden, order, stages: [stage] }`
+- `begin: { on: ["npc:met"], when: CONDITION, stage? }`: the storyline starts by itself (at `stage`, by default the first) the first time that bus event happens with the condition true, e.g. `when: { withNpc: "dennis" }` to start when you meet Dennis.
 
 stage — `{ id, label, desc, hint, enter, onEnter, events, gates }`
 - `hint`: what to do next, shown in the Diary ("Keep working shifts at the café").
@@ -15,6 +16,12 @@ stage — `{ id, label, desc, hint, enter, onEnter, events, gates }`
 
 Example: the barista job (`src/content/mooresville/town-work.js`): hired → (1 shift) trainee → (Barista 20) barista → (Barista 50) supervisor.
 
+## Progression
+Every storyline has one main counter, its **progression** (saved as the `progression` counter): "hypnotherapist progression 5" means five sessions with the hypnotherapist.
+- Effect `{ progression: "id" }` adds 1; `{ progression: { id, add: -1 } }` takes one away.
+- Condition `{ progression: { id, min?, max? } }`.
+- `setup.storylines.progression(id)`. The debug tools show it and can add or take one away.
+
 ## Diary
 The view `app-diary` (the phone's Diary app) lists every started storyline with its stage's `label`, `desc` and `hint`. Gates and counters are never shown (decided by the user): the next stage is a surprise.
 
@@ -22,7 +29,7 @@ The view `app-diary` (the phone's Diary app) lists every started storyline with 
 `$arcs = { [id]: { stage, since, counts: { [key]: n }, history: [[stage, t]] } }`
 
 ## API (`setup.storylines`)
-`stage(id)`, `stageDef(id)`, `started(id)`, `count(id, key)`, `addCount(id, key, n)`, `moveTo(id, stage, { quiet })`, `check(id)`, `checkAll()`, `active()`
+`stage(id)`, `stageDef(id)`, `started(id)`, `count(id, key)`, `addCount(id, key, n)`, `moveTo(id, stage, { quiet })`, `check(id)`, `checkAll()`, `active()`, `progression(id)`
 
 ## Conditions and effects
 - `{ storyline: { id, stage?: id | [ids], started?: false } }`

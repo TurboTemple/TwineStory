@@ -24,7 +24,9 @@
 		install({ registry, cond, time, ui, flow }) {
 			registry.defineType("npc", {
 				required: ["name", "age"],
-				defaults: { pronouns: "they/them", role: "", tags: [], desc: "", home: null, schedule: [], body: {}, passage: null },
+				// ageKnown: false — the player doesn't know it (the sheet says "Unknown");
+				// `age` is still required for the age rules.
+				defaults: { pronouns: "they/them", role: "", tags: [], desc: "", home: null, schedule: [], body: {}, passage: null, ageKnown: true, online: false },
 				refs: { home: "location", "schedule[].at": "location" },
 				passages: ["passage"],
 				check(def) {
@@ -168,6 +170,12 @@
 				describe: (spec) => `With ${registry.tryGet("npc", spec)?.name ?? spec}`,
 			});
 
+			// { meet: "id" } — count as having met someone (e.g. an online friend).
+			setup.effects.register("meet", {
+				apply: (spec) => npcs.meet(spec),
+				describe: (spec) => `You meet ${registry.tryGet("npc", spec)?.name ?? spec}`,
+			});
+
 			// { npcMet: "id" } — the PC has met that NPC.
 			cond.register("npcMet", {
 				test: (spec) => npcs.hasMet(spec),
@@ -211,10 +219,10 @@
 					const def = registry.get("npc", id);
 					const where = npcs.whereIs(id);
 					const rows = [
-						["Age", String(def.age)],
+						["Age", def.ageKnown ? String(def.age) : "Unknown"],
 						["Pronouns", def.pronouns],
 						["Role", def.role || "—"],
-						["Right now", where ? registry.tryGet("location", where)?.name ?? where : "Unknown"],
+						["Right now", def.online ? "Online" : where ? registry.tryGet("location", where)?.name ?? where : "Unknown"],
 						["Met you", npcs.hasMet(id) ? "Yes" : "Not yet"],
 					];
 					// Profile picture: assets/media/npc/<id>.*

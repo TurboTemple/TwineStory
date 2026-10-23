@@ -69,5 +69,6 @@ test("effects describe what they do", () => {
 test("NPCs have an appearance, checked against the body parts", () => {
 	const { setup } = bootTown();
 	assert.equal(setup.npcs.get("dr_okafor").body.hair_colour, "black");
-	for (const n of setup.registry.all("npc")) assert.ok(Object.keys(n.body).length > 0, n.id);
+	// Key story characters' looks are left for the user to write.
+	for (const n of setup.registry.all("npc").filter((x) => !x.tags.includes("story"))) assert.ok(Object.keys(n.body).length > 0, n.id);
 });
