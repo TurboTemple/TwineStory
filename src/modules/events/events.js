@@ -171,6 +171,7 @@
 						if (time.isAdvancing()) setup.reportError(new setup.GameError(`Storylet "${id}" can't move time while time is already moving`), "events");
 						else time.advance(extra, { reason: `event:${id}` });
 					}
+					events.current = id;
 					flow.request(s.passage, flow.PRIORITY.event);
 					bus.emit("event:fired", { id });
 					return result;
@@ -200,6 +201,17 @@
 					if (hits.length) return [rng.weighted(hits)];
 				}
 				return [];
+			});
+
+			/** The storylet most recently fired (not saved). */
+			events.current = null;
+
+			// The event's picture or clip: <<view "event-media">> at the top of an Ev_ passage.
+			ui.view("event-media", (box) => {
+				const here = setup.sc.passage();
+				const s = registry.all("storylet").find((x) => x.passage === here) ?? (events.current ? registry.get("storylet", events.current) : null);
+				const pic = s ? setup.media.render("storylet", s.id, { class: "media-wide" }) : null;
+				if (pic) box.append(pic);
 			});
 
 			ui.view("event-end", (box) => {

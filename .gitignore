@@ -6,3 +6,5 @@ node_modules/
 build.log
 formats.txt
 .DS_Store
+# Generated at build time by scripts/media-manifest.mjs
+src/01-engine/media-manifest.js

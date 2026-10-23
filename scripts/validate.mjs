@@ -14,6 +14,7 @@ import { fileURLToPath } from "node:url";
 import { bootGame, listFiles } from "./lib/load.mjs";
 import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources } from "./lib/rules.mjs";
 import { findPassageRefs, parseTwee } from "./lib/twee.mjs";
+import { buildManifest } from "./lib/media.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const src = path.join(root, "src");
@@ -39,6 +40,14 @@ export function validate() {
 		const { setup } = bootGame(src, { includeTest: true, passages: names });
 		errors.push(...setup.validate({ hasPassage: (n) => names.has(n) }));
 		errors.push(...checkDefs(setup.registry.entries()));
+		// A `media` path set on a definition must exist (web addresses are trusted).
+		const manifest = Object.values(buildManifest(root));
+		for (const { type, def } of setup.registry.entries()) {
+			const src = typeof def.media === "string" ? def.media : def.media?.src;
+			if (src && !/^https?:/.test(src) && !manifest.includes(src) && !fs.existsSync(path.join(root, src))) {
+				errors.push(`${type} "${def.id}": media file "${src}" not found`);
+			}
+		}
 	}
 	catch (ex) {
 		errors.push(`Engine failed to boot: ${ex.stack ?? ex}`);

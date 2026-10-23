@@ -5,7 +5,7 @@
 | Region | Passage | What it shows |
 |---|---|---|
 | `#topbar` | `Sys_Topbar` | Phones only: a **Menu** button, the time and your money |
-| `#sidebar` | `Sys_Sidebar` | Portrait, name, age and pronouns, time, date and location, money per account, stat bars, active effects, and Saves / Settings / Restart (plus Tests in debug mode) |
+| `#sidebar` | `Sys_Sidebar` | Two tabs. **Overview:** portrait, name, time, place, money, stat bars, effects. **Profile:** the full profile (body with pictures, clothes with pictures, stats in detail with every modifier and where it comes from, money with recent spending, and each effect with what it does). Both tabs end with Me / Bag / Saves / Settings / Restart (plus Debug in debug mode) |
 | `#passages` | — | The game |
 
 SugarCube redraws `data-passage` regions after every passage and on `UI.update()`, so the sidebar is always current.

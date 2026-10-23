@@ -11,10 +11,10 @@
 		R.define("storage", { id: "bag", label: "Bag", carried: true, capacity: 16, order: 0 });
 		R.define("storage", {
 			id: "wardrobe", label: "Wardrobe", at: "home_bedroom", accepts: ["clothes"], order: 1,
+			// Decided by the user: pyjamas (worn on day one) and one outfit for going out.
 			start: [
-				{ item: "white_tshirt" }, { item: "black_tshirt" }, { item: "grey_hoodie" }, { item: "blue_jeans" },
-				{ item: "joggers" }, { item: "trainers" }, { item: "socks", qty: 3 }, { item: "briefs", qty: 2 },
-				{ item: "sports_bra" }, { item: "rain_jacket" }, { item: "pyjamas" },
+				{ item: "pyjamas" }, { item: "briefs" },
+				{ item: "white_tshirt" }, { item: "blue_jeans" }, { item: "socks" }, { item: "trainers" },
 			],
 		});
 		R.define("storage", {

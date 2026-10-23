@@ -4,6 +4,8 @@
  * Clothes are items with a `clothing` block. Worn clothes live in the hidden
  * "worn" storage place; $wear maps each body slot to the item worn there.
  * You can change only where it makes sense (rooms tagged "changing").
+ * Clothes can carry stat modifiers (`clothing.modifiers`), which apply while
+ * they're worn; statuses can switch on from what you wear (`whileCond`).
  */
 (function () {
 	"use strict";
@@ -169,6 +171,15 @@
 				describe: (spec) => (typeof spec === "string" ? `Wearing ${registry.tryGet("item", spec)?.name ?? spec}` : `Wearing something ${spec.tag}`),
 			});
 
+			// { outfit: { warmth: { min, max }, formality: { min } } } — outfit totals in range.
+			cond.register("outfit", {
+				test(spec) {
+					const totals = clothing.outfitStats();
+					return Object.entries(spec).every(([k, r]) => (r.min == null || (totals[k] ?? 0) >= r.min) && (r.max == null || (totals[k] ?? 0) <= r.max));
+				},
+				describe: (spec) => Object.entries(spec).map(([k, r]) => `Outfit ${k}${r.min != null ? ` at least ${r.min}` : ""}${r.max != null ? ` at most ${r.max}` : ""}`).join(", "),
+			});
+
 			// { dressed: true } — decently dressed (see clothing.dressed()).
 			cond.register("dressed", {
 				test: (spec) => clothing.dressed() === (spec !== false),
@@ -198,6 +209,7 @@
 					// A dress or pyjamas covers several slots: name them all.
 					const label = item ? item.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ") : slot.label;
 					const li = ui.el("li", { class: "inv-row" },
+						item ? setup.media.thumb("item", item.id, item.name) : setup.ui.el("span", { class: "thumb thumb-none" }),
 						ui.el("span", { class: "inv-slot", text: `${label}: ` }),
 						ui.el("span", { class: "inv-name", text: item ? item.name : "—" }));
 					if (item && canChange) li.append(ui.action("Take off", () => clothing.takeOff(uid)));
@@ -218,6 +230,7 @@
 							const def = registry.get("item", id);
 							const slots = def.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
 							list.append(ui.el("li", { class: "inv-row" },
+								setup.media.thumb("item", def.id, def.name),
 								ui.el("span", { class: "inv-name", text: copies.length > 1 ? `${def.name} × ${copies.length}` : def.name }),
 								ui.el("span", { class: "inv-slot", text: ` (${slots})` }),
 								ui.action("Wear", () => clothing.wear(copies[0].uid))));
@@ -246,7 +259,17 @@
 			setup.character.addMeSection("clothes", 30, (box) => {
 				box.append(ui.el("h2", { text: "Wearing" }));
 				const items = clothing.wornItems();
-				box.append(ui.el("p", { text: items.length ? setup.text.list(items.map((w) => w.item.name.toLowerCase())) : "Nothing at all." }));
+				if (!items.length) box.append(ui.el("p", { text: "Nothing at all." }));
+				const ul = ui.el("ul", { class: "parts" });
+				for (const w of items) {
+					const slots = w.item.clothing.slots.map((s) => registry.get("clothingSlot", s).label).join(" + ");
+					ul.append(ui.el("li", { class: "inv-row", attrs: { title: w.item.desc || null } },
+						setup.media.thumb("item", w.item.id, w.item.name),
+						ui.el("span", { class: "inv-slot", text: `${slots}: ` }), ui.el("span", { text: w.item.name })));
+				}
+				if (items.length) box.append(ul);
+				const totals = clothing.outfitStats();
+				if (Object.keys(totals).length) box.append(ui.el("p", { class: "note", text: Object.entries(totals).map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${v}`).join(" · ") }));
 				if (!clothing.dressed()) box.append(ui.el("p", { class: "locked", text: "You're not dressed to go out." }));
 				if (clothing.canChangeHere()) box.append(ui.button("Get changed", () => flow.go("Clothing_Wardrobe")));
 			});
@@ -255,6 +278,13 @@
 			setup.world.addHereSection("wardrobe", 32, (box) => {
 				if (clothing.canChangeHere()) box.append(ui.button("Get changed", () => flow.go("Clothing_Wardrobe")));
 			});
+		},
+
+		ready() {
+			// Clothes' own stat modifiers apply while they're worn.
+			if (setup.modules.has("stats")) {
+				setup.stats.addModifierSource(() => setup.clothing.wornItems().flatMap((w) => (w.item.clothing.modifiers ?? []).map((m) => ({ ...m, source: `item:${w.item.id}` }))));
+			}
 		},
 
 		newGame() {

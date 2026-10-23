@@ -245,6 +245,7 @@
 			const row = (e, place, buttons) => {
 				const def = item(e.item);
 				const li = ui.el("li", { class: "inv-row" },
+					setup.media.thumb("item", def.id, def.name),
 					ui.el("span", { class: "inv-name", text: e.qty > 1 ? `${def.name} × ${e.qty}` : def.name }));
 				const extra = (inventory.rowButtons ?? []).flatMap((fn) => fn(e, place, def) ?? []);
 				for (const b of [...buttons, ...extra]) li.append(b);

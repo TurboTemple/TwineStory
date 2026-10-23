@@ -239,6 +239,8 @@
 			world.addHereSection("description", 10, (box, here) => {
 				const crumbs = world.chain(here.id).slice(1).reverse().map((id) => L(id).name);
 				if (crumbs.length) box.append(ui.el("p", { class: "crumbs", text: crumbs.join(" › ") }));
+				const pic = setup.media.render("location", here.id, { class: "media-wide", alt: here.name });
+				if (pic) box.append(pic);
 				box.append(ui.el("h1", { text: here.name }));
 				if (here.passage) ui.wiki(box, here.passage);
 				else if (here.desc) box.append(ui.el("p", { text: here.desc }));

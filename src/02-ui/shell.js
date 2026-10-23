@@ -11,6 +11,9 @@
  *
  * On wide screens the sidebar is a fixed column; on phones it's a drawer
  * opened from the top bar. Sections are registered, so modules can add more.
+ *
+ * The sidebar has two tabs: Overview (the sections below) and Profile (the
+ * full character profile: body, clothes, detailed stats, money, effects).
  */
 (function () {
 	"use strict";
@@ -20,7 +23,7 @@
 	(setup.__modules ??= []).push({
 		id: "shell",
 		version: 1,
-		deps: [],
+		deps: ["character"],
 
 		install({ ui, fmt, time, flow, registry, config }) {
 			/** @type {{name: string, order: number, fn: Function}[]} */
@@ -38,6 +41,15 @@
 					sections.push({ name, order, fn });
 					sections.sort((a, b) => a.order - b.order);
 				},
+				/** Which sidebar tab is showing: "overview" or "profile" (not saved). */
+				tab: "overview",
+
+				/** Switch sidebar tab and redraw the sidebar. */
+				setTab(tab) {
+					shell.tab = tab;
+					setup.sc.uiUpdate();
+				},
+
 				/** Open/close the phone drawer. */
 				toggle(force) {
 					document.documentElement.classList.toggle(OPEN_CLASS, force);
@@ -156,11 +168,103 @@
 				box.append(nav);
 			});
 
+			/* ---- Profile sections (sidebar Profile tab and the Me page) ------ */
+
+			/** Who or what a modifier comes from, for display. */
+			const sourceName = (src) => {
+				if (!src) return "";
+				if (src.startsWith("item:")) return registry.tryGet("item", src.slice(5))?.name ?? src;
+				return has("status") && registry.tryGet("statusEffect", src) ? setup.status.label(src) : src;
+			};
+
+			setup.character.addMeSection("stats", 40, (box) => {
+				if (!has("stats")) return;
+				box.append(ui.el("h2", { text: "Stats in detail" }));
+				const ul = ui.el("ul", { class: "stats stats-detail" });
+				for (const d of setup.stats.defs()) {
+					const v = setup.stats.get(d.id);
+					const base = setup.stats.base(d.id);
+					const rate = setup.stats.rate(d.id);
+					const li = ui.el("li", { attrs: { title: d.desc || null } },
+						ui.el("div", { class: "stat-row" }, ui.el("span", { text: d.label }), ui.el("span", { class: "stat-val", text: `${Math.round(v)} / ${d.max}` })));
+					const pct = Math.round(((v - d.min) / (d.max - d.min)) * 100);
+					li.append(ui.el("div", { class: "bar" }, ui.el("div", { class: "bar-fill", attrs: { style: `width:${pct}%` } })));
+					const notes = [];
+					if (d.desc) notes.push(d.desc);
+					if (Math.round(base) !== Math.round(v)) notes.push(`Underlying: ${Math.round(base)}.`);
+					if (d.change !== "none" && Math.abs(rate) >= 0.05) notes.push(d.change === "toward" ? `Drifts back towards ${d.target ?? d.start}.` : `${rate > 0 ? "Rises" : "Falls"} about ${Math.abs(Math.round(rate * 10) / 10)} an hour.`);
+					for (const m of setup.stats.modifiers(d.id)) notes.push(`${setup.stats.describeModifier(m)}${m.source ? ` (${sourceName(m.source)})` : ""}`);
+					if (notes.length) li.append(ui.el("ul", { class: "mods" }, ...notes.map((n) => ui.el("li", { text: n }))));
+					ul.append(li);
+				}
+				box.append(ul);
+			});
+
+			setup.character.addMeSection("money", 50, (box) => {
+				if (!has("money") || !setup.money.enabled()) return;
+				box.append(ui.el("h2", { text: "Money" }));
+				const dl = ui.el("dl", { class: "money" });
+				for (const a of registry.all("account").sort((x, y) => x.order - y.order)) {
+					dl.append(ui.el("dt", { text: a.label }), ui.el("dd", { text: fmt.money(setup.money.balance(a.id)) }));
+				}
+				dl.append(ui.el("dt", { text: "Total" }), ui.el("dd", { text: fmt.money(setup.money.balance()) }));
+				box.append(dl);
+				const recent = setup.money.log().slice(-5).reverse();
+				if (recent.length) {
+					box.append(ui.el("p", { class: "note", text: "Recently:" }));
+					box.append(ui.el("ul", { class: "mods" }, ...recent.map((r) => ui.el("li", {
+						text: `${r.amount < 0 ? "−" : "+"}${fmt.money(Math.abs(r.amount))}${r.reason ? ` · ${r.reason}` : ""}`,
+					}))));
+				}
+			});
+
+			setup.character.addMeSection("effects", 60, (box) => {
+				if (!has("status")) return;
+				box.append(ui.el("h2", { text: "Effects" }));
+				const list = setup.status.list().filter((s) => !s.def.hidden);
+				if (!list.length) {
+					box.append(ui.el("p", { class: "note", text: "Nothing right now." }));
+					return;
+				}
+				const ul = ui.el("ul", { class: "effects" });
+				for (const s of list) {
+					const left = s.remaining != null ? ` · ${setup.status.shortDuration(s.remaining)} left` : "";
+					const does = s.def.modifiers.map((m) => setup.stats.describeModifier({ ...m, value: m.op === "mul" || m.op === "rateMul" ? m.value ** s.stacks : m.value * s.stacks }));
+					const icon = setup.media.render("statusEffect", s.def.id, { class: "thumb", alt: s.label });
+					ul.append(ui.el("li", { class: `effect effect-${s.def.good === true ? "good" : s.def.good === false ? "bad" : "neutral"}` },
+						ui.el("div", { class: "inv-row" }, icon, ui.el("strong", { text: s.label }), ui.el("span", { class: "note", text: left })),
+						s.def.desc ? ui.el("p", { text: s.def.desc }) : null,
+						ui.el("p", { class: "note", text: does.length ? `What it does: ${does.join("; ")}.` : "No effect on your stats." })));
+				}
+				box.append(ul);
+			});
+
 			/* ---- Views ------------------------------------------------------ */
 
 			ui.view("sidebar", (box) => {
 				box.classList.add("m-shell");
 				box.append(ui.button("Close", close, { class: "sidebar-close" }));
+				if (setup.vars().pc) {
+					const tabs = ui.el("div", { class: "tabs", attrs: { role: "tablist" } });
+					for (const [id, label] of [["overview", "Overview"], ["profile", "Profile"]]) {
+						tabs.append(ui.el("button", {
+							class: `tab${shell.tab === id ? " tab-on" : ""}`, text: label,
+							attrs: { type: "button", role: "tab", "aria-selected": String(shell.tab === id) },
+							on: { click: () => shell.setTab(id) },
+						}));
+					}
+					box.append(tabs);
+				}
+				if (shell.tab === "profile" && setup.vars().pc) {
+					const prof = ui.el("section", { class: "side-profile" });
+					setup.character.renderMe(prof);
+					box.append(prof);
+					const menu = sections.find((s) => s.name === "menu");
+					const part = ui.el("section", { class: "side-menu" });
+					menu.fn(part);
+					box.append(part);
+					return;
+				}
 				for (const s of sections) {
 					const part = ui.el("section", { class: `side-${s.name}` });
 					try {
