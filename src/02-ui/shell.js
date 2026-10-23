@@ -141,7 +141,7 @@
 					}),
 				);
 				if (config.debug && setup.sc.hasPassage("Test_Index")) {
-					nav.append(ui.button("Tests", () => {
+					nav.append(ui.button("Debug", () => {
 						close();
 						flow.go("Test_Index");
 					}));

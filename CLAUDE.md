@@ -14,7 +14,7 @@ This file is the **technical specification for the game's framework**. Read it i
 - **Do not invent gameplay rules, mechanics, formulas, balance numbers, random-event logic, checks, content or story.** If a system needs a value or rule to work, do one of these:
   - expose it as data or configuration with a neutral placeholder, and mark it `// DESIGN: user to decide`, or
   - make it a pluggable hook (a registered function or data field) with a no-op or pass-through default.
-- **Test content only.** To prove a system works, you may add clearly-labelled placeholder content in `src/content/_test/` (e.g. `test_item_a`, `Test Location 1`). It is only loaded in debug mode. Never add real game content unless asked.
+- **No test fixture in the game (decided by the user).** Everything in `src/content/` is real game content, edited as we go. To prove a system works, use the real town, or define small throwaway data inside a unit test (see `tests/world.test.mjs`). Debug tools (§13) work on the real game.
 - **List open decisions in every PR.** Include a "Needs your decision" list in plain English for each placeholder or hook you introduced.
 - If a request is ambiguous about design, ask the user rather than choosing for them.
 
@@ -110,8 +110,7 @@ APIs relied on:
 │   ├── modules/<module>/           # one folder per system (§7)
 │   │   ├── <module>.js  <module>.twee  <module>.css
 │   │   └── README.md               # API, data types, state, events, hooks, open decisions
-│   ├── content/                    # game content — added only when the user asks
-│   │   └── _test/                  # placeholder content for proving systems; debug only
+│   ├── content/                    # game content (the town of Mooresville)
 │   └── story/                      # narrative passages — added only when the user asks
 └── dist/                           # build output — gitignored, never edit
 ```
@@ -184,13 +183,13 @@ Each `.js` file only **queues** work:
   (setup.__content ??= []).push((R) => { R.define("item", { id: "…", /* … */ }); });
 })();
 ```
-Test content in `src/content/_test/` queues onto `setup.__testContent` instead of `setup.__content`, so boot can load it only in debug mode.
+`setup.__testContent` still exists for unit tests to add throwaway data; the game itself ships none.
 
 Boot runs from `:: Sys_Boot [init nobr]` → `<<run setup.boot()>>`:
 1. Create the engine services.
 2. Topologically sort the modules by `deps`, failing loudly on a cycle or a missing dependency.
 3. Call each `install()`.
-4. Run the content functions (`_test` content only in debug mode).
+4. Run the content functions.
 5. Freeze the registries.
 6. In debug mode, run validation.
 
@@ -279,7 +278,7 @@ As in §5.2.
   - `flag`, `counter`
   - `goto` (via flow)
   - `toast`
-- **Skill or stat checks:** provide a `check` operator **hook** only. It takes `{ resolver: "<name>", …, then, else }` and calls a resolver function registered with `setup.effects.registerResolver(name, fn)`. The engine ships no resolver formula; the user designs those. Include one `_test` resolver for unit tests.
+- **Skill or stat checks:** provide a `check` operator **hook** only. It takes `{ resolver: "<name>", …, then, else }` and calls a resolver function registered with `setup.effects.registerResolver(name, fn)`. The engine ships no resolver formula; the user designs those. Unit tests register their own throwaway resolver.
 
 ### 6.7 RNG — `setup.rng`
 - Wraps the seeded `State.random()`. Provides `float`, `int`, `chance`, `pick`, `weighted`, `shuffle`.
@@ -444,7 +443,7 @@ Text style (voice, tense, spelling) is set by the user. Use British English in U
 - RNG determinism
 - the events framework's trigger and filter path (with the default selection hook)
 
-**In game:** `Test_*` scenario passages, listed by `Test_Index`, using `_test` content.
+**In game:** `Test_Index` (Debug in the sidebar) links to the Debug tools and the setup checks.
 
 **Browser smoke test (sandbox only, not CI):** `scripts/smoke.mjs` opens the built game in headless Chromium, normally and with `?debug`, and fails on any page/console error or any non-PASS row on the `Test_*` pages it lists. The sandbox can't reach jsDelivr, so point `ERUDA_FILE` at the pinned `eruda.js` from `npm pack eruda@<version>`.
 
@@ -471,9 +470,8 @@ Branches and pull requests validate, test and build. Only `main` deploys.
 `?debug` in the URL turns on:
 - `Config.debug` and `Config.enableOptionalDebugging`
 - the Eruda console, loaded only in debug mode via `https://cdn.jsdelivr.net/npm/eruda` (pinned to an exact version in `config.js`) and then `eruda.init()`
-- the Debug panel and `Test_Index`
+- the Debug button in the sidebar → `Test_Index` and `Debug_Tools` (go anywhere, skip time, add money, set stats, force/block events)
 - the validation banner
-- `_test` content
 - `window.GAME = setup`
 
 Ask the user for screenshots of errors.
@@ -503,7 +501,7 @@ Each phase ends with: validator ✅, tests ✅, build ✅, README updated, phone
 
 ## 15. Never do
 
-- Invent game rules, formulas, balance numbers, random-event behaviour, checks or real content. Use hooks, placeholders and `_test` content instead (§0.1).
+- Invent game rules, formulas, balance numbers, random-event behaviour, checks or real content. Use hooks and placeholders instead (§0.1) — unless the user asks Claude to design something, as they did for the town.
 - Tell the user to run commands or use a computer. Push to `main` unasked.
 - Edit or commit `dist/`. Change the IFID. Rename shipped ids without an alias.
 - Store functions, classes, `Date`, `Map` or `Set`, or static data, in `$variables`.
@@ -524,6 +522,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Phase 1 engine core + early `character` (minimal), `world`, `npcs`, `actions`, `travel`, `events` | Built ahead of the phase order because the user asked for a test therapy storyline. The rest of each module's §7 scope still comes in its phase. |
 
 | 2026-10-23 | Travel rules, `money` (early), event rules, locked actions, NPC meeting | Built from the user's answers to the PR #1 decisions. |
+| 2026-10-23 | Test fixture removed; debug tools for the real game | The user asked for everything to be part of the real game. |
 | 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.

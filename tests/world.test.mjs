@@ -3,20 +3,24 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { boot, plain } from "./helpers.mjs";
 
-/** The test fixture plus a pub with rooms on the test map. */
+/** A small self-contained map: a home, a street and a pub with rooms. */
 function game() {
 	return boot({
 		includeTest: true,
 		before(setup) {
 			(setup.__testContent ??= []).push((R) => {
+				R.define("location", { id: "t_home", name: "Home", tags: ["start"] });
+				R.define("location", { id: "t_street", name: "Street" });
 				R.define("location", { id: "t_pub", name: "Test Pub", hours: [{ from: "11:00", to: "23:00" }] });
 				R.define("location", { id: "t_pub_bar", name: "Bar", parent: "t_pub", innerMins: 2 });
 				R.define("location", { id: "t_pub_toilets", name: "Toilets", parent: "t_pub", tags: ["toilet"] });
 				R.define("location", { id: "t_pub_cubicle", name: "Cubicle", parent: "t_pub_toilets" });
-				R.define("route", { id: "t_walk_pub", network: "test_walk", from: "test_high_street", to: "t_pub", mins: 3 });
+				R.define("travelMode", { id: "t_walk", label: "Walk", network: "t_walk" });
+				R.define("route", { id: "t_walk_home", network: "t_walk", from: "t_home", to: "t_street", mins: 5 });
+				R.define("route", { id: "t_walk_pub", network: "t_walk", from: "t_street", to: "t_pub", mins: 3 });
 				R.define("action", { id: "t_pint", label: "Pint", at: "t_pub_bar", mins: 5, costs: [{ money: { amount: -500 } }] });
 				R.define("action", { id: "t_wee", label: "Wee", atTag: "toilet", mins: 2 });
-				R.define("action", { id: "t_nap", label: "Nap", at: "test_home", durations: [30, "08:00"] });
+				R.define("action", { id: "t_nap", label: "Nap", at: "t_home", durations: [30, "08:00"] });
 			});
 		},
 	});
@@ -71,11 +75,11 @@ test("travelling from a room walks you out first", () => {
 	const { setup } = game();
 	noon(setup);
 	setup.world.moveTo("t_pub_cubicle");
-	assert.ok(setup.travel.options().some((o) => o.to === "test_high_street"));
+	assert.ok(setup.travel.options().some((o) => o.to === "t_street"));
 	const t0 = setup.time.now();
-	setup.travel.go("test_high_street", "test_walk");
+	setup.travel.go("t_street", "t_walk");
 	assert.equal(setup.time.now() - t0, 2 + 3);
-	assert.equal(setup.world.loc(), "test_high_street");
+	assert.equal(setup.world.loc(), "t_street");
 });
 
 test("actions: only offered where they belong, by place or by tag", () => {

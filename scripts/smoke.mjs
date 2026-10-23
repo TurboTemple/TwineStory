@@ -94,38 +94,39 @@ async function playTown(page, label) {
 	if (!(await sidebar(page)).includes("£33.20")) failures.push(`${label}: fare not taken from cash`);
 }
 
-/** Play the test fixture's storyline (debug only) through the real UI. */
+/** Use the Debug tools page: pick `value` in the row whose button is `button`. */
+async function debugRow(page, button, value) {
+	await page.evaluate(() => window.SugarCube.Engine.play("Debug_Tools"));
+	await page.waitForSelector('[data-passage="Debug_Tools"]');
+	const row = page.locator(".debug-row", { has: page.locator("button", { hasText: button }) }).first();
+	if (value != null) await row.locator("select").selectOption(value);
+	await row.locator("button", { hasText: button }).click();
+}
+
+/** Debug mode: therapy with and without the interruption, via the debug tools. */
 async function playTherapy(page) {
-	const shortcut = async (label) => {
-		await page.evaluate(() => window.SugarCube.Engine.play("Test_Therapy"));
-		await click(page, label);
-	};
-	await shortcut("Go to Test Clinic, next 10:00");
-	await expectPassage(page, "Ev_test_meet_therapist", /first time you've met the therapist/, "first meeting event");
-	await click(page, "Continue");
-	await expectPassage(page, "Here", /Test Clinic[\s\S]*People here/, "clinic open");
-	await click(page, "Test Therapist");
-	await expectPassage(page, "Npcs_Sheet", /Age\s*45[\s\S]*Met you\s*Yes/, "therapist sheet");
+	await page.evaluate(() => window.SugarCube.Engine.play("Debug_Tools"));
+	await click(page, "Next 10:00");
+	await debugRow(page, "Go", "wellbeing_therapy");
+	await expectPassage(page, "Here", /Therapy Room[\s\S]*People here[\s\S]*Dr Maya Okafor/, "therapy room");
+	await click(page, "Dr Maya Okafor");
+	await expectPassage(page, "Npcs_Sheet", /Age\s*46[\s\S]*Met you\s*Yes/, "therapist sheet");
 	await click(page, "Back");
-	await shortcut("WON'T interrupt");
+	await debugRow(page, "Block", "therapy_interrupted");
 	await click(page, "Therapy session");
 	await expectPassage(page, "Here", /Therapy session took 2 hours/, "full session");
-	await shortcut("WILL interrupt");
+	await debugRow(page, "Force", "therapy_interrupted");
 	await click(page, "Therapy session");
-	await expectPassage(page, "Ev_test_secretary_interrupts", /knock at the door/, "interruption event");
+	await expectPassage(page, "Ev_therapy_interrupted", /knock/, "interruption event");
 	await click(page, "Continue");
 	await expectPassage(page, "Here", /ended early after 1 hour/, "after interruption");
-	await click(page, "Go somewhere else");
-	await click(page, "Test High Street (5 minutes)");
-	await shortcut("Bus trips: break down at City Centre");
-	await click(page, "Go somewhere else");
-	await click(page, "Test Park (25 minutes, £2.00)");
-	await expectPassage(page, "Ev_test_bus_breakdown", /stops for good/, "bus breakdown");
-	await click(page, "Continue");
-	await expectPassage(page, "Here", /stopped at Test City Centre after 15 minutes[\s\S]*placeholder city centre/, "after breakdown");
-	await click(page, "Go somewhere else");
-	await click(page, "Test High Street (10 minutes, £6.00)");
-	await expectPassage(page, "Here", /Taxi to Test High Street \(£6\.00\): 10 minutes/, "taxi");
+	// Stats: set Bladder to 100 and the sidebar shows the effect.
+	await page.evaluate(() => window.SugarCube.Engine.play("Debug_Tools"));
+	const row = page.locator(".debug-row", { hasText: "Set to 100" });
+	await row.locator("select").selectOption("bladder");
+	await row.locator("button").click();
+	await expectPassage(page, "Here", null, "after setting bladder");
+	if (!(await sidebar(page)).includes("Bursting")) failures.push("debug: Bursting effect not shown after bladder set to 100");
 }
 
 // Release mode.

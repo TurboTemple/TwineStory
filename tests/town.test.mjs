@@ -127,3 +127,132 @@ test("sleeping through the night wakes you if you're bursting", () => {
 	assert.equal(played.at(-1), "Ev_woken_by_bladder");
 	assert.equal(setup.status.has("asleep"), false, "the asleep effect is cleared even when woken");
 });
+
+/* ---- Travel ------------------------------------------------------------ */
+
+const opts = (setup, mode) => plain(setup.travel.options().filter((o) => o.mode.id === mode).map((o) => [o.to, o.mins, o.cost]));
+
+test("walking only reaches neighbouring places", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("elm_road");
+	assert.deepEqual(opts(setup, "walk"), [["home", 1, 0], ["corner_shop", 3, 0], ["elm_park_green", 6, 0], ["academy", 18, 0], ["high_street", 25, 0]]);
+});
+
+test("Route 7 only runs from its stops, through each stop on the way", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("corner_shop");
+	assert.deepEqual(opts(setup, "bus7"), []);
+	setup.world.moveTo("elm_road");
+	assert.deepEqual(opts(setup, "bus7"), [["academy", 6, 180], ["high_street", 13, 180], ["arcade", 17, 180]]);
+	const arcade = setup.travel.options().find((o) => o.mode.id === "bus7" && o.to === "arcade");
+	assert.deepEqual(plain(arcade.legs.map((l) => l.to)), ["academy", "high_street", "arcade"]);
+});
+
+test("taxis go to hubs, only for trips longer than a 10-minute walk", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("elm_road");
+	// High Street: 25 min walk → 8 min taxi, £3.20 + 8 × 35p. Arcade: 35 → 11 min.
+	assert.deepEqual(opts(setup, "taxi"), [["high_street", 8, 600], ["arcade", 11, 705]]);
+	setup.world.moveTo("corner_shop");
+	assert.ok(!opts(setup, "taxi").some(([to]) => to === "elm_road"), "Elm Road is only a 3-minute walk");
+});
+
+test("travelling pays the fare from cash first, takes the time and arrives", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("elm_road");
+	const t0 = setup.time.now();
+	const r = setup.travel.go("arcade", "bus7");
+	assert.equal(r.arrived, true);
+	assert.equal(setup.time.now() - t0, 17);
+	assert.equal(setup.world.loc(), "arcade");
+	assert.equal(setup.money.balance("cash"), 3500 - 180);
+});
+
+test("you can't travel if you can't pay; no time passes", () => {
+	const { setup, vars } = bootTown();
+	setup.world.moveTo("elm_road");
+	vars.money.balances = { cash: 100, bank: 0 };
+	const o = setup.travel.options().find((x) => x.mode.id === "bus7" && x.to === "academy");
+	assert.equal(o.ok, false);
+	assert.match(o.reasons[0], /Not enough money \(£1\.80 needed\)/);
+	const t0 = setup.time.now();
+	assert.equal(setup.travel.go("academy", "bus7").ok, false);
+	assert.equal(setup.time.now(), t0);
+});
+
+test("an interrupted journey leaves you at the last stop, unless the event moves you", () => {
+	const a = bootTown().setup;
+	a.world.moveTo("elm_road");
+	a.events.force("bus_traffic", false);
+	a.bus.on("travel:checkpoint", (p) => p.at === "academy" && p.interrupt("breakdown"));
+	const r = a.travel.go("arcade", "bus7");
+	assert.equal(r.arrived, false);
+	assert.equal(a.world.loc(), "academy");
+	assert.match(r.changes[0].text, /stopped at Mooresville Academy after 6 minutes/);
+
+	const b = bootTown().setup;
+	b.world.moveTo("elm_road");
+	b.events.force("bus_traffic", false);
+	b.bus.on("travel:checkpoint", (p) => b.effects.run([{ moveTo: "home" }, { interrupt: "detour" }], p.ctx, p.result));
+	b.travel.go("arcade", "bus7");
+	assert.equal(b.world.loc(), "home");
+});
+
+test("bus traffic can hold you up between stops", () => {
+	const { setup, played } = bootTown();
+	setup.world.moveTo("elm_road");
+	setup.events.force("bus_traffic", true);
+	const t0 = setup.time.now();
+	setup.flow.perform(() => setup.travel.go("high_street", "bus7"));
+	assert.equal(setup.time.now() - t0, 13 + 10);
+	assert.equal(played.at(-1), "Ev_bus_traffic");
+});
+
+/* ---- People ------------------------------------------------------------ */
+
+test("NPCs are met on first encounter, but not from a passing taxi", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("elm_road");
+	setup.time.advance(setup.time.at(0, "09:25") - setup.time.now());
+	setup.travel.go("high_street", "taxi"); // Margaret arrives at 09:30; you've gone
+	assert.equal(setup.npcs.hasMet("margaret_holt"), false);
+	setup.world.moveTo("elm_road");
+	assert.equal(setup.npcs.hasMet("margaret_holt"), true);
+	assert.ok(setup.npcs.peopleAt("elm_road").includes("margaret_holt"));
+});
+
+test("character sheets: age and whereabouts", () => {
+	const { setup } = bootTown();
+	assert.equal(setup.npcs.get("dr_okafor").age, 46);
+	assert.equal(setup.npcs.whereIs("dr_okafor", setup.time.at(0, "10:00")), "wellbeing_therapy");
+	assert.equal(setup.npcs.whereIs("dr_okafor", setup.time.at(4, "10:00")), null, "Saturday off");
+	assert.equal(setup.npcs.whereIs("priya_shah", setup.time.at(0, "12:30")), "academy_canteen", "lunch beats lessons");
+});
+
+/* ---- Actions ----------------------------------------------------------- */
+
+test("a locked action lists what it needs", () => {
+	const { setup } = bootTown();
+	setup.time.advance(setup.time.at(4, "10:00") - setup.time.now()); // Saturday: no therapist
+	setup.world.moveTo("wellbeing");
+	assert.equal(setup.world.nearby().every((n) => !n.ok), true, "closed at the weekend");
+	setup.time.advance(setup.time.at(6, "10:00") - setup.time.now()); // Monday
+	setup.world.moveTo("wellbeing_therapy");
+	setup.npcs.setOverride("dr_okafor", "wellbeing_reception");
+	const a = setup.actions.available().find((x) => x.def.id === "therapy_session");
+	assert.equal(a.ok, false);
+	assert.deepEqual(plain(a.reasons), ["Dr Maya Okafor is here"]);
+});
+
+test("the therapy interruption is random (about half) and reproducible per seed", () => {
+	const outcomes = (seed) => Array.from({ length: 40 }, (_, i) => {
+		const { setup } = bootTown({ seed: seed + i });
+		setup.time.advance(setup.time.at(0, "10:00") - setup.time.now());
+		setup.world.moveTo("wellbeing_therapy");
+		return setup.actions.do("therapy_session").interrupted ? 1 : 0;
+	});
+	const a = outcomes(1000);
+	assert.deepEqual(a, outcomes(1000));
+	const n = a.reduce((x, y) => x + y, 0);
+	assert.ok(n > 5 && n < 35, `interrupted ${n}/40`);
+});
