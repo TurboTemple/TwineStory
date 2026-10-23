@@ -8,7 +8,7 @@
  *   2. The hidden "Working" effect (how a shift wears you out)
  *   3. The barista job at The Daily Grind:
  *        a. its career, as a storyline (stages and what moves you on)
- *        b. the job itself (where, when, pay)
+ *        b. the job itself (where, shift length, pay, what can happen)
  *        c. how you get it (asking Jess at the counter)
  *        d. its events (the story moments, and the events during shifts)
  *
@@ -18,19 +18,26 @@
  * ---------------------------------------------------------------------------
  *  THE BARISTA CAREER (decided with the user)
  * ---------------------------------------------------------------------------
+ *   The loop (decided by the user): a story event, then a task you repeat
+ *   (working shifts) while a counter goes up (Barista skill), then at a set
+ *   point the next story event.
+ *
  *   Ask Jess about the job ─► "hired": interview event, Jess texts you
  *        │  work 1 shift (the first-day event plays during it)
  *        ▼
- *   "trainee" (Barista skill 0–19): one trainee event each shift
+ *   "trainee" (Barista skill 0–19): sometimes a trainee event during a shift
  *        │  reach Barista 20
  *        ▼
- *   "barista" (20–49): promotion event, then barista events each shift
+ *   "barista" (20–49): promotion event, then sometimes barista events
  *        │  reach Barista 50
  *        ▼
- *   "supervisor" (50+): supervisor event, then supervisor events each shift
+ *   "supervisor" (50+): supervisor event, then sometimes supervisor events
  *
- *   At any working stage, missing 3 shifts in total ─► "fired".
  *   Handing in your notice (Me page) ─► "quit".
+ *
+ *   A shift is one tap: 2 hours, worked whenever the café is open, as many
+ *   as you like (decided by the user). Every shift ends with a random
+ *   outcome (part 3b) that can add to or take from your Barista skill.
  *
  * ---------------------------------------------------------------------------
  *  HOW TO ADD A SHIFT EVENT
@@ -39,7 +46,8 @@
  *        burnt_toast: [{ stat: { stress: 3 } }],
  *   2. Add its id ("grind_trainee_burnt_toast") to that stage's `events` in 3a.
  *   3. Write the passage ":: Ev_grind_trainee_burnt_toast" in work.twee.
- *   One event from the stage's list plays halfway through every shift.
+ *   Each event in the stage's list has a `chance` of playing halfway through
+ *   a shift (EVENT_CHANCE below); if several come up, one is picked.
  *
  *  HOW TO ADD A STAGE: add it to `stages` in 3a, give the stage before it a
  *  gate ({ to: "new_stage", when: CONDITION }), and add it to `workStages`
@@ -49,7 +57,7 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { DAYS, mod } = setup.town;
+		const { mod } = setup.town;
 
 		/* ======================================================================
 		 *  1. Skills
@@ -93,13 +101,10 @@
 		 *   gates        [{ to, when }]: move to stage `to` as soon as `when` is true.
 		 *                Useful conditions here:
 		 *                  { skill: { id: "barista", min: 20 } }
-		 *                  { storylineCount: { key: "shifts", min: 1 } }  (shifts worked)
-		 *                  { storylineCount: { key: "missed", min: 3 } }  (shifts missed)
-		 *                  { storylineCount: { key: "late", min: 5 } }    (shifts started late)
+		 *                  { storylineCount: { key: "shifts", min: 1, label: "Shifts worked" } }
+		 *                The Work section and the Me page show how far you are
+		 *                ("Next: Barista skill 12 / 20"); `label` names the counter.
 		 */
-
-		// Every working stage has this gate: miss 3 shifts and you're let go.
-		const missedThree = { to: "fired", when: { storylineCount: { key: "missed", min: 3 } } };
 
 		R.define("storyline", {
 			id: "barista_job",
@@ -109,21 +114,21 @@
 				{
 					id: "hired",
 					label: "New starter",
-					desc: "Jess has put you on the weekend rota. Your first shift is coming up.",
+					desc: "Jess has taken you on. Go to The Daily Grind while it's open and work your first shift.",
 					enter: "grind_interview",
 					onEnter: [
 						{ contact: "jess_marlow" },
-						{ message: { from: "jess_marlow", text: "Hi, it's Jess from the Grind! Saturday 8am, don't be late. Wear something comfy and closed-toe shoes 😊" } },
+						{ message: { from: "jess_marlow", text: "Hi, it's Jess from the Grind! Come in for your first shift whenever we're open. Wear something comfy and closed-toe shoes 😊" } },
 					],
 					events: ["grind_first_day"],
-					gates: [{ to: "trainee", when: { storylineCount: { key: "shifts", min: 1 } } }, missedThree],
+					gates: [{ to: "trainee", when: { storylineCount: { key: "shifts", min: 1, label: "Shifts worked" } } }],
 				},
 				{
 					id: "trainee",
 					label: "Trainee barista",
 					desc: "Still learning the machine. Barista skill 20 and Jess will let you loose on your own.",
 					events: ["grind_trainee_rush", "grind_trainee_spill", "grind_trainee_regular", "grind_trainee_milk"],
-					gates: [{ to: "barista", when: { skill: { id: "barista", min: 20 } } }, missedThree],
+					gates: [{ to: "barista", when: { skill: { id: "barista", min: 20 } } }],
 				},
 				{
 					id: "barista",
@@ -131,7 +136,7 @@
 					desc: "A proper barista now. Barista skill 50 and there might be more on offer.",
 					enter: "grind_promotion",
 					events: ["grind_barista_art", "grind_barista_rude", "grind_barista_newbie", "grind_barista_quiet"],
-					gates: [{ to: "supervisor", when: { skill: { id: "barista", min: 50 } } }, missedThree],
+					gates: [{ to: "supervisor", when: { skill: { id: "barista", min: 50 } } }],
 				},
 				{
 					id: "supervisor",
@@ -139,10 +144,8 @@
 					desc: "You run the shift: the till, the rota and the keys.",
 					enter: "grind_supervisor",
 					events: ["grind_supervisor_keys", "grind_supervisor_rota", "grind_supervisor_complaint"],
-					gates: [missedThree],
 				},
-				// The end: no more shifts in these two stages.
-				{ id: "fired", label: "Let go", desc: "You missed too many shifts, and Jess had to let you go.", enter: "grind_fired" },
+				// The end: no more shifts.
 				{ id: "quit", label: "Left", desc: "You handed in your notice.", enter: "grind_quit" },
 			],
 		});
@@ -151,10 +154,16 @@
 		 *  3b. The job
 		 * ======================================================================
 		 *
-		 * You can start a shift from 30 minutes before it begins until it ends,
-		 * at The Daily Grind (a "Start your shift" button appears). More than
-		 * 10 minutes late counts as late. A shift you never start counts as
-		 * missed the next day. You're paid at the end of each shift.
+		 * At The Daily Grind a "Work a shift" button appears while it's open
+		 * and there's time for a whole shift before closing. You're paid at
+		 * the end of each shift.
+		 *
+		 *   shiftMins       how long one shift is
+		 *   skillPerShift   Barista skill for every shift (before "slowing")
+		 *   effects         what else happens at the end of every shift. Here
+		 *                   it's a random outcome: { random: [{ weight, then }] }
+		 *                   picks one branch, `weight` = how likely it is.
+		 *                   { note: "…" } adds a line to the shift summary.
 		 */
 
 		R.define("job", {
@@ -163,8 +172,9 @@
 			at: "daily_grind",
 			storyline: "barista_job",
 			workStages: ["hired", "trainee", "barista", "supervisor"], // stages where you work shifts
+			shiftMins: 120, // 2 hours (decided by the user)
 			skill: "barista",
-			xpPerHour: 1, // Barista skill gained per hour worked (before the "slowing" rule)
+			skillPerShift: 2, // before the "slowing" rule: about 10 shifts to reach 20
 			// Pay per hour at each stage, in whole pounds.
 			pay: {
 				hired: 10,
@@ -173,9 +183,16 @@
 				supervisor: 12,
 			},
 			payTo: "bank",
-			shifts: [
-				{ days: DAYS.SAT, from: "08:00", to: "14:00" },
-				{ days: DAYS.SUN, from: "10:00", to: "16:00" },
+			// How the shift went. Most are ordinary; some help, some set you back.
+			effects: [
+				{
+					random: [
+						{ weight: 6, then: [] }, // an ordinary shift
+						{ weight: 2, then: [{ note: "A good shift: everything clicked." }, { skill: { barista: 1 } }, { stat: { mood: 3 } }] },
+						{ weight: 1, then: [{ note: "A rough shift: you muddled orders all afternoon." }, { skill: { barista: -0.5 } }, { stat: { stress: 5 } }] },
+						{ weight: 1, then: [{ note: "Someone left a big tip in the jar for you." }, { money: { amount: 3, account: "cash", reason: "Tips" } }] },
+					],
+				},
 			],
 			status: "working",
 			quitStage: "quit",
@@ -197,7 +214,7 @@
 			hidden: true,
 			conditions: { npcHere: "jess_marlow", storyline: { id: "barista_job", started: false } },
 			effects: [{ storyline: { id: "barista_job", to: "hired" } }],
-			desc: "There's a card in the window: weekend staff wanted.",
+			desc: "There's a card in the window: staff wanted.",
 		});
 
 		/* ======================================================================
@@ -210,7 +227,6 @@
 		moment("grind_interview");
 		moment("grind_promotion");
 		moment("grind_supervisor");
-		moment("grind_fired");
 		moment("grind_quit");
 
 		// ---- The first day (plays during your first shift) ----
@@ -223,18 +239,22 @@
 			effects: [{ skill: { barista: 1 } }],
 		});
 
-		// ---- Shift events: one plays halfway through each shift ----
+		// ---- Shift events: each has a chance of playing halfway through a shift ----
 		// Each stage has its own list. Write an entry as  name: [effects].
 		// Its id becomes "grind_<stage>_<name>", its passage "Ev_grind_<stage>_<name>".
 
 		/** Tips go in your pocket (whole pounds). */
 		const tips = (amount) => ({ money: { amount, account: "cash", reason: "Tips" } });
 
+		/** How likely each shift event is, per shift (0.15 = 15%). */
+		const EVENT_CHANCE = 0.15;
+
 		const shiftEvents = (stage, list) => {
 			for (const [name, effects] of Object.entries(list)) {
 				R.define("storylet", {
 					id: `grind_${stage}_${name}`,
-					kind: "pool", // one is picked from the stage's events every shift
+					kind: "pool", // only during this stage (see its `events` in 3a)
+					chance: EVENT_CHANCE,
 					passage: `Ev_grind_${stage}_${name}`,
 					triggers: ["job:shift"],
 					conditions: { shiftOf: "grind_barista" },

@@ -7,7 +7,8 @@
  *   2. Story storylets (kind "story") fire first: the highest-priority
  *      eligible one fires, every time it's eligible.
  *   3. Then pool storylets (kind "pool": e.g. the events of a job stage):
- *      one is picked by weight every time, with no game-wide limits.
+ *      each with a `chance` rolls it (no chance = always in the running),
+ *      then one is picked by weight, with no game-wide limits.
  *   4. Otherwise random storylets (kind "random") go to the selection hook,
  *      unless the game-wide random limits say "not now".
  * Kind "manual" storylets have no triggers: something fires them directly
@@ -60,8 +61,13 @@
 			const selectors = new Map();
 			/** Extra eligibility rules other modules add (e.g. storyline stages). */
 			const filters = [];
-			/** Highest-priority pool storylets, one picked by weight. */
-			const pickPool = (pool) => {
+			/**
+			 * Pool storylets: each with a `chance` rolls it first (no chance =
+			 * always in the running); then one of the highest-priority ones
+			 * left is picked by weight.
+			 */
+			const pickPool = (all) => {
+				const pool = all.filter((s) => s.chance == null || rng.chance(s.chance));
 				if (!pool.length) return undefined;
 				const top = Math.max(...pool.map((s) => s.priority));
 				return rng.weighted(pool.filter((s) => s.priority === top));

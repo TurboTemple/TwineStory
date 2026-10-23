@@ -4,7 +4,7 @@
  * ============================================================================
  *
  * What's in this file:
- *   1. Stats: Health, Energy, Food, Drink, Bladder, Hygiene, Mood, Stress
+ *   1. Stats: Health, Energy, Food, Drink, Bladder, Hygiene, Mood, Stress, Beauty
  *   2. Effects that switch on by themselves when a stat is high or low
  *      (Hungry, Bursting, Exhausted…)
  *   3. Effects that last a set time (Caffeinated, Well fed, Tipsy…)
@@ -129,6 +129,14 @@
 			good: "low",
 			order: 7,
 		});
+		stat({
+			id: "beauty",
+			label: "Beauty",
+			desc: "How put-together you look. Makeup raises it for a while.",
+			start: 30,
+			change: "none",
+			order: 8,
+		});
 
 		/* ======================================================================
 		 *  2. Effects that follow a stat
@@ -236,6 +244,13 @@
 			desc: "A proper meal. You feel satisfied.",
 			mins: 180,
 			modifiers: [mod.add("mood", 4)],
+		});
+		timed({
+			id: "made_up",
+			label: "Made up",
+			desc: "Your makeup's done. It lasts until it wears off or you shower.",
+			mins: 480, // 8 hours
+			modifiers: [mod.add("beauty", 20)],
 		});
 		timed({
 			id: "refreshed",

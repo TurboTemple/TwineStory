@@ -65,7 +65,7 @@ test("homework needs you not to be too stressed", () => {
 	assert.ok(!setup.actions.available().find((a) => a.def.id === "homework").ok);
 });
 
-test("phone: messages, unread badge, calendar shifts, alarm wakes you", () => {
+test("phone: messages, unread badge, alarm wakes you", () => {
 	const { setup } = atCafe();
 	setup.actions.do("ask_about_work");
 	assert.ok(setup.phone.hasContact("jess_marlow"), "Jess texts you after the interview");
@@ -73,9 +73,6 @@ test("phone: messages, unread badge, calendar shifts, alarm wakes you", () => {
 	assert.equal(setup.phone.badgeTotal(), 1);
 	setup.phone.markRead("jess_marlow");
 	assert.equal(setup.phone.unread(), 0);
-	const day = setup.time.day(setup.time.now());
-	const cal = setup.phone.calendar(setup.time.at(day, "00:00"), setup.time.at(day + 7, "00:00"));
-	assert.ok(cal.some((e) => /Shift: Barista/.test(e.text)), "shifts are in the calendar");
 
 	const g = bootTown();
 	const s = g.setup;

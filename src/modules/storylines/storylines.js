@@ -52,6 +52,8 @@
 			let checking = false;
 			/** storylet id → [{ arc, stage }] for stage event pools. */
 			let poolIndex = new Map();
+			/** condition name → progress reader (see registerProgress). */
+			const progressReaders = new Map();
 
 			const storylines = {
 				/** @returns {string|null} Current stage, or null if not started. */
@@ -123,6 +125,36 @@
 					}
 				},
 
+				/**
+				 * How far the current stage is towards its gates, for display:
+				 * one row per gate condition that has a progress reader (e.g.
+				 * "Barista skill 12 / 20"). Conditions inside `any`/`not` are skipped.
+				 * @returns {{to: string, have: number, need: number, text: string}[]}
+				 */
+				progress(id) {
+					const st = storylines.stageDef(id);
+					if (!st) return [];
+					const ctx = { storyline: id, stage: st.id, t: time.now() };
+					const out = [];
+					const walk = (c, to) => {
+						if (!c || typeof c !== "object") return;
+						if (Array.isArray(c.all)) return c.all.forEach((x) => walk(x, to));
+						for (const [op, spec] of Object.entries(c)) {
+							const p = progressReaders.get(op)?.(spec, ctx);
+							if (p) out.push({ to, ...p, text: `${p.label} ${Math.min(p.have, p.need)} / ${p.need}` });
+						}
+					};
+					for (const g of st.gates ?? []) walk(g.when, g.to);
+					return out;
+				},
+
+				/**
+				 * Teach progress() to read a condition: (spec, ctx) =>
+				 * { label, have, need } or null.
+				 * @param {string} op Condition name @param {Function} fn
+				 */
+				registerProgress: (op, fn) => progressReaders.set(op, fn),
+
 				/** @returns {object[]} Storylines that have started, for display. */
 				active: () => registry.all("storyline").filter((d) => A()[d.id] && !d.hidden).sort((a, b) => a.order - b.order),
 			};
@@ -143,9 +175,19 @@
 			};
 
 			// Re-check gates whenever something they might depend on changes.
-			for (const ev of ["action:end", "job:shiftEnd", "job:missed", "skill:changed", "rel:changed", "time:day", "storyline:count", "school:lesson", "travel:arrived", "world:enter"]) {
+			for (const ev of ["action:end", "job:shiftEnd", "skill:changed", "rel:changed", "time:day", "storyline:count", "school:lesson", "travel:arrived", "world:enter"]) {
 				bus.on(ev, () => storylines.checkAll(), { priority: -10 });
 			}
+
+			// Progress readers for the usual gate conditions. `label` on the
+			// condition names the counter on screen, e.g.
+			//   { storylineCount: { key: "sessions", min: 5, label: "Sessions" } }
+			storylines.registerProgress("storylineCount", (spec, ctx) => spec.min == null ? null : {
+				label: spec.label ?? spec.key, have: storylines.count(spec.id ?? ctx.storyline, spec.key), need: spec.min,
+			});
+			storylines.registerProgress("skill", (spec) => spec.min == null || !setup.skills ? null : {
+				label: spec.label ?? `${registry.tryGet("skill", spec.id)?.label ?? spec.id} skill`, have: setup.skills.level(spec.id), need: spec.min,
+			});
 
 			// { storyline: { id, stage?, started? } } — stage can be one id or a list.
 			cond.register("storyline", {
@@ -199,7 +241,8 @@
 					const st = storylines.stageDef(d.id);
 					ul.append(ui.el("li", { class: "effect" },
 						ui.el("strong", { text: `${d.label}: ${st?.label ?? "—"}` }),
-						st?.desc ? ui.el("p", { class: "note", text: st.desc }) : null));
+						st?.desc ? ui.el("p", { class: "note", text: st.desc }) : null,
+						...storylines.progress(d.id).map((p) => ui.el("p", { class: "note", text: `Next: ${p.text}` }))));
 				}
 				box.append(ul);
 			});

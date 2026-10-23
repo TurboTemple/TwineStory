@@ -18,7 +18,7 @@
 	"use strict";
 
 	const KEEP_DAYS = 7;
-	const fresh = () => ({ earned: 0, spent: 0, lessons: 0, skipped: 0, shifts: 0, workMins: 0, missedShifts: 0, met: [], levels: [], tiers: [], stages: [], traits: [], messages: 0 });
+	const fresh = () => ({ earned: 0, spent: 0, lessons: 0, skipped: 0, shifts: 0, workMins: 0, met: [], levels: [], tiers: [], stages: [], traits: [], messages: 0 });
 
 	(setup.__modules ??= []).push({
 		id: "journal",
@@ -93,7 +93,6 @@
 				add("shifts");
 				add("workMins", mins);
 			});
-			bus.on("job:missed", () => add("missedShifts"));
 			bus.on("npc:met", ({ npc }) => push("met", npc));
 			bus.on("skill:levelup", ({ id, level }) => push("levels", `${registry.tryGet("skill", id)?.label ?? id} ${level}`));
 			bus.on("rel:tier", ({ npc, tier, up }) => {
@@ -123,7 +122,6 @@
 				const names = (ids) => ids.map((id) => setup.npcs.get(id).name).join(", ");
 				if (e.lessons || e.skipped) lines.push(`School: ${e.lessons} lesson${e.lessons === 1 ? "" : "s"} attended${e.skipped ? `, ${e.skipped} skipped` : ""}.`);
 				if (e.shifts) lines.push(`Work: ${e.shifts} shift${e.shifts === 1 ? "" : "s"}, ${fmt.duration(e.workMins)}.`);
-				if (e.missedShifts) lines.push(`You missed ${e.missedShifts} shift${e.missedShifts === 1 ? "" : "s"}.`);
 				if (e.earned || e.spent) lines.push(`Money: ${e.earned ? `+${fmt.money(e.earned)}` : ""}${e.earned && e.spent ? ", " : ""}${e.spent ? `−${fmt.money(e.spent)}` : ""}.`);
 				if (e.met.length) lines.push(`Met: ${names(e.met)}.`);
 				for (const t of e.tiers) lines.push(t);
