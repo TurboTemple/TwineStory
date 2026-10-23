@@ -1,7 +1,6 @@
 /*
- * base.css — Phase 0 placeholder styles. The real UI shell, tokens and
- * themes arrive in Phase 2 (§8). Neutral look only: the visual design is
- * the user's decision.
+ * base.css — shared component styles (buttons, results, notes). Colours
+ * come from tokens.css. Neutral placeholder look.
  */
 #sys-banners {
 	position: fixed;
@@ -47,27 +46,53 @@
 }
 
 .sys-ok {
-	color: #2e7d32;
+	color: var(--ok);
 }
 
 .sys-fail {
-	color: #c62828;
+	color: var(--bad);
 }
 
 .sys-note {
 	font-style: italic;
 }
 
-/* Placeholder module UI (neutral; replaced by the Phase 2 shell). */
-.btn {
+/* Buttons: real <button>s, at least 44px tall for thumbs. */
+.btn,
+#passages button {
 	min-height: 44px;
 	margin: 0.2em 0.4em 0.2em 0;
 	padding: 0.4em 0.9em;
-	font-size: 16px;
+	font: inherit;
+	font-size: 0.95em;
+	color: var(--text);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	cursor: pointer;
+	text-align: left;
 }
 
-.btn[disabled] {
-	opacity: 0.5;
+.btn:active,
+#passages button:active {
+	background: var(--surface-2);
+}
+
+.btn[disabled],
+#passages button[disabled] {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-text);
+	font-weight: 600;
+}
+
+.btn-locked {
+	font-style: italic;
 }
 
 .view ul {
@@ -79,24 +104,43 @@
 	margin-bottom: 0.5em;
 }
 
-.status-line {
-	opacity: 0.8;
+.status-line,
+.crumbs {
+	color: var(--muted);
+	margin: 0.75rem 0 0;
+	font-size: 0.9em;
+}
+
+.view h1 {
+	margin: 0.25rem 0 0.5rem;
+	line-height: 1.2;
+}
+
+.view h2 {
+	font-size: 1.05em;
+	margin: 1.25rem 0 0.4rem;
 }
 
 .result {
-	border-left: 4px solid currentColor;
-	padding: 0.25em 0.75em;
-	margin: 1em 0;
+	border-left: 4px solid var(--accent);
+	background: var(--surface);
+	padding: 0.4em 0.9em;
+	margin: 1rem 0;
+	border-radius: 0 var(--radius) var(--radius) 0;
 }
 
 .result ul {
 	margin: 0;
 }
 
+.result li {
+	margin: 0.1em 0;
+}
+
 .note,
 .locked {
 	font-size: 0.9em;
-	opacity: 0.8;
+	color: var(--muted);
 	margin: 0.25em 0 0;
 }
 
@@ -112,4 +156,42 @@
 
 .sheet dd {
 	margin: 0;
+}
+
+/* Grouped action buttons sit side by side and wrap. */
+.m-actions li,
+.areas li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+}
+
+.m-actions li .note,
+.m-actions li .locked,
+.areas li .locked {
+	flex-basis: 100%;
+}
+
+.m-character label {
+	display: block;
+	font-weight: 600;
+	margin: 1rem 0 0.3rem;
+}
+
+.m-character input,
+.m-character select {
+	font: inherit;
+	min-height: 44px;
+	width: 100%;
+	max-width: 22rem;
+	box-sizing: border-box;
+	padding: 0.4em 0.6em;
+	color: var(--text);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+}
+
+.m-character .btn-primary {
+	margin-top: 1.25rem;
 }

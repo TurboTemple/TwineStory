@@ -31,6 +31,7 @@
 					boardTag: null,
 					destTag: null,
 					stopsOnWay: true,
+					minDistance: 0,
 					timeFactor: 1,
 					time: "path",
 					cost: "none",
@@ -118,8 +119,10 @@
 				 * @returns {{mode: object, to: string, legs: object[], legMins: number[], mins: number, cost: number, ok: boolean, reasons: string[]}[]}
 				 */
 				options() {
-					const here = setup.world.loc();
-					if (!here) return [];
+					// Journeys start from the site (the street-level place), not a room inside it.
+					const loc = setup.world.loc();
+					if (!loc) return [];
+					const here = setup.world.site(loc);
 					const out = [];
 					const modes = registry.all("travelMode").sort((a, b) => a.order - b.order);
 					for (const mode of modes) {
@@ -129,6 +132,8 @@
 							: new Map(neighbours(here, mode.network).map((n) => [n.to, { mins: n.mins, legs: [{ from: here, to: n.to, mins: n.mins }] }]));
 						for (const [to, path] of paths) {
 							if (mode.destTag && !hasTag(to, mode.destTag)) continue;
+							// e.g. no taxi for a trip you could walk in a few minutes.
+							if (path.mins < mode.minDistance) continue;
 							const legs = mode.stopsOnWay ? path.legs : [{ from: here, to, mins: path.mins }];
 							const ctx = { mode: mode.id, from: here, to, t: time.now() };
 							const legMins = timeHooks.get(mode.time)(legs, mode, ctx);
@@ -175,7 +180,11 @@
 						result.cost = opt.cost;
 					}
 
-					const from = setup.world.loc();
+					// Walk out of the building first.
+					const exit = setup.world.exitMins(setup.world.loc());
+					if (exit) result.mins += time.advance(exit, { reason: "travel" }).elapsed;
+					const from = setup.world.site(setup.world.loc());
+					if (setup.world.loc() !== from) setup.world.moveTo(from);
 					let interrupted = null;
 					let reached = from;
 					const interrupt = (reason) => {
@@ -246,9 +255,13 @@
 
 			ui.view("travel", (box) => {
 				box.classList.add("m-travel");
-				const here = setup.world.here();
+				const loc = setup.world.loc();
 				box.append(ui.el("h1", { text: "Where to?" }));
-				if (here) box.append(ui.el("p", { class: "status-line", text: `${fmt.date(time.now())} · ${fmt.time(time.now())} · leaving ${here.name}` }));
+				if (loc) {
+					const site = registry.get("location", setup.world.site(loc));
+					const exit = setup.world.exitMins(loc);
+					box.append(ui.el("p", { class: "status-line", text: `Leaving ${site.name}${exit ? ` (${fmt.duration(exit)} to get outside)` : ""}` }));
+				}
 				const byMode = new Map();
 				for (const o of travel.options()) byMode.set(o.mode, [...(byMode.get(o.mode) ?? []), o]);
 				for (const [mode, opts] of byMode) {

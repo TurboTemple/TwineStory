@@ -1,0 +1,13 @@
+:: StoryInterface
+<div id="shell">
+	<header id="topbar" data-passage="Sys_Topbar"></header>
+	<aside id="sidebar" data-passage="Sys_Sidebar" aria-label="Your character"></aside>
+	<div id="sidebar-backdrop" aria-hidden="true"></div>
+	<main id="main"><div id="passages"></div></main>
+</div>
+
+:: Sys_Sidebar [nobr]
+<<view "sidebar">>
+
+:: Sys_Topbar [nobr]
+<<view "topbar">>

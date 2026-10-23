@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkDefs, checkLinks, checkPassages, checkSources, guaranteesAdult, IFID } from "../scripts/lib/rules.mjs";
+import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources, guaranteesAdult, IFID } from "../scripts/lib/rules.mjs";
 import { findPassageRefs } from "../scripts/lib/twee.mjs";
 
 const p = (name, text = "", tags = []) => ({ name, text, tags, file: "t.twee", line: 1 });
@@ -73,4 +73,9 @@ test("guaranteesAdult only trusts conditions that always apply", () => {
 	assert.equal(guaranteesAdult({ any: [{ ageAtLeast: 18 }, { ageAtLeast: 20 }] }), true);
 	assert.equal(guaranteesAdult({ any: [] }), false);
 	assert.equal(guaranteesAdult(true), false);
+});
+
+test("script and style files need unique names (Tweego uses them as passage names)", () => {
+	assert.deepEqual(checkFileNames(["src/a/x.js", "src/b/y.js"]), []);
+	assert.match(checkFileNames(["src/a/x.js", "src/b/x.js"]).join(), /both called "x\.js"/);
 });

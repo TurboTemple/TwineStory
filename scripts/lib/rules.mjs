@@ -166,3 +166,19 @@ export function checkDefs(defs) {
 	}
 	return errors;
 }
+
+/**
+ * Tweego turns every .js/.css file into a passage named after its file name,
+ * so two files with the same name (in different folders) clash.
+ * @param {string[]} files  Paths of .js and .css files under src/.
+ */
+export function checkFileNames(files) {
+	const seen = new Map();
+	const errors = [];
+	for (const f of files) {
+		const base = f.split(/[\\/]/).pop();
+		if (seen.has(base)) errors.push(`Two files are both called "${base}" (${seen.get(base)} and ${f}); Tweego needs unique file names`);
+		else seen.set(base, f);
+	}
+	return errors;
+}

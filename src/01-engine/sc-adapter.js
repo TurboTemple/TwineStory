@@ -154,6 +154,11 @@
 			Config.saves.metadata = fn;
 		},
 
+		/** Open SugarCube's restart confirmation dialog. */
+		restart() {
+			UI.restart();
+		},
+
 		/** Open SugarCube's built-in saves dialog. */
 		openSaves() {
 			UI.saves();
@@ -209,6 +214,16 @@
 		 */
 		on(event, fn) {
 			jQuery(document).on(`${event}.game`, fn);
+		},
+
+		/**
+		 * Delegated click handler (namespaced ".game"), for elements that are
+		 * re-rendered, like the StoryInterface regions.
+		 * @param {string} selector
+		 * @param {(ev: object) => void} fn
+		 */
+		onClick(selector, fn) {
+			jQuery(document).on("click.game", selector, fn);
 		},
 
 		/**

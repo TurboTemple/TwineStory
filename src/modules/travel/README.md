@@ -19,10 +19,13 @@ Moving between locations. **Travel always takes time, and may cost money.**
   | `multiHop` | `false`: neighbours only (walking). `true`: anywhere reachable on the network |
   | `boardTag` / `destTag` | only start from / go to places with this tag (e.g. `destTag: "hub"`) |
   | `stopsOnWay` | `true`: passes each stop (checkpoints). `false`: one direct trip (taxi) |
+  | `minDistance` | only offered for trips at least this long on the network (e.g. no taxi for a 2-minute walk) |
   | `timeFactor` | multiplies route minutes (a taxi at 0.25 is four times faster than walking) |
   | `time` / `cost` | names of the time and fare hooks |
   | `fare` | numbers for the fare hook: `{ flat }` or `{ base, perMin }` (pence) |
   | `payWith` | account ids allowed (default: any) |
+
+Journeys start from the site: if you're in a room, you walk out first (shown as "N minutes to get outside").
 
 ## Hooks
 - Time: `registerTimeHook(name, (legs, mode, ctx) => minutesPerLeg[])`. Default `"path"`: each leg's minutes × `timeFactor`, rounded up.

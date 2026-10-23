@@ -61,56 +61,78 @@ async function expectPassage(page, name, text, label) {
 	}
 }
 
-/** Play the test storyline through the real UI. */
+/** Text of the sidebar region. */
+const sidebar = (page) => page.textContent("#sidebar");
+
+/** Start a new game from the Start screen. */
+async function begin(page, name) {
+	await page.waitForSelector("#pc-name");
+	await page.fill("#pc-name", name);
+	await page.selectOption("#pc-pronouns", "she/her");
+	await click(page, "Begin");
+}
+
+/** Play the start of a day in the real town. */
+async function playTown(page, label) {
+	await begin(page, "Sam");
+	await expectPassage(page, "Here", /Your Bedroom[\s\S]*Around here[\s\S]*Sleep \(1 hour\)/, `${label}: bedroom`);
+	const side = await sidebar(page);
+	for (const bit of ["Sam", "18 · she/her", "07:00", "£35.00", "£180.00", "Energy", "Bladder", "Saves", "Settings"]) {
+		if (!side.includes(bit)) failures.push(`${label}: sidebar is missing "${bit}"`);
+	}
+	await click(page, "Bathroom");
+	await click(page, "Go for a wee");
+	await click(page, "Have a shower");
+	await expectPassage(page, "Here", /Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Bathroom/, `${label}: shower`);
+	if (!(await sidebar(page)).includes("Refreshed")) failures.push(`${label}: Refreshed effect not in sidebar`);
+	await click(page, "Go somewhere else");
+	await expectPassage(page, "Travel_Pick", /Leaving Your House \(1 minute to get outside\)/, `${label}: travel from a room`);
+	await click(page, "Elm Road (1 minute)");
+	await click(page, "Go somewhere else");
+	await click(page, "Mooresville High Street (13 minutes, £1.80)");
+	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£1\.80\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
+	if (!(await sidebar(page)).includes("£33.20")) failures.push(`${label}: fare not taken from cash`);
+}
+
+/** Play the test fixture's storyline (debug only) through the real UI. */
 async function playTherapy(page) {
 	const shortcut = async (label) => {
 		await page.evaluate(() => window.SugarCube.Engine.play("Test_Therapy"));
 		await click(page, label);
 	};
-	await page.evaluate(() => window.SugarCube.Engine.play("Start"));
-	await click(page, "Start the test storyline");
-	await expectPassage(page, "Here", /07:00 · Test Home · £120\.00/, "start");
-	await click(page, "Go somewhere else");
-	await expectPassage(page, "Travel_Pick", /Walk[\s\S]*Test High Street \(10 minutes\)[\s\S]*Taxi[\s\S]*Test City Centre \(13 minutes, £6\.90\)/, "travel list from home");
-	await click(page, "Test High Street (10 minutes)");
-	await click(page, "Go somewhere else");
-	await click(page, "Test Clinic (5 minutes)");
-	await expectPassage(page, "Here", /07:15 · Test Clinic[\s\S]*closed right now[\s\S]*Locked[\s\S]*Needs: It's open; Test Therapist is here/, "arrive closed, locked action");
 	await shortcut("Go to Test Clinic, next 10:00");
 	await expectPassage(page, "Ev_test_meet_therapist", /first time you've met the therapist/, "first meeting event");
 	await click(page, "Continue");
-	await expectPassage(page, "Here", /10:00 · Test Clinic[\s\S]*People here/, "clinic open");
+	await expectPassage(page, "Here", /Test Clinic[\s\S]*People here/, "clinic open");
 	await click(page, "Test Therapist");
 	await expectPassage(page, "Npcs_Sheet", /Age\s*45[\s\S]*Met you\s*Yes/, "therapist sheet");
 	await click(page, "Back");
 	await shortcut("WON'T interrupt");
 	await click(page, "Therapy session");
-	await expectPassage(page, "Here", /12:00 · Test Clinic[\s\S]*Therapy session took 2 hours/, "full session");
+	await expectPassage(page, "Here", /Therapy session took 2 hours/, "full session");
 	await shortcut("WILL interrupt");
 	await click(page, "Therapy session");
 	await expectPassage(page, "Ev_test_secretary_interrupts", /knock at the door/, "interruption event");
 	await click(page, "Continue");
-	await expectPassage(page, "Here", /13:00 · Test Clinic[\s\S]*ended early after 1 hour/, "after interruption");
+	await expectPassage(page, "Here", /ended early after 1 hour/, "after interruption");
 	await click(page, "Go somewhere else");
 	await click(page, "Test High Street (5 minutes)");
 	await shortcut("Bus trips: break down at City Centre");
 	await click(page, "Go somewhere else");
-	await expectPassage(page, "Travel_Pick", /Bus[\s\S]*Test Park \(25 minutes, £2\.00\)[\s\S]*Stops at Test City Centre/, "bus list");
 	await click(page, "Test Park (25 minutes, £2.00)");
-	await expectPassage(page, "Ev_test_bus_breakdown", /breaks? down|stops for good/, "bus breakdown");
+	await expectPassage(page, "Ev_test_bus_breakdown", /stops for good/, "bus breakdown");
 	await click(page, "Continue");
-	await expectPassage(page, "Here", /13:20 · Test City Centre · £118\.00[\s\S]*stopped at Test City Centre after 15 minutes/, "after breakdown");
+	await expectPassage(page, "Here", /stopped at Test City Centre after 15 minutes[\s\S]*placeholder city centre/, "after breakdown");
 	await click(page, "Go somewhere else");
 	await click(page, "Test High Street (10 minutes, £6.00)");
-	await expectPassage(page, "Here", /13:30 · Test High Street · £112\.00[\s\S]*Taxi to Test High Street \(£6\.00\): 10 minutes/, "taxi");
+	await expectPassage(page, "Here", /Taxi to Test High Street \(£6\.00\): 10 minutes/, "taxi");
 }
 
 // Release mode.
 {
 	const { page, errors } = await openPage(base);
-	const text = await page.textContent("#passages");
-	if (!text.includes("placeholder")) failures.push("release: Start passage did not render");
 	if (await page.evaluate(() => "GAME" in window)) failures.push("release: window.GAME leaked");
+	await playTown(page, "release");
 	failures.push(...errors.map((e) => `release: ${e}`));
 	await page.close();
 }

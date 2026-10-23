@@ -12,7 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bootGame, listFiles } from "./lib/load.mjs";
-import { checkDefs, checkLinks, checkPassages, checkSources } from "./lib/rules.mjs";
+import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources } from "./lib/rules.mjs";
 import { findPassageRefs, parseTwee } from "./lib/twee.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -31,6 +31,7 @@ export function validate() {
 	errors.push(...checkPassages(passages));
 	errors.push(...checkLinks(passages, findPassageRefs));
 	errors.push(...checkSources(sources));
+	errors.push(...checkFileNames([...jsFiles, ...listFiles(src, ".css")].map(rel)));
 
 	// Boot the real engine (with _test content) and check every definition.
 	try {

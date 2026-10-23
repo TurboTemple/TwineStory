@@ -1,0 +1,277 @@
+/*
+ * shell.css — layout for the StoryInterface shell (§8). Mobile-first:
+ * phones get a top bar and a slide-out sidebar; wide screens get a fixed
+ * sidebar column.
+ */
+html,
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font);
+	font-size: var(--text-size);
+	line-height: 1.5;
+	margin: 0;
+}
+
+#shell {
+	min-height: 100vh;
+}
+
+/* ---- Top bar (phones) ---------------------------------------------- */
+
+#topbar {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	min-height: var(--topbar-h);
+	padding: env(safe-area-inset-top, 0) calc(var(--gap) + env(safe-area-inset-right, 0)) 0 calc(var(--gap) + env(safe-area-inset-left, 0));
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+
+#topbar .view {
+	display: flex;
+	align-items: center;
+	gap: var(--gap);
+	min-height: var(--topbar-h);
+}
+
+.topbar-info {
+	margin: 0;
+	font-weight: 600;
+}
+
+/* ---- Sidebar -------------------------------------------------------- */
+
+#sidebar {
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 40;
+	width: min(var(--sidebar-w), 86vw);
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	padding: calc(var(--gap) + env(safe-area-inset-top, 0)) var(--gap) calc(var(--gap) + env(safe-area-inset-bottom, 0)) calc(var(--gap) + env(safe-area-inset-left, 0));
+	background: var(--surface);
+	border-right: 1px solid var(--line);
+	box-sizing: border-box;
+	transform: translateX(-105%);
+	transition: transform 0.2s ease;
+}
+
+.sidebar-open #sidebar {
+	transform: none;
+}
+
+#sidebar-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	background: rgb(0 0 0 / 45%);
+}
+
+.sidebar-open #sidebar-backdrop {
+	display: block;
+}
+
+.sidebar-close {
+	float: right;
+}
+
+#sidebar section {
+	margin-bottom: 1.1rem;
+}
+
+#sidebar h2 {
+	font-size: 0.8em;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+	margin: 0 0 0.4rem;
+}
+
+.side-who {
+	display: flex;
+	align-items: center;
+	gap: var(--gap);
+}
+
+.portrait {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex: none;
+}
+
+.portrait-placeholder {
+	position: relative;
+	background: var(--surface-2);
+	overflow: hidden;
+}
+
+.portrait-placeholder svg {
+	width: 100%;
+	height: 100%;
+	fill: var(--line);
+}
+
+.portrait-placeholder span {
+	position: absolute;
+	right: 4px;
+	bottom: 2px;
+	font-weight: 700;
+	color: var(--muted);
+}
+
+.who-name {
+	margin: 0;
+	font-size: 1.15em;
+	font-weight: 700;
+}
+
+.who-meta,
+.clock-date,
+.clock-where {
+	margin: 0;
+	color: var(--muted);
+}
+
+.clock-time {
+	margin: 0;
+	font-size: 1.8em;
+	font-weight: 700;
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+}
+
+.money {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	margin: 0;
+	gap: 0.15rem 0.5rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.money dd {
+	margin: 0;
+	font-weight: 600;
+}
+
+.stats {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.stats li {
+	margin-bottom: 0.45rem;
+}
+
+.stat-row {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9em;
+}
+
+.stat-val {
+	font-variant-numeric: tabular-nums;
+	color: var(--muted);
+}
+
+.bar {
+	height: 8px;
+	border-radius: 4px;
+	background: var(--surface-2);
+	overflow: hidden;
+}
+
+.bar-fill {
+	height: 100%;
+	background: var(--ok);
+}
+
+.bar-warn .bar-fill {
+	background: var(--warn);
+}
+
+.bar-bad .bar-fill {
+	background: var(--bad);
+}
+
+.chips {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.chip {
+	padding: 0.2rem 0.6rem;
+	border-radius: 999px;
+	font-size: 0.85em;
+	background: var(--chip-neutral);
+}
+
+.chip-good {
+	background: var(--chip-good);
+}
+
+.chip-bad {
+	background: var(--chip-bad);
+}
+
+.menu {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.4rem;
+}
+
+.menu .btn {
+	margin: 0;
+	width: 100%;
+}
+
+/* ---- Main ----------------------------------------------------------- */
+
+#main {
+	padding: 0 calc(var(--gap) + env(safe-area-inset-right, 0)) calc(2rem + env(safe-area-inset-bottom, 0)) calc(var(--gap) + env(safe-area-inset-left, 0));
+	max-width: 46rem;
+	margin: 0 auto;
+}
+
+#passages {
+	margin: 0;
+}
+
+/* ---- Wide screens: sidebar is a permanent column ------------------- */
+
+@media (min-width: 900px) {
+	#topbar,
+	#sidebar-backdrop,
+	.sidebar-close {
+		display: none !important;
+	}
+
+	#sidebar {
+		transform: none;
+		width: var(--sidebar-w);
+	}
+
+	#main {
+		margin-left: var(--sidebar-w);
+		padding-left: 2rem;
+		padding-right: 2rem;
+		max-width: 46rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#sidebar {
+		transition: none;
+	}
+}

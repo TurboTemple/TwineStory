@@ -222,6 +222,8 @@ $meta  $time  $sched  $pc  $inv  $wear  $home  $money  $bills  $world  $npcs  $s
 ```
 The fields inside each slice are defined in that module's README and grow as the user designs content.
 
+Stats and active effects use their own slices, `$stats` and `$status`, rather than living inside `$pc`, so that every module owns exactly one slice.
+
 Engine-owned slices: `$meta` (schema versions, seed, generic `flags`/`counters`, `returnTo`), `$time`, `$sched`. The PC's current location is `$pc.loc`, owned by `character`; other modules change it only through `setup.world.moveTo()`.
 
 - Keep state lean: static data lives in `setup`, NPC state is created lazily (only once met), and logs are capped.
@@ -522,6 +524,9 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Phase 1 engine core + early `character` (minimal), `world`, `npcs`, `actions`, `travel`, `events` | Built ahead of the phase order because the user asked for a test therapy storyline. The rest of each module's §7 scope still comes in its phase. |
 
 | 2026-10-23 | Travel rules, `money` (early), event rules, locked actions, NPC meeting | Built from the user's answers to the PR #1 decisions. |
+| 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
+
+**Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
 User decisions so far:
 - Title "Life Sim" (for now); city Mooresville; en-GB, £, 24-hour clock; epoch 1 Sept 2026, start 07:00 day 0; 12 save slots.
@@ -532,3 +537,5 @@ User decisions so far:
 - Travel: walking goes one neighbouring place at a time. Public transport only goes to hubs (a bus to its stops, a taxi to the city or suburbs). Travel costs money. What an interrupted journey means depends on the event.
 - Travel times should be sensible for the distance (e.g. 5 minutes to a house on the same street, much longer across town).
 - An NPC is met at the first encounter.
+- The game has a sidebar with the player portrait, stats, money, active effects and menu buttons (saves, settings…).
+- Claude was asked to design the town (Mooresville), its places and rooms, actions, location text, stats and effects. These are content and can be tuned freely.

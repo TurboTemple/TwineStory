@@ -1,11 +1,8 @@
-:: Start
+:: Start [nobr]
 <h1><<= setup.config.title>></h1>
-
-This is a placeholder start passage. The game framework is being built phase by phase; real content comes later.
-
+<p>September in <<= setup.config.city>>. Summer's over, the leaves are starting to turn, and your final year at school starts today.</p>
+<<view "new-game">>
 <<if setup.config.debug>>
-<p class="sys-note">Debug mode is on. The on-screen console button should appear in the corner.</p>
-<<button "Start the test storyline">><<run setup.flow.go("Here")>><</button>>
-
-[[Open the test index|Test_Index]]
+<p class="sys-note">Debug mode is on: the on-screen console button is in the corner, and the test pages are under Tests in the sidebar.</p>
+<p>[[Open the test index|Test_Index]]</p>
 <</if>>

@@ -13,7 +13,8 @@
  *                                              |
  *                                          Test Park (bus stop)
  *
- * Walking goes one place at a time. The bus runs High Street – City Centre –
+ * Fares are paid from whatever accounts exist (the real ones in the game; the
+ * unit tests add test accounts). Walking goes one place at a time. The bus runs High Street – City Centre –
  * Park. A taxi can be taken from anywhere to a hub.
  *
  * The clinic has a therapist and a secretary. A therapy session lasts 2 hours;
@@ -29,16 +30,17 @@
 		const loc = (id, name, extra = {}) => R.define("location", { id, name, district: "test_district", passage: `Loc_${id}`, ...extra });
 		loc("test_home", "Test Home", { tags: ["start", "home"] });
 		loc("test_neighbour", "Test Neighbour's House");
-		loc("test_high_street", "Test High Street", { tags: ["hub", "bus_stop"] });
+		loc("test_high_street", "Test High Street", { tags: ["test_hub", "bus_stop"] });
 		loc("test_clinic", "Test Clinic", {
 			// Placeholder opening hours: Monday–Friday, 09:00–17:00.
 			hours: [{ days: [1, 2, 3, 4, 5], from: "09:00", to: "17:00" }],
 		});
-		loc("test_city_centre", "Test City Centre", { tags: ["hub", "bus_stop"] });
+		loc("test_city_centre", "Test City Centre", { tags: ["test_hub", "bus_stop"] });
 		loc("test_park", "Test Park", { tags: ["bus_stop"] });
 
 		// Walking links (minutes).
-		const walk = (from, to, mins) => R.define("route", { id: `test_walk_${from.slice(5)}_${to.slice(5)}`, from, to, mins });
+		// The test map has its own walking network so it never links up with the real town.
+		const walk = (from, to, mins) => R.define("route", { id: `test_walk_${from.slice(5)}_${to.slice(5)}`, network: "test_walk", from, to, mins });
 		walk("test_home", "test_neighbour", 5);
 		walk("test_home", "test_high_street", 10);
 		walk("test_high_street", "test_clinic", 5);
@@ -49,7 +51,7 @@
 		R.define("route", { id: "test_bus_high_street_city_centre", network: "test_bus", from: "test_high_street", to: "test_city_centre", mins: 15 });
 		R.define("route", { id: "test_bus_city_centre_park", network: "test_bus", from: "test_city_centre", to: "test_park", mins: 10 });
 
-		R.define("travelMode", { id: "test_walk", label: "Walk", order: 0 });
+		R.define("travelMode", { id: "test_walk", label: "Walk", order: 0, network: "test_walk" });
 		R.define("travelMode", {
 			id: "test_bus",
 			label: "Bus",
@@ -64,7 +66,8 @@
 			label: "Taxi",
 			order: 2,
 			multiHop: true,
-			destTag: "hub",
+			network: "test_walk",
+			destTag: "test_hub",
 			stopsOnWay: false,
 			// A taxi takes a quarter of the walking time.
 			timeFactor: 0.25,
@@ -72,8 +75,6 @@
 			fare: { base: 300, perMin: 30 },
 		});
 
-		R.define("account", { id: "test_cash", label: "Cash", kind: "cash", start: 2000, order: 0 });
-		R.define("account", { id: "test_bank", label: "Bank card", kind: "bank", start: 10000, order: 1 });
 
 		const clinicHours = [{ days: [1, 2, 3, 4, 5], from: "09:00", to: "17:00", at: "test_clinic" }];
 		R.define("npc", {
@@ -109,6 +110,7 @@
 		R.define("action", {
 			id: "test_wait",
 			label: "Wait",
+			whenClosed: true,
 			at: ["test_home", "test_neighbour", "test_high_street", "test_clinic", "test_city_centre", "test_park"],
 			durations: [30, 60, 120],
 		});
