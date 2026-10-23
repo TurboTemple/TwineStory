@@ -1,12 +1,12 @@
 :: Test_Index
 <h1>Test index</h1>
 <<if setup.config.debug>>
-Scenario checks for proving the framework works. These pages only matter in debug mode.
+Checks and tools for testing the game. These pages only work in debug mode.
 
-* [[Phase 0 — setup checks|Test_Phase0]]
-* [[Storyline shortcuts (therapy, travel)|Test_Therapy]]
+* [[Debug tools (go anywhere, skip time, money, stats, events)|Debug_Tools]]
+* [[Setup checks|Test_Phase0]]
 
-[[Back to start|Start]]
+<<button "Back to the game">><<run setup.flow.go("Here")>><</button>>
 <<else>>
 Test pages are only available in debug mode.
 <</if>>

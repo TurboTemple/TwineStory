@@ -10,4 +10,4 @@ src/modules/<module>/
 └── README.md       # API, data types, state, events, hooks, open decisions
 ```
 
-Built so far: `character` (minimal), `world`, `npcs`, `actions`, `travel`, `money`, `events`.
+Built so far: `character`, `stats`, `status`, `world`, `npcs`, `actions`, `travel`, `money`, `events`. The UI shell lives in `src/02-ui/`.

@@ -130,6 +130,15 @@
 				describe: (spec) => `${registry.tryGet("npc", spec)?.name ?? spec} is here`,
 			});
 
+			// { npcAt: { npc, at } } — that NPC is at a location (or inside it) right now.
+			cond.register("npcAt", {
+				test(spec, ctx) {
+					const where = npcs.whereIs(spec.npc, ctx.t ?? time.now());
+					return where != null && setup.util.toArray(spec.at).some((a) => setup.world.within(where, a));
+				},
+				describe: (spec) => `${registry.tryGet("npc", spec.npc)?.name ?? spec.npc} is at ${setup.util.toArray(spec.at).map((a) => registry.tryGet("location", a)?.name ?? a).join(" or ")}`,
+			});
+
 			// { withNpc: "id" } — the NPC in context (e.g. the one just met, ctx.npc).
 			cond.register("withNpc", {
 				test: (spec, ctx) => setup.util.toArray(spec).includes(ctx.npc),

@@ -14,6 +14,11 @@
 	function createFmt() {
 		const L = () => setup.config.locale;
 		const at = (t) => new Date(Date.parse(setup.config.epoch) + t * 60000);
+		/** The player's clock setting wins over the locale default. */
+		const clock12 = () => {
+			const pref = setup.sc.settings.get("clock");
+			return typeof pref === "string" ? pref === "12-hour" : L().clock === "12h";
+		};
 
 		return {
 			/**
@@ -30,7 +35,7 @@
 				const m = setup.time.minuteOfDay(t);
 				const h = Math.floor(m / 60);
 				const mm = String(m % 60).padStart(2, "0");
-				if (L().clock === "12h") return `${h % 12 || 12}:${mm} ${h < 12 ? "am" : "pm"}`;
+				if (clock12()) return `${h % 12 || 12}:${mm} ${h < 12 ? "am" : "pm"}`;
 				return `${String(h).padStart(2, "0")}:${mm}`;
 			},
 
@@ -74,6 +79,19 @@
 				if (PRONOUNS[spec]) return PRONOUNS[spec];
 				const [a, b = a] = String(spec).split("/");
 				return { they: a, them: b, their: b, theirs: b, themself: `${b}self`, plural: false };
+			},
+
+			/**
+			 * Part of the day, for descriptions: "morning" (05–12), "afternoon"
+			 * (12–17), "evening" (17–21) or "night".
+			 * @param {number} [t]
+			 */
+			period(t = setup.time.now()) {
+				const h = setup.time.hour(t);
+				if (h >= 5 && h < 12) return "morning";
+				if (h >= 12 && h < 17) return "afternoon";
+				if (h >= 17 && h < 21) return "evening";
+				return "night";
 			},
 
 			/** Capitalise the first letter. */

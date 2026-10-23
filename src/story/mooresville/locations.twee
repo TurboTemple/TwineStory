@@ -1,0 +1,166 @@
+:: Loc_home
+The narrow hallway of 14 Elm Road: coats on hooks, a pile of shoes nobody claims, and the post on the mat. Stairs lead up to your bedroom and the bathroom; the kitchen and living room are through the doors ahead.
+<<if setup.text.period() is "night">>The house is dark apart from the streetlight through the glass in the front door.<</if>>
+
+:: Loc_home_bedroom
+Your room. A single bed under the window, a desk buried in revision guides you keep meaning to open, and a wardrobe that doesn't quite shut.
+<<switch setup.text.period()>>
+<<case "morning">>Grey morning light leaks round the edges of the curtains.
+<<case "afternoon">>The afternoon sun lights up the dust over your desk.
+<<case "evening">>The desk lamp throws a warm circle over the clutter.
+<<default>>It's dark out. The glow of your phone charger is the only light.
+<</switch>>
+
+:: Loc_home_bathroom
+A small bathroom with a shower over the bath, a mirror that steams up instantly, and a cabinet full of half-used bottles.
+
+:: Loc_home_kitchen
+The kitchen smells faintly of toast. There's a fridge covered in takeaway menus, a kettle that's always warm, and enough in the cupboards to make something decent if you can be bothered.
+
+:: Loc_home_living_room
+A squashy sofa, a TV that's slightly too big for the room, and a coffee table covered in remote controls. It's the comfiest room in the house.
+
+:: Loc_elm_road
+Elm Road is a long terrace of red-brick houses with small front gardens. The Route 7 bus stops halfway down, and taxis can usually be flagged here.
+<<switch setup.text.period()>>
+<<case "morning">>People hurry past to the bus stop, coffee cups in hand.
+<<case "afternoon">>It's quiet: a few parked cars and a cat asleep on a wall.
+<<case "evening">>Windows glow orange up and down the street, and somebody's cooking something with garlic.
+<<default>>The street is silent under the orange streetlights.
+<</switch>>
+
+:: Loc_corner_shop
+Patel's Corner Shop is crammed floor to ceiling: newspapers, sweets, a fridge of cold drinks, and a little bit of everything else. The bell over the door jingles when you come in.
+
+:: Loc_elm_park_green
+A patch of open grass at the end of Elm Road, with a few old oak trees, a play area and a path down to the duck pond. Dog walkers nod at each other as they pass.
+
+:: Loc_elm_green_pond
+A small, slightly murky pond with a bench beside it. The ducks know exactly what a rustling bag means.
+
+:: Loc_academy
+Mooresville Academy: a big brick building from the sixties with a newer glass wing bolted on. Students mill round the front entrance, and signs point to the canteen, library, sports hall and the playing field.
+<<if setup.time.weekday(setup.time.now()) is 0 or setup.time.weekday(setup.time.now()) is 6>>It's the weekend, and the place is locked up.<</if>>
+
+:: Loc_academy_form_room
+Room 12B is your form room: rows of desks, a whiteboard that never quite wipes clean, and a poster about exam stress that someone has drawn a moustache on.
+
+:: Loc_academy_canteen
+The canteen is loud and smells of chips. Long tables, plastic chairs, and a queue that moves just slowly enough to be annoying. A vending machine hums in the corner.
+
+:: Loc_academy_library
+The library is the quietest place in school. Tall shelves, study carrels by the windows, and Ms Rowe's desk positioned to see everything.
+
+:: Loc_academy_sports_hall
+A big echoing hall with lines painted all over the floor and basketball hoops at each end. It smells of rubber and floor polish.
+
+:: Loc_academy_field
+The playing field stretches out behind the school, muddy round the goalmouths. On a clear day you can see over the rooftops to the river.
+
+:: Loc_academy_toilets
+School toilets: cold, echoey and covered in graffiti about people who left years ago.
+
+:: Loc_high_street
+Mooresville High Street is the heart of town: a mix of old shopfronts and chain stores, with the Route 7 bus stop and a taxi rank outside the bank. The Daily Grind, The Red Lion and Threadline are all close by.
+<<switch setup.text.period()>>
+<<case "morning">>Delivery vans are unloading and shops are pulling up their shutters.
+<<case "afternoon">>The pavements are busy with shoppers and people on their lunch breaks.
+<<case "evening">>The shops are shutting, and the pub is getting busier.
+<<default>>Most of the shops are dark. Taxis idle at the rank.
+<</switch>>
+
+:: Loc_daily_grind
+The Daily Grind is a narrow café with mismatched chairs, plants in every window and a chalkboard menu. The coffee machine hisses constantly.
+
+:: Loc_grind_counter
+A wooden counter stacked with pastries under glass domes. The barista works the coffee machine with practised speed.
+
+:: Loc_grind_seating
+Small tables and a long bench by the window. It's a good place to sit with a drink and watch the high street go by.
+
+:: Loc_grind_toilet
+A single small toilet with a fern on the cistern and a sign asking you, very politely, not to flush anything else.
+
+:: Loc_red_lion
+The Red Lion is an old coaching inn with low beams and a crooked front. Inside it's warm and dim, with a long bar, a lounge with a pool table, and a beer garden out the back.
+
+:: Loc_lion_bar
+The bar is lined with pumps and polished brass. A chalkboard lists the guest ales and the pub quiz scores. Gary watches the room from behind the till.
+
+:: Loc_lion_lounge
+The lounge has worn leather seats, a fireplace and a pool table with a slight lean that the regulars know how to use.
+
+:: Loc_lion_beer_garden
+A walled garden with picnic benches, fairy lights strung overhead and a couple of patio heaters.
+
+:: Loc_lion_toilets
+The pub toilets: down a narrow corridor past the kitchen, with a hand dryer that roars like a jet engine.
+
+:: Loc_wellbeing
+The Mooresville Wellbeing Centre is a calm, modern building. Pale wood, soft lighting, and a lot of leaflets about mindfulness.
+
+:: Loc_wellbeing_reception
+A curved reception desk with a bowl of mints and a phone that never stops ringing. Tom looks up and smiles when you come in.
+
+:: Loc_wellbeing_waiting
+A waiting room with comfy chairs, a water cooler, and a rack of leaflets on everything from sleep to money worries. Quiet music plays.
+
+:: Loc_wellbeing_therapy
+A small, warm room with two armchairs, a box of tissues on the table and a window that looks onto a tree. Dr Okafor's notebook sits closed on her knee.
+
+:: Loc_wellbeing_toilets
+Clean, quiet toilets that smell of lavender hand soap.
+
+:: Loc_threadline
+Threadline is a small clothing boutique with exposed brick walls, rails of carefully chosen clothes and a playlist that's just a bit too cool.
+
+:: Loc_threadline_floor
+Rails of jackets, jeans and knitwear, arranged by colour. A table at the front displays this week's new arrivals.
+
+:: Loc_threadline_fitting
+Two fitting rooms behind velvet curtains, each with a flattering mirror and a hook that's always slightly too small.
+
+:: Loc_pulsefit
+PulseFit is a busy gym above a row of shops, all mirrors, motivational slogans and thumping music.
+
+:: Loc_pulsefit_reception
+A bright front desk with a membership screen and a basket of free protein-bar samples.
+
+:: Loc_pulsefit_floor
+Rows of treadmills facing the windows, racks of weights, and the clang of someone dropping a barbell.
+
+:: Loc_pulsefit_changing
+Changing rooms with lockers, benches and a row of showers with excellent water pressure.
+
+:: Loc_arcade
+The Arcade Shopping Centre is a big glass-roofed mall: two floors of shops round a central concourse, with a food court and a cinema at the far end.
+
+:: Loc_arcade_concourse
+The main concourse is bright and busy, with escalators, a fountain and benches where people rest their shopping bags.
+
+:: Loc_arcade_food_court
+A ring of fast-food counters round a sea of plastic tables. It's noisy, it smells of everything at once, and it's always busy.
+
+:: Loc_arcade_freshway
+FreshWay is a big supermarket with bright aisles, a meal-deal fridge by the door and self-checkouts that always need an assistant.
+
+:: Loc_arcade_urban_thread
+Urban Thread is a big high-street clothing chain, with loud music, endless rails and a sale section at the back.
+
+:: Loc_urban_thread_fitting
+A long row of fitting cubicles. A staff member counts your items with a tired smile.
+
+:: Loc_arcade_cinema
+The Arcade Cinema has six screens, a popcorn counter and posters for this week's films. It stays open after the rest of the centre shuts.
+
+:: Loc_arcade_toilets
+Busy shopping-centre toilets with a long line of sinks and a cleaner who's seen it all.
+
+:: Loc_riverside_park
+Riverside Park follows the River Moore through the middle of town, with wide lawns, old willows and a boathouse kiosk near the bridge.
+
+:: Loc_riverside_path
+A gravel path runs along the water's edge, past rowing boats and the occasional heron. There are benches every few hundred metres.
+
+:: Loc_riverside_kiosk
+A little green kiosk by the old boathouse selling ice creams, teas and snacks through a hatch.

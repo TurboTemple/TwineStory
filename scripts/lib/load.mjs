@@ -57,6 +57,8 @@ export function loadStoryJs(srcDir, opts = {}) {
 		console,
 		URLSearchParams,
 		window: { location: { search: opts.search ?? "" } },
+		document: { documentElement: { dataset: {} } },
+		settings: {},
 		Config: makeStub("Config", config),
 		State: makeStub("State", config),
 		Story: makeStub("Story", config),
@@ -84,7 +86,7 @@ export function loadStoryJs(srcDir, opts = {}) {
  * Load the Story JavaScript, swap SugarCube-dependent adapter calls for
  * Node-friendly fakes, boot the engine and start a new game.
  * @param {string} srcDir
- * @param {{ debug?: boolean, includeTest?: boolean, passages?: Iterable<string>, seed?: number, order?: (files: string[]) => string[], before?: (setup: object) => void }} [opts]
+ * @param {{ debug?: boolean, includeTest?: boolean, content?: boolean, passages?: Iterable<string>, seed?: number, order?: (files: string[]) => string[], before?: (setup: object) => void }} [opts]
  *   `before` runs just before boot (e.g. to queue extra test content).
  * @returns {{ setup: object, vars: object, played: string[], config: object }}
  */
@@ -105,6 +107,9 @@ export function bootGame(srcDir, opts = {}) {
 		on() {},
 	});
 	setup.vars = () => vars;
+	// content: false leaves out the real game content (unit tests of the
+	// framework use only the _test fixture).
+	if (opts.content === false) setup.__content = [];
 	opts.before?.(setup);
 	setup.boot({ includeTest: opts.includeTest ?? true });
 	setup.newGame();

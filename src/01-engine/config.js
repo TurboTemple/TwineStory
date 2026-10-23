@@ -26,7 +26,7 @@
 	 * Save-schema version. Bump whenever any module's `version` bumps (§6.10).
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 2;
+	setup.SCHEMA_VERSION = 3;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -46,8 +46,15 @@
 		epoch: "2026-09-01T00:00:00Z",
 		// Decided by the user: when a new game starts, relative to the epoch.
 		start: { day: 0, time: "07:00" },
-		// Decided by the user (§1): the player character is 18 at game start.
-		pc: { startAge: 18 },
+		// The player character. Age 18 at start was decided by the user (§1);
+		// the default name and pronoun choices are Claude's proposals.
+		pc: {
+			startAge: 18,
+			defaultName: "Alex",
+			pronounOptions: ["she/her", "he/him", "they/them"],
+		},
+		// Where a new game starts (falls back to a location tagged "start").
+		startLocation: "home_bedroom",
 		// Random events (see the events module README).
 		events: {
 			// Decided by the user: random events roll each event's own `chance`.
@@ -77,6 +84,20 @@
 	Config.enableOptionalDebugging = debug;
 	Config.saves.version = setup.SCHEMA_VERSION;
 	Config.saves.maxSlotSaves = setup.config.saves.slots;
+
+	/*
+	 * Player preferences (Setting API). SugarCube loads saved settings straight
+	 * after Story JavaScript runs, so they must be registered here rather than
+	 * at boot. They apply as data attributes on <html> for the CSS to use.
+	 */
+	const applyPrefs = () => {
+		const root = document.documentElement;
+		root.dataset.theme = String(settings.theme ?? "Auto").toLowerCase();
+		root.dataset.textsize = String(settings.textSize ?? "Medium").toLowerCase();
+	};
+	Setting.addList("theme", { label: "Theme", list: ["Auto", "Light", "Dark"], default: "Auto", onInit: applyPrefs, onChange: applyPrefs });
+	Setting.addList("textSize", { label: "Text size", list: ["Small", "Medium", "Large"], default: "Medium", onInit: applyPrefs, onChange: applyPrefs });
+	Setting.addList("clock", { label: "Clock", list: ["24-hour", "12-hour"], default: setup.config.locale.clock === "12h" ? "12-hour" : "24-hour" });
 
 	/* Seeded PRNG (§4.5). Must be called from Story JavaScript or StoryInit. */
 	State.prng.init();

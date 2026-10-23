@@ -132,6 +132,8 @@
 			apply(spec, ctx, result) {
 				result.interrupted = spec || "interrupted";
 				if (typeof ctx.interrupt === "function") ctx.interrupt(result.interrupted);
+				// Fired while the clock is moving (e.g. a time:hour event): stop it too.
+				else if (time.isAdvancing()) time.interrupt(result.interrupted);
 			},
 		});
 	}

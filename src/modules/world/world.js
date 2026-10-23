@@ -1,6 +1,10 @@
 /*
- * world — districts, locations, opening hours and the `Here` main loop.
- * See README.md.
+ * world — districts, locations (with sub-locations), opening hours and the
+ * `Here` main loop. See README.md.
+ *
+ * A location with a `parent` is a sub-location (a bar's toilets, a shop's
+ * fitting rooms). The top-level ancestor is the "site": travel goes between
+ * sites, and moving around inside a site takes `innerMins`.
  */
 (function () {
 	"use strict";
@@ -12,12 +16,12 @@
 		state: "world",
 		defaultState: () => ({ visited: {} }),
 
-		install({ registry, cond, effects, bus, time, ui, fmt, save }) {
-			registry.defineType("district", { required: ["name"] });
+		install({ registry, cond, effects, bus, time, ui, flow, fmt, save, config }) {
+			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, tags: [], desc: "", passage: null, hours: null, entry: null },
-				refs: { district: "district" },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false },
+				refs: { district: "district", parent: "location" },
 				passages: ["passage"],
 				conditions: ["entry"],
 				check(def) {
@@ -31,12 +35,23 @@
 							errs.push(`hours: ${ex.message}`);
 						}
 					}
+					if (!Number.isInteger(def.innerMins) || def.innerMins < 0) errs.push("innerMins must be whole minutes ≥ 0");
+					// Parent chains must end (no loops).
+					const seen = new Set([def.id]);
+					for (let p = def.parent; p; p = registry.tryGet("location", p)?.parent) {
+						if (seen.has(p)) {
+							errs.push("parent chain loops");
+							break;
+						}
+						seen.add(p);
+					}
 					return errs;
 				},
 			});
 
 			/** @type {{order: number, name: string, fn: Function}[]} */
 			const sections = [];
+			const L = (id) => registry.get("location", id);
 
 			const world = {
 				/** @returns {string|null} Current location id. */
@@ -45,29 +60,106 @@
 				/** @returns {object|undefined} Current location definition. */
 				here: () => registry.tryGet("location", setup.character.loc()),
 
+				/** @returns {object|null} The parent location, if any. */
+				parent: (id) => (L(id).parent ? L(L(id).parent) : null),
+
+				/** @returns {object[]} Sub-locations directly inside a location. */
+				children: (id) => registry.query("location", (d) => d.parent === id),
+
+				/** @returns {string[]} [id, parent, grandparent, …] up to the site. */
+				chain(id) {
+					const out = [];
+					for (let p = id; p; p = L(p).parent) out.push(p);
+					return out;
+				},
+
+				/** @returns {string} The top-level location (site) containing `id`. */
+				site: (id) => world.chain(id).at(-1),
+
+				/** @returns {boolean} Whether `inner` is `outer` or inside it. */
+				within: (inner, outer) => world.chain(inner).includes(outer),
+
+				/** @returns {number} Minutes to walk from `id` out to its site. */
+				exitMins: (id) => world.chain(id).slice(0, -1).reduce((sum, p) => sum + L(p).innerMins, 0),
+
 				/**
-				 * Is a location open at time t? `hours: null` means always open.
+				 * Is a location open at time t? A location without its own `hours`
+				 * follows its parent; `hours: null` all the way up means always open.
 				 * hours: [{ days?: [0-6], from: "HH:MM", to: "HH:MM" }]
 				 * @param {string} id @param {number} [t]
 				 */
 				isOpen(id, t = time.now()) {
-					const def = registry.get("location", id);
-					if (!def.hours) return true;
-					return def.hours.some((h) => (!h.days || h.days.includes(time.weekday(t))) && time.isBetween(t, h.from, h.to));
+					for (const p of world.chain(id)) {
+						const hours = L(p).hours;
+						if (hours) return hours.some((h) => (!h.days || h.days.includes(time.weekday(t))) && time.isBetween(t, h.from, h.to));
+					}
+					return true;
 				},
 
 				/**
-				 * Move the PC. Emits world:leave then world:enter.
+				 * Opening hours for display, from the location or its parent.
+				 * @returns {object[]|null}
+				 */
+				hoursOf(id) {
+					for (const p of world.chain(id)) if (L(p).hours) return L(p).hours;
+					return null;
+				},
+
+				/**
+				 * Move the PC instantly. Emits world:leave then world:enter.
 				 * @param {string} id
 				 */
 				moveTo(id) {
-					registry.get("location", id);
+					L(id);
 					const from = setup.character.loc();
 					if (from) bus.emit("world:leave", { loc: from, to: id });
 					setup.character.setLoc(id);
 					const visited = setup.vars().world.visited;
 					visited[id] = (visited[id] ?? 0) + 1;
 					bus.emit("world:enter", { loc: id, from });
+				},
+
+				/**
+				 * Places you can walk to inside this site from here: the parent,
+				 * sub-locations and sibling areas, each with why it's locked (if it is).
+				 * @returns {{def: object, kind: "out"|"in"|"side", mins: number, ok: boolean, reasons: string[]}[]}
+				 */
+				nearby() {
+					const here = world.here();
+					if (!here) return [];
+					const out = [];
+					const add = (def, kind) => {
+						const reasons = [];
+						if (kind !== "out") {
+							if (!world.isOpen(def.id)) reasons.push("It's closed");
+							const ctx = { loc: def.id, t: time.now() };
+							if (!cond.test(def.entry, ctx)) reasons.push(...cond.explain(def.entry, ctx).filter((e) => !e.ok).map((e) => e.text));
+						}
+						const mins = kind === "out" ? here.innerMins : def.innerMins;
+						out.push({ def, kind, mins, ok: !reasons.length, reasons });
+					};
+					if (here.parent) add(L(here.parent), "out");
+					for (const c of world.children(here.id)) add(c, "in");
+					if (here.parent) for (const s of world.children(here.parent)) if (s.id !== here.id) add(s, "side");
+					return out;
+				},
+
+				/**
+				 * Walk to another area of the same site (see nearby()).
+				 * @param {string} id
+				 * @returns {object} Result
+				 */
+				walkTo(id) {
+					const target = world.nearby().find((n) => n.def.id === id);
+					if (!target) throw new setup.GameError(`Can't walk to ${id} from ${world.loc()}`);
+					const result = effects.newResult();
+					if (!target.ok) {
+						result.changes.push({ kind: "blocked", text: `${target.def.name}: ${target.reasons.join("; ")}` });
+						return result;
+					}
+					if (target.mins) time.advance(target.mins, { reason: "walk" });
+					world.moveTo(id);
+					return result;
 				},
 
 				/**
@@ -83,9 +175,18 @@
 			};
 			setup.world = world;
 
-			// { at: "loc_id" } or { at: ["a", "b"] } — the PC is at one of these.
+			// Closing time: anyone inside a closed area is shown out to the site.
+			bus.on("time:advanced", () => {
+				const loc = world.loc();
+				if (!loc || !L(loc).parent || world.isOpen(loc)) return;
+				const site = world.site(loc);
+				world.moveTo(site);
+				bus.emit("world:closed", { loc, site });
+			});
+
+			// { at: "loc_id" } or { at: ["a", "b"] } — the PC is at (or inside) one of these.
 			cond.register("at", {
-				test: (spec) => setup.util.toArray(spec).includes(world.loc()),
+				test: (spec) => world.loc() != null && setup.util.toArray(spec).some((id) => world.within(world.loc(), id)),
 				describe: (spec) => `At ${setup.util.toArray(spec).map((id) => registry.tryGet("location", id)?.name ?? id).join(" or ")}`,
 			});
 
@@ -102,7 +203,7 @@
 			effects.register("moveTo", {
 				apply(spec, ctx, result) {
 					world.moveTo(spec);
-					result.changes.push({ kind: "move", text: `You're now at ${registry.get("location", spec).name}.` });
+					result.changes.push({ kind: "move", text: `You're now at ${L(spec).name}.` });
 				},
 				describe: (spec) => `Go to ${registry.tryGet("location", spec)?.name ?? spec}`,
 			});
@@ -115,7 +216,7 @@
 				const here = world.here();
 				box.classList.add("m-world");
 				if (!here) {
-					box.append(ui.el("p", { text: "Nothing is here yet. (No locations are loaded — try ?debug for the test content.)" }));
+					box.append(ui.el("p", { text: "There's nowhere to be yet." }));
 					return;
 				}
 				for (const s of sections) {
@@ -130,29 +231,44 @@
 				}
 			});
 
-			world.addHereSection("status", 0, (box, here) => {
-				const t = time.now();
-				const cash = setup.modules.has("money") && setup.money.enabled() ? ` · ${fmt.money(setup.money.balance())}` : "";
-				box.append(ui.el("p", { class: "status-line", text: `${fmt.date(t)} · ${fmt.time(t)} · ${here.name}${cash}` }));
-			});
-
 			world.addHereSection("result", 5, (box) => {
-				const r = ui.result(setup.flow.lastResult());
+				const r = ui.result(flow.lastResult());
 				if (r) box.append(r);
 			});
 
 			world.addHereSection("description", 10, (box, here) => {
+				const crumbs = world.chain(here.id).slice(1).reverse().map((id) => L(id).name);
+				if (crumbs.length) box.append(ui.el("p", { class: "crumbs", text: crumbs.join(" › ") }));
 				box.append(ui.el("h1", { text: here.name }));
 				if (here.passage) ui.wiki(box, here.passage);
 				else if (here.desc) box.append(ui.el("p", { text: here.desc }));
-				if (!world.isOpen(here.id)) box.append(ui.el("p", { class: "note", text: "It's closed right now." }));
+				if (!world.isOpen(here.id)) {
+					const hours = world.hoursOf(here.id);
+					const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(time.now())));
+					const when = today?.length ? ` Today: ${today.map((h) => `${h.from}–${h.to}`).join(", ")}.` : " Not open today.";
+					box.append(ui.el("p", { class: "note", text: `It's closed right now.${when}` }));
+				}
+			});
+
+			world.addHereSection("areas", 25, (box) => {
+				const list = world.nearby();
+				if (!list.length) return;
+				box.append(ui.el("h2", { text: "Around here" }));
+				const ul = ui.el("ul", { class: "areas" });
+				for (const n of list) {
+					const label = n.kind === "out" ? `Back to ${n.def.name}` : n.def.name;
+					const li = ui.el("li", {}, ui.action(label, () => world.walkTo(n.def.id), { disabled: !n.ok }));
+					if (!n.ok) li.append(ui.el("p", { class: "locked", text: n.reasons.join("; ") }));
+					ul.append(li);
+				}
+				box.append(ul);
 			});
 		},
 
 		newGame() {
-			// DESIGN: user to decide — how the start location is chosen. For now:
-			// the first location tagged "start", if any.
-			const start = setup.registry.byTag("location", "start")[0];
+			// The configured start location, else the first location tagged "start".
+			const R = setup.registry;
+			const start = R.tryGet("location", setup.config.startLocation) ?? R.byTag("location", "start")[0];
 			if (start) setup.world.moveTo(start.id);
 		},
 	});

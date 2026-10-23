@@ -19,10 +19,10 @@
 
 		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
 			registry.defineType("action", {
-				required: ["label", "at"],
+				required: ["label"],
 				defaults: {
-					desc: "", tags: [], mins: 0, durations: null, checkpoints: [], conditions: null,
-					costs: [], effects: [], perHour: [], interruptible: true, passage: null,
+					at: [], atTag: null, whenClosed: false, desc: "", tags: [], mins: 0, durations: null, checkpoints: [], conditions: null,
+					costs: [], effects: [], perHour: [], always: [], interruptible: true, passage: null,
 					// Decided by the user: a locked action shows its requirements but not
 					// what it is. `hidden: true` hides it completely instead.
 					hidden: false,
@@ -30,12 +30,14 @@
 				refs: { at: "location" },
 				passages: ["passage"],
 				conditions: ["conditions"],
-				effects: ["costs", "effects", "perHour"],
+				effects: ["costs", "effects", "perHour", "always"],
 				check(def) {
 					const errs = [];
 					const ok = (n) => Number.isInteger(n) && n >= 0;
 					if (!ok(def.mins)) errs.push("mins must be a whole number ≥ 0");
-					if (def.durations && !def.durations.every((d) => ok(d) && d > 0)) errs.push("durations must be whole numbers > 0");
+					const hm = (d) => typeof d === "string" && /^\d{1,2}:\d{2}$/.test(d);
+					if (def.durations && !def.durations.every((d) => (ok(d) && d > 0) || hm(d))) errs.push('durations must be whole minutes > 0 or "HH:MM" (until that time)');
+					if (!setup.util.toArray(def.at).length && !def.atTag) errs.push("needs `at` (location ids) or `atTag`");
 					if (!def.checkpoints.every((c) => ok(c) && c > 0)) errs.push("checkpoints must be whole numbers > 0");
 					return errs;
 				},
@@ -50,6 +52,40 @@
 
 			const ctxFor = (def) => ({ action: def.id, loc: setup.world.loc(), t: time.now(), reason: `action:${def.id}` });
 
+			/** Total pence an action's costs take (negative `money` effects). */
+			const priceOf = (def) => def.costs.reduce((sum, c) => sum + (c.money && c.money.amount < 0 ? -c.money.amount : 0), 0);
+			const moneyOn = () => setup.modules.has("money") && setup.money.enabled();
+
+			/** Is the action offered where the PC is? */
+			const offeredHere = (def) => {
+				const here = setup.world.here();
+				return Boolean(here) && (setup.util.toArray(def.at).includes(here.id) || (def.atTag != null && here.tags.includes(def.atTag)));
+			};
+
+			/**
+			 * Every reason an action can't be done now: not open (unless the
+			 * action has `whenClosed: true`), conditions, then price.
+			 */
+			const blockers = (def, ctx) => {
+				const reasons = [];
+				if (!def.whenClosed && ctx.loc && !setup.world.isOpen(ctx.loc)) reasons.push("It's open");
+				if (!cond.test(def.conditions, ctx)) reasons.push(...cond.explain(def.conditions, ctx).filter((e) => !e.ok).map((e) => e.text));
+				const price = priceOf(def);
+				if (price && moneyOn() && setup.money.balance() < price) reasons.push(`${fmt.money(price)} to pay`);
+				return [...new Set(reasons)];
+			};
+
+			/**
+			 * Minutes for a duration option: a number, or "HH:MM" meaning until
+			 * that time (the next one, at least a minute away).
+			 */
+			const minsFor = (d) => {
+				if (typeof d !== "string") return d;
+				const now = time.now();
+				const until = time.nextAt(now, d);
+				return until > now ? until - now : until + time.MIN_PER_DAY - now;
+			};
+
 			const actions = {
 				/**
 				 * Actions offered at the current location, with whether each is
@@ -57,14 +93,12 @@
 				 * @returns {{def: object, ok: boolean, reasons: string[]}[]}
 				 */
 				available() {
-					const loc = setup.world.loc();
+					if (!setup.world.here()) return [];
 					return registry.all("action")
-						.filter((def) => setup.util.toArray(def.at).includes(loc))
+						.filter(offeredHere)
 						.map((def) => {
-							const ctx = ctxFor(def);
-							const ok = cond.test(def.conditions, ctx);
-							const reasons = ok ? [] : cond.explain(def.conditions, ctx).filter((e) => !e.ok).map((e) => e.text);
-							return { def, ok, reasons };
+							const reasons = blockers(def, ctxFor(def));
+							return { def, ok: !reasons.length, reasons, price: priceOf(def) };
 						})
 						.filter((a) => a.ok || !a.def.hidden);
 				},
@@ -75,19 +109,21 @@
 				/**
 				 * Do an action.
 				 * @param {string} id
-				 * @param {{mins?: number}} [opts]  mins picks one of `durations`.
+				 * @param {{mins?: number|string}} [opts]  mins picks one of `durations`
+				 *   (a number of minutes, or "HH:MM" for "until then").
 				 * @returns {object} Result, plus { ok, action, elapsed }.
 				 */
 				do(id, opts = {}) {
 					if (running) throw new setup.GameError(`Can't start "${id}" while "${running.def.id}" is running`);
 					const def = registry.get("action", id);
-					const mins = opts.mins ?? def.mins;
-					if (def.durations && opts.mins != null && !def.durations.includes(mins)) throw new setup.GameError(`"${id}" can't last ${mins} minutes`);
+					if (def.durations && opts.mins != null && !def.durations.includes(opts.mins)) throw new setup.GameError(`"${id}" can't last ${opts.mins} minutes`);
+					const mins = minsFor(opts.mins ?? def.mins);
 					const ctx = ctxFor(def);
 					const result = Object.assign(effects.newResult(), { ok: false, action: id, elapsed: 0 });
 
-					if (!cond.test(def.conditions, ctx)) {
-						const why = cond.explain(def.conditions, ctx).filter((e) => !e.ok).map((e) => e.text);
+					if (!offeredHere(def)) throw new setup.GameError(`"${id}" isn't offered at ${setup.world.loc()}`);
+					const why = blockers(def, ctx);
+					if (why.length) {
 						result.changes.push({ kind: "blocked", text: `${def.label}: not possible right now (${why.join("; ")}).` });
 						return result;
 					}
@@ -121,6 +157,8 @@
 							const extra = result.mins - queued;
 							if (extra > 0) result.elapsed += time.advance(extra, { reason: ctx.reason }).elapsed;
 						}
+						// `always` runs whether or not the action was interrupted.
+						effects.run(def.always, ctx, result);
 						result.ok = true;
 						result.interrupted = interrupted || false;
 						result.changes.unshift({
@@ -171,9 +209,14 @@
 						continue;
 					}
 					const options = def.durations ?? [def.mins];
-					for (const mins of options) {
-						const label = mins ? `${def.label} (${fmt.duration(mins)})` : def.label;
-						li.append(ui.action(label, () => actions.do(def.id, def.durations ? { mins } : {})));
+					const price = priceOf(def);
+					for (const d of options) {
+						const parts = [];
+						if (typeof d === "string") parts.push(`until ${d}`);
+						else if (d) parts.push(fmt.duration(d));
+						if (price) parts.push(fmt.money(price));
+						const label = parts.length ? `${def.label} (${parts.join(", ")})` : def.label;
+						li.append(ui.action(label, () => actions.do(def.id, def.durations ? { mins: d } : {})));
 					}
 					if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
 					ul.append(li);

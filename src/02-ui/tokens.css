@@ -1,0 +1,74 @@
+/*
+ * tokens.css — design tokens (§8). A neutral placeholder theme: the real
+ * look is the user's decision. Light by default; dark follows the device,
+ * or the Theme setting (html[data-theme]).
+ */
+:root {
+	--bg: #f6f5f2;
+	--surface: #ffffff;
+	--surface-2: #eceae4;
+	--text: #1f1f1f;
+	--muted: #5f5f5f;
+	--line: #d6d3cb;
+	--accent: #2f5d8a;
+	--accent-text: #ffffff;
+	--ok: #2e7d32;
+	--warn: #b26a00;
+	--bad: #c62828;
+	--chip-good: #e3f1e4;
+	--chip-bad: #f8e1e1;
+	--chip-neutral: #e9e7e1;
+	--radius: 10px;
+	--gap: 0.75rem;
+	--sidebar-w: 300px;
+	--topbar-h: 52px;
+	--font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	--text-size: 17px;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #151515;
+		--surface: #1e1e1e;
+		--surface-2: #2a2a2a;
+		--text: #ececec;
+		--muted: #a5a5a5;
+		--line: #3a3a3a;
+		--accent: #6fa3d8;
+		--accent-text: #0f1a25;
+		--ok: #6cc070;
+		--warn: #e0a040;
+		--bad: #ef6b6b;
+		--chip-good: #1f3a22;
+		--chip-bad: #45201f;
+		--chip-neutral: #2c2c2c;
+		color-scheme: dark;
+	}
+}
+
+:root[data-theme="dark"] {
+	--bg: #151515;
+	--surface: #1e1e1e;
+	--surface-2: #2a2a2a;
+	--text: #ececec;
+	--muted: #a5a5a5;
+	--line: #3a3a3a;
+	--accent: #6fa3d8;
+	--accent-text: #0f1a25;
+	--ok: #6cc070;
+	--warn: #e0a040;
+	--bad: #ef6b6b;
+	--chip-good: #1f3a22;
+	--chip-bad: #45201f;
+	--chip-neutral: #2c2c2c;
+	color-scheme: dark;
+}
+
+:root[data-textsize="small"] {
+	--text-size: 16px;
+}
+
+:root[data-textsize="large"] {
+	--text-size: 20px;
+}
