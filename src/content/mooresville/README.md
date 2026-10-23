@@ -18,9 +18,10 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 | `town-body.js` | Body parts: height, weight, bust, skin tone, eye colour, hair colour and length |
 | `town-work.js` | Skills, and the barista job: its career stages, shifts, pay and events |
 | `town-fitness.js` | Getting fit: a second storyline, driven by working out at the gym |
+| `town-home.js` | Home and family: residences, the flat to rent, rent and pocket money, furniture, chores, the curfew |
 | `town-school.js` | Subjects, the timetable, term dates, and your tutor's word about skipping |
 | `town-social.js` | Friendship and Romance, and the Talk menu |
-| `town-events.js` | Events around town (therapy interruption, waking up bursting, bus traffic, closing time) |
+| `town-events.js` | Events around town (therapy interruption, waking up bursting, bus traffic, closing time, footsteps at night), and part 2: things on in town on set days (the Saturday market, fireworks night) |
 | `town-weather.js` | Weather kinds, the climate month by month, Cold and Getting wet |
 | `town-phone.js` | The apps on your phone |
 | `src/story/mooresville/*.twee` | The text: one passage per place (`Loc_<id>`) and per event (`Ev_<id>`) |

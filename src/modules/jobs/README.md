@@ -3,7 +3,8 @@
 Paid work, built on a storyline: the storyline's stages are the career, and the job says which stages you work in and the pay at each.
 
 ## Data
-`job` — `{ id, label, at, storyline, workStages, shiftMins (120), skill, skillPerShift, pay: { [stage]: whole pounds/hour }, payTo, effects, status, perHour, quitStage, order }`
+`job` — `{ id, label, at, storyline, workStages, shiftMins (120), skill, skillPerShift, pay: { [stage]: whole pounds/hour }, payTo, effects, status, perHour, quitStage, dressCode, order }`
+- `dressCode`: `{ when: CONDITION, text }` — what you must be wearing to work a shift; `text` is shown if not.
 - `shiftMins`: how long one shift is.
 - `skillPerShift`: the job's `skill` gained each shift (through the skill's gain rule).
 - `effects`: run at the end of every full shift, e.g. a `random` outcome that adds to or takes from the skill, with a `note` for the summary.
@@ -19,7 +20,7 @@ Be at the job's place while it's open and tap **Work a shift**. One tap works on
 `defs()`, `employed(id)`, `current()`, `rate(id)`, `shiftPay(id)`, `canWork(id)` → `{ ok, reason }`, `work(id)`, `isWorking()`, `quit(id)`
 
 ## Conditions
-`{ employed: id }`, `{ shiftOf: id }` (during that job's shift)
+`{ employed: id }` (that job), `{ employed: true }` (any job), `{ shiftOf: id }` (during that job's shift)
 
 ## Events
 `job:shift`, `job:shiftEnd { job, mins, pay }`

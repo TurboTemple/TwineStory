@@ -167,6 +167,7 @@
 		 * the end of each shift.
 		 *
 		 *   shiftMins       how long one shift is
+		 *   dressCode       { when: CONDITION, text } — what you must be wearing
 		 *   skillPerShift   Barista skill for every shift (before "slowing")
 		 *   effects         what else happens at the end of every shift. Here
 		 *                   it's a random outcome: { random: [{ weight, then }] }
@@ -225,6 +226,8 @@
 				},
 			],
 			status: "working",
+			// What you must wear to work a shift (any condition), and what it says if not.
+			dressCode: { when: { not: { wearing: "sliders" } }, text: "Closed-toe shoes for work: Jess won't let you on shift in sliders" },
 			quitStage: "quit",
 		});
 

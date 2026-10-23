@@ -39,11 +39,12 @@ test("<<choice>>: locked with reasons, effects run, then the passage", () => {
 	const { setup, played } = bootTown();
 	const W = setup.writing;
 	const opts = { conditions: { stat: { id: "beauty", min: 40 } }, effects: [{ stat: { mood: 4 } }] };
-	setup.stats.set("beauty", 10);
+	setup.stats.set("hygiene", 0); // Beauty 10
 	const locked = W.check(opts);
 	assert.equal(locked.ok, false);
 	assert.match(locked.reasons.join(" "), /Beauty/);
-	setup.stats.set("beauty", 50);
+	setup.stats.set("hygiene", 100);
+	setup.status.add("made_up"); // Beauty 50
 	assert.ok(W.check(opts).ok);
 	setup.stats.set("mood", 50);
 	const mood = setup.stats.get("mood");
@@ -146,4 +147,33 @@ test("a Talk option can open a scene, and its choices know who it's with", () =>
 	setup.flow.perform(() => setup.rel.interact("jess_marlow", "t_scene"));
 	assert.equal(played.at(-1), "Ev_t_scene");
 	assert.equal(setup.vars().scene.npc, "jess_marlow");
+});
+
+test("skill and stat checks: odds from config, threshold mode, labels and branches", () => {
+	const { setup, played } = bootTown();
+	const C = setup.checks;
+	setup.skills.set("barista", 25);
+	assert.equal(C.chance({ resolver: "skill", skill: "barista", difficulty: 25 }), 0.5, "at the difficulty: 50%");
+	assert.ok(Math.abs(C.chance({ resolver: "skill", skill: "barista", difficulty: 15 }) - 0.8) < 1e-9, "10 above: +30%");
+	assert.equal(C.chance({ resolver: "skill", skill: "barista", difficulty: 90 }), 0.05, "never below 5%");
+	assert.equal(C.chance({ resolver: "skill", skill: "barista", difficulty: 25, mode: "threshold" }), 1);
+	assert.equal(C.chance({ resolver: "skill", skill: "barista", difficulty: 26, mode: "threshold" }), 0);
+
+	// Over many rolls at 50% both branches happen; labels say how it went.
+	const seen = new Set();
+	for (let i = 0; i < 40; i++) {
+		const r = setup.effects.apply([{ check: { resolver: "skill", skill: "barista", difficulty: 25, label: "Latte art", then: [{ flag: "won" }], else: [{ flag: "lost" }] } }]);
+		seen.add(plain(r.changes)[0].text);
+	}
+	assert.deepEqual([...seen].sort(), ["Latte art: failed", "Latte art: success"]);
+
+	// A choice can branch to different passages through a check.
+	setup.writing.choose(null, { effects: [{ check: { resolver: "stat", stat: "hygiene", difficulty: 0, mode: "threshold", then: [{ goto: "Ev_grind_barista_rude_pro" }], else: [{ goto: "Ev_grind_barista_rude_fumble" }] } }] });
+	assert.equal(played.at(-1), "Ev_grind_barista_rude_pro");
+});
+
+test("the checker catches checks on unknown skills", () => {
+	const { setup } = bootTown();
+	const errs = checkStoryMacros([{ name: "Ev_t", file: "t.twee", text: `<<choice "Try" { effects: [{ check: { resolver: "skill", skill: "juggling", difficulty: 10, then: [], else: [] } }] }>>` }], setup, () => true);
+	assert.match(errs.join(" "), /unknown skill "juggling"/);
 });

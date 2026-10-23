@@ -11,6 +11,14 @@ The PC's stats. Only **base values** are saved (`$stats.base`). The **effective 
   - `"drift"`: `perHour` each hour
   - `"toward"`: pulled back to `target` by `perHour` each hour; rate modifiers push on top of that
 
+## Derived stats
+A stat with `derive` isn't saved: it's worked out every time from a list of parts (e.g. Beauty):
+- `{ add: 10 }` — a fixed amount
+- `{ stat: "hygiene", times: 0.2 }` — another stat × a number
+- `{ when: CONDITION, add: 10 }` — while the condition is true
+
+Each part can have a `label`, shown in the Profile ("Clean +17"). Modifiers still apply on top. A derived stat can't be set or changed by effects (`set` throws); change what it's made of. The validator rejects a derive list that goes round in a circle. API: `isDerived(id)`, `breakdown(id)`.
+
 ## Modifiers
 `{ stat, op, value }` where `op` is:
 - `"add"` — effective + value

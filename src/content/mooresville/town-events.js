@@ -8,6 +8,9 @@
  * Job events are in town-work.js, and your tutor's word about skipping
  * school is in town-school.js.
  *
+ * Part 2 (at the end) has things happening around town on set days:
+ * the Saturday market and fireworks night.
+ *
  * ---------------------------------------------------------------------------
  *  HOW TO ADD AN EVENT
  * ---------------------------------------------------------------------------
@@ -99,6 +102,78 @@
 			passage: "Ev_closing_time",
 			triggers: ["world:closed"],
 			effects: [{ interrupt: "closing" }],
+		});
+
+		// Random: out on the street late at night, footsteps behind you.
+		// Mostly nothing; how you react is a choice (events.twee).
+		R.define("storylet", {
+			id: "night_footsteps",
+			passage: "Ev_night_footsteps",
+			triggers: ["world:enter"],
+			conditions: { outdoors: true, time: { from: "23:00", to: "04:00" } },
+			chance: 0.15,
+			cooldown: 1440,
+			effects: [{ stat: { stress: 4 } }],
+		});
+
+		/* ======================================================================
+		 *  2. Around town: things on set days
+		 * ======================================================================
+		 *
+		 * A city event says where and when. While it's on, the place shows
+		 * "On now: …" and the phone's calendar lists it. What you can do there
+		 * is ordinary actions with { happening: "id" } and hidden: true.
+		 *
+		 *   days: [6]                           every Saturday (0 = Sunday)
+		 *   dates: ["2026-11-05"]               particular days
+		 *   from: "2026-12-01", to: "2026-12-24" every day between two dates
+		 *   hours: { from: "09:00", to: "14:00" }
+		 */
+
+		R.define("cityEvent", {
+			id: "saturday_market",
+			label: "Saturday market",
+			at: "high_street",
+			desc: "Stalls line the street: bread, flowers, second-hand records.",
+			days: [6],
+			hours: { from: "09:00", to: "14:00" },
+		});
+		R.define("action", {
+			id: "market_browse",
+			label: "Browse the market stalls",
+			at: "high_street",
+			mins: 30,
+			hidden: true,
+			conditions: { happening: "saturday_market" },
+			effects: [{ stat: { mood: 3 } }],
+		});
+		R.define("action", {
+			id: "market_bread",
+			label: "Buy a loaf from the bakery stall",
+			at: "high_street",
+			mins: 5,
+			hidden: true,
+			conditions: { happening: "saturday_market" },
+			costs: [{ money: { amount: -3, reason: "Market bread" } }],
+			effects: [{ item: { id: "groceries", qty: 1 } }],
+		});
+
+		R.define("cityEvent", {
+			id: "fireworks_night",
+			label: "Fireworks night",
+			at: "riverside_park",
+			desc: "Crowds on the riverbank, sparklers and the smell of hot dogs.",
+			dates: ["2026-11-05"],
+			hours: { from: "18:30", to: "21:00" },
+		});
+		R.define("action", {
+			id: "watch_fireworks",
+			label: "Watch the fireworks",
+			at: "riverside_park",
+			mins: 45,
+			hidden: true,
+			conditions: { happening: "fireworks_night" },
+			effects: [{ stat: { mood: 8, stress: -4 } }],
 		});
 	});
 })();

@@ -206,7 +206,7 @@ async function playChoice(page) {
 		s.flow.perform(() => {
 			s.storylines.moveTo("barista_job", "barista", { quiet: true });
 			s.stats.set("stress", 70);
-			s.stats.set("beauty", 10);
+			s.stats.set("hygiene", 0); // Beauty 10, too low to charm him
 			s.events.fire("grind_barista_rude", { npc: "jess_marlow" });
 		});
 	});

@@ -226,10 +226,12 @@ test("makeup: needs a kit, done in a bathroom, raises Beauty until a shower", ()
 	assert.ok(makeup().ok);
 	const before = setup.stats.get("beauty");
 	setup.actions.do("do_makeup");
-	assert.equal(setup.stats.get("beauty"), before + 20);
-	assert.equal(setup.inventory.count("makeup_kit"), 1, "the kit isn't used up");
+	assert.ok(Math.abs(setup.stats.get("beauty") - (before + 20)) < 1, "makeup adds 20");
+	assert.equal(setup.inventory.count("makeup_kit"), 1, "one go used, nine left");
+	const entry = () => setup.inventory.entries("bag").find((e) => e.item === "makeup_kit");
+	assert.equal(setup.inventory.usesLeft(entry()), 9);
 	setup.actions.do("shower");
-	assert.equal(setup.stats.get("beauty"), before, "a shower takes it off");
+	assert.ok(!setup.status.has("made_up"), "a shower takes it off");
 });
 
 test("only things you wear can carry stats", () => {
@@ -272,7 +274,66 @@ test("crossovers: Barista skill and Beauty open up new things to say", () => {
 	assert.ok(has("jess_marlow", "talk_coffee").ok);
 	assert.ok(!has("jess_marlow", "hang_out"), "only with students");
 	assert.ok(!has("priya_shah", "hang_out").ok);
-	setup.stats.set("beauty", 40);
+	setup.stats.set("hygiene", 100);
+	setup.status.add("made_up"); // Beauty 10 + 20 (clean) + 20 (made up)
 	R.add("priya_shah", "friendship", 20);
 	assert.ok(has("priya_shah", "hang_out").ok);
+});
+
+test("derived stats: Beauty is worked out from hygiene, clothes, hair and fitness", () => {
+	const { setup } = town();
+	const S = setup.stats;
+	S.set("hygiene", 50);
+	assert.equal(S.get("beauty"), 20, "base 10 + clean 10");
+	setup.status.add("fresh_haircut");
+	assert.equal(S.get("beauty"), 25);
+	assert.deepEqual(plain(S.breakdown("beauty").map((p) => p.label)), ["Base", "Clean", "Fresh haircut"]);
+	assert.ok(S.isDerived("beauty"));
+	assert.throws(() => S.set("beauty", 90), /worked out from other things/);
+	assert.equal(setup.vars().stats.base.beauty, undefined, "not saved");
+});
+
+test("the checker rejects a derived stat that goes round in a circle", () => {
+	const { setup } = boot({
+		before(s) {
+			(s.__testContent ??= []).push((R) => {
+				R.define("stat", { id: "t_a", label: "A", derive: [{ stat: "t_b" }] });
+				R.define("stat", { id: "t_b", label: "B", derive: [{ stat: "t_a" }] });
+			});
+		},
+		includeTest: true,
+	});
+	assert.ok(setup.validate().some((e) => /t_a.*circle/.test(e)));
+});
+
+test("items with uses run out", () => {
+	const { setup } = town();
+	setup.world.moveTo("home_bathroom");
+	setup.inventory.add("makeup_kit");
+	for (let i = 0; i < 9; i++) setup.inventory.useUp("makeup_kit");
+	assert.equal(setup.inventory.count("makeup_kit"), 1);
+	const r = setup.effects.apply([{ useUp: "makeup_kit" }]);
+	assert.match(plain(r.changes).map((c) => c.text).join(" "), /used up your makeup kit/);
+	assert.equal(setup.inventory.count("makeup_kit"), 0, "gone after 10 goes");
+	assert.ok(!setup.actions.available().find((a) => a.def.id === "do_makeup").ok);
+});
+
+test("dress codes: the gym floor wants sportswear, café shifts want closed-toe shoes", () => {
+	const { setup } = town();
+	skipTo(setup, 1, "10:00");
+	setup.world.moveTo("pulsefit_reception");
+	const floor = () => setup.world.nearby().find((n) => n.def.id === "pulsefit_floor");
+	assert.equal(floor().ok, false);
+	assert.match(floor().reasons.join(" "), /Gym kit only/);
+	setup.inventory.add("leggings");
+	const uid = setup.inventory.entries("bag").find((e) => e.item === "leggings").uid;
+	setup.clothing.wear(uid, { force: true });
+	assert.ok(floor().ok, "in sportswear you can go in");
+
+	setup.storylines.moveTo("barista_job", "trainee", { quiet: true });
+	setup.world.moveTo("grind_counter");
+	assert.ok(setup.jobs.canWork("grind_barista").ok);
+	setup.inventory.add("sliders");
+	setup.clothing.wear(setup.inventory.entries("bag").find((e) => e.item === "sliders").uid, { force: true });
+	assert.match(setup.jobs.canWork("grind_barista").reason, /Closed-toe shoes/);
 });

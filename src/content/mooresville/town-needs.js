@@ -24,6 +24,13 @@
  *                     "toward" moves back towards `target` by perHour an hour
  *                     "none"   never changes by itself
  *   good: "low"       for stats where low is good (Bladder, Stress); colours the bar
+ *   derive            work the stat out from other things instead of saving it
+ *                     (see Beauty): a list of
+ *                       { add: 10 }                       a fixed amount
+ *                       { stat: "hygiene", times: 0.2 }   another stat × a number
+ *                       { when: CONDITION, add: 10 }      while the condition is true
+ *                     each with an optional `label` for the Profile. A derived
+ *                     stat can't be changed by effects; change what it's made of.
  *   order             position in the sidebar
  *
  * ---------------------------------------------------------------------------
@@ -132,10 +139,18 @@
 		stat({
 			id: "beauty",
 			label: "Beauty",
-			desc: "How put-together you look. Makeup raises it for a while.",
-			start: 30,
-			change: "none",
+			desc: "How put-together you look: being clean, what you wear, your hair and your fitness. Makeup adds to it for a while.",
 			order: 8,
+			// Worked out from these every time (not saved). The Profile tab
+			// lists what's counting right now. Makeup ("Made up", part 3) adds
+			// +20 on top.
+			derive: [
+				{ add: 10, label: "Base" },
+				{ stat: "hygiene", times: 0.2, label: "Clean" },                                  // up to +20
+				{ when: { status: "smartly_dressed" }, add: 10, label: "Smartly dressed" },     // town-clothing.js
+				{ when: { status: "fresh_haircut" }, add: 5, label: "Fresh haircut" },          // part 3
+				{ when: { storyline: { id: "fitness", stage: "fit" } }, add: 5, label: "In good shape" }, // town-fitness.js
+			],
 		});
 
 		/* ======================================================================
@@ -251,6 +266,12 @@
 			desc: "Your makeup's done. It lasts until it wears off or you shower.",
 			mins: 480, // 8 hours
 			modifiers: [mod.add("beauty", 20)],
+		});
+		timed({
+			id: "fresh_haircut",
+			label: "Fresh haircut",
+			desc: "Your hair looks its best for a few days after a cut.",
+			mins: 4320, // 3 days
 		});
 		timed({
 			id: "refreshed",

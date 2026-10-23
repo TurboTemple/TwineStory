@@ -167,3 +167,21 @@ A little green kiosk by the old boathouse selling ice creams, teas and snacks th
 
 :: Loc_snips
 Snips is a bright little salon with three chairs, a wall of mirrors and a stack of style magazines from last year. It smells of shampoo and hairspray, and the radio is always on.
+
+:: Loc_riverside_court
+A tidy brick block of flats overlooking the river. The shared hallway smells faintly of other people's cooking, and the post is stacked on a shelf by the door.
+
+:: Loc_flat_living
+<<when { livesAt: "riverside_flat" }>>Your own place. A small living room with a window onto the river, and doors to the bedroom, bathroom and kitchen.<</when>>
+
+:: Loc_flat_bedroom
+A box room with just enough space for a bed and a rail of clothes. It's yours, though.
+
+:: Loc_flat_bathroom
+A narrow bathroom with a shower over the bath and an extractor fan that sounds like a jet engine.
+
+:: Loc_flat_kitchen
+A galley kitchen: two hobs, a microwave and a fridge that hums all night.
+
+:: Loc_keys_lettings
+A bright little office on the High Street, its window full of photos of flats. Someone behind the desk looks up and smiles.

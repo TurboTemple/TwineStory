@@ -97,6 +97,7 @@ You take a slow breath.
 
 <<choice "Smile and remake it" "Ev_grind_barista_rude_polite" { effects: [{ stat: { stress: 6 } }, { skill: { barista: 0.5 } }, { rel: { friendship: 2 } }], npc: "jess_marlow" }>>
 <<choice "Tell him he didn't ask for skimmed" "Ev_grind_barista_rude_snap" { effects: [{ stat: { mood: 3, stress: -4 } }] }>>
+<<choice "Explain the menu like a pro (Barista check)" { effects: [{ check: { resolver: "skill", skill: "barista", difficulty: 25, label: "Explaining the menu", then: [{ skill: { barista: 0.5 } }, { goto: "Ev_grind_barista_rude_pro" }], else: [{ stat: { stress: 4 } }, { goto: "Ev_grind_barista_rude_fumble" }] } }] }>>
 <<choice "Charm him into a better mood" "Ev_grind_barista_rude_charm" { conditions: { stat: { id: "beauty", min: 40 } }, effects: [{ stat: { mood: 4 } }, { money: { amount: 2, account: "cash", reason: "Tips" } }] }>>
 
 :: Ev_grind_barista_rude_polite
@@ -180,5 +181,17 @@ A customer wants to speak to the manager. Today, that's you. You listen, apologi
 <h1>Handing in your notice</h1>
 
 You tell Jess you're leaving. She nods slowly. "Fair enough. You were good at this, you know. Door's open if you ever want to come back for a coffee."
+
+<<view "event-end">>
+
+:: Ev_grind_barista_rude_pro
+<<view "event-media">>
+You talk him through the difference between skimmed, semi and oat so confidently that he ends up ordering a flat white and thanking you for the education.
+
+<<view "event-end">>
+
+:: Ev_grind_barista_rude_fumble
+<<view "event-media">>
+You start explaining, lose your thread halfway through the milk options, and he rolls his eyes all the way out of the door.
 
 <<view "event-end">>

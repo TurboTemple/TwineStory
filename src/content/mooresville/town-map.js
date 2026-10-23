@@ -49,6 +49,13 @@
  *  Other fields:
  *   outdoor: true   → you're outside here (weather, cold and rain apply)
  *   ambient: [...]  → atmosphere lines; filled in from AMBIENT below
+ *   crowd: [{ when: CONDITION, level: "busy", text: "…" }, …]
+ *                   → how busy it is: the first entry that's true shows its
+ *                     text, and { crowd: "busy" } tests its level. Rooms use
+ *                     their place's unless they have their own.
+ *   dressCode: { when: CONDITION, text: "…" }
+ *                   → you can only go in dressed like this; `text` says why
+ *                     not (see the gym floor). Works for any condition.
  *
  *  Walking times are rough real-world distances: next door is a minute or
  *  two, across town is 20–25 minutes.
@@ -203,7 +210,19 @@
 
 		/* ---- Town Centre ------------------------------------------------------- */
 
-		place({ id: "high_street", name: "Mooresville High Street", district: "town_centre", outdoor: true, tags: ["street", "hub", "bus_stop"] });
+		place({
+			id: "high_street",
+			name: "Mooresville High Street",
+			district: "town_centre",
+			outdoor: true,
+			tags: ["street", "hub", "bus_stop"],
+			// How busy it is: the first line that's true is shown (and { crowd: "busy" } can test it).
+			crowd: [
+				{ when: { happening: "saturday_market" }, level: "busy", text: "The street is packed with market shoppers." },
+				{ when: { time: { from: "08:00", to: "18:00" } }, level: "busy", text: "Shoppers and buses crowd the pavements." },
+				{ when: { time: { from: "23:00", to: "06:00" } }, level: "quiet", text: "The street is empty apart from the odd taxi." },
+			],
+		});
 
 		// The Daily Grind (café, and the barista job: see town-work.js)
 		place({
@@ -212,6 +231,10 @@
 			district: "town_centre",
 			tags: ["cafe"],
 			hours: [hours.on(DAYS.MON_SAT, "07:30", "18:00"), hours.on(DAYS.SUN, "09:00", "16:00")],
+			crowd: [
+				{ when: { weekday: DAYS.WEEKDAYS, time: { from: "07:30", to: "09:30" } }, level: "busy", text: "The morning rush: the queue is nearly out of the door." },
+				{ when: { time: { from: "14:00", to: "16:00" } }, level: "quiet", text: "It's the quiet part of the afternoon." },
+			],
 		});
 		room({ id: "grind_counter", name: "Counter", parent: "daily_grind", tags: ["cafe"] });
 		room({ id: "grind_seating", name: "Seating Area", parent: "daily_grind", tags: ["cafe", "seating"] });
@@ -269,7 +292,14 @@
 		// PulseFit Gym
 		place({ id: "pulsefit", name: "PulseFit Gym", district: "town_centre", tags: ["gym"], hours: [hours.daily("06:00", "22:00")] });
 		room({ id: "pulsefit_reception", name: "Reception", parent: "pulsefit", tags: ["gym"] });
-		room({ id: "pulsefit_floor", name: "Gym Floor", parent: "pulsefit", tags: ["gym"] });
+		room({
+			id: "pulsefit_floor",
+			name: "Gym Floor",
+			parent: "pulsefit",
+			tags: ["gym"],
+			// Gym kit only: change in the changing rooms first.
+			dressCode: { when: { wearing: { attribute: "sportswear", min: 2 } }, text: "Gym kit only: trainers and a sporty top or bottoms (change in the changing rooms)" },
+		});
 		room({ id: "pulsefit_changing", name: "Changing Rooms", parent: "pulsefit", tags: ["gym", "toilet", "sink", "shower", "changing"] });
 
 		/* ---- Westgate (shopping centre) --------------------------------------- */
@@ -295,6 +325,25 @@
 		place({ id: "riverside_park", name: "Riverside Park", district: "riverside", outdoor: true, tags: ["park"] });
 		room({ id: "riverside_path", name: "River Path", parent: "riverside_park", outdoor: true, tags: ["seating"], innerMins: 3 });
 		room({ id: "riverside_kiosk", name: "Boathouse Kiosk", parent: "riverside_park", outdoor: true, innerMins: 4, hours: [hours.daily("10:00", "17:00")] });
+
+		// A block of flats. The flat itself is only open to you while you rent
+		// it (town-home.js); the hallway is shared.
+		const flatOnly = { livesAt: "riverside_flat" };
+		place({ id: "riverside_court", name: "Riverside Court", district: "riverside", tags: ["flats"] });
+		room({ id: "flat_living", name: "Flat 4: Living Room", parent: "riverside_court", tags: ["home", "sofa"], entry: flatOnly, innerMins: 2 });
+		room({ id: "flat_bedroom", name: "Flat 4: Bedroom", parent: "flat_living", tags: ["home", "bed", "changing"] });
+		room({ id: "flat_bathroom", name: "Flat 4: Bathroom", parent: "flat_living", tags: ["home", "toilet", "sink", "shower", "changing"] });
+		room({ id: "flat_kitchen", name: "Flat 4: Kitchen", parent: "flat_living", tags: ["home", "kitchen"] });
+
+		/* ---- Letting agent (High Street) -------------------------------------- */
+
+		place({
+			id: "keys_lettings",
+			name: "Keys & Co Lettings",
+			district: "town_centre",
+			tags: ["letting_agent"], // lists places to rent (town-home.js)
+			hours: [hours.on(DAYS.MON_SAT, "09:00", "17:30")],
+		});
 
 		/* ======================================================================
 		 *  4. Walking routes
@@ -322,6 +371,8 @@
 		walk({ from: "high_street", to: "arcade", mins: 10 });
 		walk({ from: "high_street", to: "riverside_park", mins: 12 });
 		walk({ from: "arcade", to: "riverside_park", mins: 15 });
+		walk({ from: "riverside_park", to: "riverside_court", mins: 4 });
+		walk({ from: "high_street", to: "keys_lettings", mins: 2 });
 
 		/* ======================================================================
 		 *  5. The Route 7 bus

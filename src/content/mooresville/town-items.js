@@ -57,6 +57,9 @@
  *                       mins     how long it takes
  *                       effects  what it does (stat changes, effects…)
  *                       consume  false = keep it after using (default: used up)
+ *   uses              how many goes it has before it runs out (leave out
+ *                     for things that last). An action takes a go with
+ *                     the effect { useUp: "makeup_kit" }.
  *   size              how much room it takes in a storage place (default 1)
  *   stackable         true/false to say whether copies share a slot in your
  *                     bag (leave out: clothing is unique, everything else stacks)
@@ -236,6 +239,7 @@
 		 * The makeup kit does nothing in your bag. Owning one lets you "Do your
 		 * makeup" in any bathroom (town-actions.js), which gives the "Made up"
 		 * effect (+Beauty for 8 hours, or until you shower: town-needs.js).
+		 * It has 10 goes, then it's used up.
 		 */
 
 		item({
@@ -243,6 +247,7 @@
 			name: "Makeup kit",
 			desc: "Foundation, mascara, a lipstick and a little mirror. Lets you do your makeup in any bathroom.",
 			price: 10,
+			uses: 10, // goes before it runs out
 			kind: "toiletries",
 			shops: ["freshway"],
 			stackable: false,
