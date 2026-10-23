@@ -69,6 +69,7 @@
  *   { item: { id: "apple", qty: 1 } }       get an item (negative = use up)
  *   { skill: { barista: 0.5 } }             improve a skill
  *   { homework: true }                      finish the homework due soonest
+ *   { habit: "coffee" }                     count today towards a habit (traits: town-traits.js)
  *   { note: "Text" }                        a line in the summary afterwards
  *
  *  CONDITIONS YOU CAN USE
@@ -188,7 +189,7 @@
 			label: "Make a coffee",
 			atTag: "kitchen",
 			mins: 5,
-			effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }],
+			effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 
 		// ---- Living room ----
@@ -207,7 +208,7 @@
 			mins: 30,
 			whileDoing: "jogging",
 			conditions: { stat: { id: "energy", min: 20 } },
-			effects: [{ body: { weight: -0.2 } }],
+			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
 		});
 		act({ id: "walk_green", label: "Walk round the green", at: "elm_park_green", mins: 20, whileDoing: "walking" });
 		act({ id: "feed_ducks", label: "Feed the ducks", at: "elm_green_pond", mins: 15, effects: [{ stat: { mood: 4, stress: -3 } }] });
@@ -247,7 +248,7 @@
 			at: "academy_sports_hall",
 			mins: 30,
 			whileDoing: "exercising",
-			effects: [{ body: { weight: -0.2 } }],
+			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
 		});
 		act({ id: "walk_field", label: "Walk laps of the field", at: "academy_field", mins: 20, whileDoing: "walking" });
 
@@ -261,7 +262,7 @@
 			at: "grind_counter",
 			mins: 5,
 			price: 3,
-			effects: [{ stat: { drink: 12, bladder: 10 } }, { status: "caffeinated" }],
+			effects: [{ stat: { drink: 12, bladder: 10 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 		act({
 			id: "cafe_tea",
@@ -421,7 +422,7 @@
 			mins: 60,
 			whileDoing: "exercising",
 			conditions: { status: "gym_pass", stat: { id: "energy", min: 20 } },
-			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }],
+			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }, { habit: "exercise" }],
 		});
 
 		/* ======================================================================

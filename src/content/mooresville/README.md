@@ -9,6 +9,7 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 | `town-kit.js` | Shorthand the other files use: day lists (`DAYS.WEEKDAYS`), opening hours, stat modifiers (`mod.add("mood", 2)`) |
 | `town-map.js` | Districts, places and their rooms, atmosphere lines, opening hours, walking routes, the Route 7 bus, taxis, money accounts |
 | `town-needs.js` | Stats (Health, Energy, Food, Drink, Bladder, Hygiene, Mood, Stress) and effects (Hungry, Tipsy, Caffeinated…) |
+| `town-traits.js` | Traits earned through habits (Caffeine addicted, Gym regular) |
 | `town-people.js` | Every person's character sheet, looks and weekly schedule |
 | `town-actions.js` | Everything under "Things to do", with prices and stat changes |
 | `town-items.js` | Storage (bag, wardrobe, kitchen cupboards), what's in them at the start, food and drink, groceries |
@@ -36,6 +37,6 @@ Your House —1— Elm Road —3— Patel's Corner Shop
                                  |— 3 Snips Hair Salon
                                  |— 6 PulseFit Gym         —10 The Arcade —15— Riverside Park
                                  '—12 Riverside Park
-Bus (Route 7, £1.80): Elm Road – Academy – High Street – Arcade
-Taxi (£3.20 + 35p a minute, for trips over a 10-minute walk): to Elm Road, High Street or the Arcade
+Bus (Route 7, £2): Elm Road – Academy – High Street – Arcade
+Taxi (£3 + 50p a minute, rounded to whole pounds, for trips over a 10-minute walk): to Elm Road, High Street or the Arcade
 ```

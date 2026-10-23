@@ -4,8 +4,9 @@ What you wear, the wardrobe and outfits.
 
 ## Data
 - `clothingSlot` — `{ id, label, order }` (coat, top, bottoms, bra, underwear, socks, shoes, accessory)
-- the `clothing` block on an item — `{ slots[], warmth, formality, modifiers[], … }`. A dress uses two slots (top + bottoms). Number attributes are added up by `outfitStats()`. `modifiers` are stat modifiers that apply while the item is worn (smart shoes tire you a little).
-- Effects from what you wear are statuses with `whileCond`, e.g. "Cosy" while wearing anything tagged `cosy`, "Smartly dressed" while outfit formality ≥ 9. Events can check these with `{ status: "smartly_dressed" }` or `{ wearing: { tag: "evening" } }`.
+- the `clothing` block on an item — `{ slots[], modifiers[] }`. A dress uses two slots (top + bottoms). `modifiers` are stat modifiers that apply while the item is worn. In the town, each item's price tier adds a mood boost here, and smart shoes tire you a little. (Any number attributes added later are summed by `outfitStats()`.)
+- What clothes *are* is told by simple yes/no **tags** on the item (decided by the user): `warm` (keeps the cold off), `waterproof`, `smart`, `cosy`, `sportswear`, `evening`, `sleepwear`. The shop and wardrobe show them.
+- Effects from what you wear are statuses with `whileCond`, e.g. "Cosy" while wearing anything tagged `cosy`, "Smartly dressed" while wearing two or more `smart` things. Events can check these with `{ status: "smartly_dressed" }` or `{ wearing: { tag: "evening" } }`.
 - `outfit` — `{ id, label, items[], start }`. The `start` outfit is put on at a new game (pyjamas).
 
 ## Rules
@@ -24,11 +25,11 @@ The wardrobe lists what you're wearing and what you could put on, each with a ti
 `wear(uid)`, `takeOff(uid, to?)`, `worn()`, `wornItems()`, `dressed()`, `canChangeHere()`, `outfitStats()`, `saveOutfit(name)`, `wearOutfit(name)`, `deleteOutfit(name)`
 
 ## Conditions
-`{ wearing: "item" }` / `{ wearing: { tag } }`, `{ dressed: true }`, `{ outfit: { formality: { min: 9 } } }`
+`{ wearing: "item" }` / `{ wearing: { tag, min? } }` (at least `min` things with the tag, default 1), `{ dressed: true }`, `{ outfit: { <number attribute>: { min, max } } }`
 
 ## UI
 "Get changed" on Here (where you can change) and on the Me page → `Clothing_Wardrobe`.
 
 ## Open decisions
-- Weather, so that warmth matters.
+- The price tiers and their mood boosts (£10 none, £20 +1, £50 +2, £100 +4), and which items are warm or smart.
 - Dirty clothes and laundry.

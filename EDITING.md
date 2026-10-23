@@ -11,7 +11,7 @@ This guide is for changing the game itself: prices, places, people, actions, eve
 5. Wait for the checks. A **green tick** means the game still builds. A **red cross** means something's wrong: open the failed check, and the message says which file and which definition.
 6. Merge the pull request. About a minute later the change is live at https://turbotemple.github.io/TwineStory/.
 
-You can always ask Claude to make a change instead ("make the flat white £3.50").
+You can always ask Claude to make a change instead ("make the flat white £4").
 
 ## Where things are
 
@@ -23,6 +23,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | A place's description | `src/story/mooresville/locations.twee` (passage `Loc_<id>`) |
 | Atmosphere lines under a place ("Rain taps against the window.") | `town-map.js`, part 2 |
 | Stats (Energy, Hunger…), how fast they change, and effects (Hungry, Tipsy…) | `town-needs.js` |
+| Traits (Caffeine addicted, Gym regular) and the habits that earn them | `town-traits.js` |
 | Things to do, their prices and what they do | `town-actions.js` |
 | Food, drink, groceries, the bag, wardrobe and cupboards | `town-items.js` |
 | Clothes, and effects clothes switch on | `town-clothing.js` |
@@ -44,10 +45,14 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 
 | Change | Where |
 |---|---|
-| Starting cash and bank balance | `town-map.js`, part 7: `start: pounds(35)` |
-| An item's price | `town-items.js` or `town-clothing.js`: `price: pounds(…)` |
-| A shop's own price for an item | `town-shops.js`: `{ item: "sandwich", price: pounds(2.99) }` |
-| The price of a café drink, pub meal, haircut… | `town-actions.js`: `price: pounds(…)` |
+| Starting cash and bank balance | `town-map.js`, part 7: `start: 35` |
+| Food and drink prices | `town-items.js`: `price: 3` (the price tiers are at the top of the file) |
+| Clothing prices and mood boosts | `town-clothing.js`, part 2: `TIERS` (£10 / £20 / £50 / £100) |
+| Which clothes are warm, waterproof or smart | `town-clothing.js`: `tags` |
+| A shop's own price for an item | `town-shops.js`: `{ item: "sandwich", price: 4 }` |
+| The price of a café drink, pub meal, haircut… | `town-actions.js`: `price: 3` (tiers at the top of the file) |
+| How cold a "cold day" is | `town-weather.js`: `coldBelow` |
+| How a trait is earned, what it needs, when it fades | `town-traits.js` |
 | Bus and taxi fares | `town-map.js`, part 6: `fare` |
 | Barista pay, shift times | `town-work.js`, part 3b |
 | Promotion points (Barista 20 / 50), shifts missed before being let go (3) | `town-work.js`, part 3a: `gates` |
@@ -64,7 +69,7 @@ Content is written as JavaScript objects, but you only need a few rules:
 - **Text goes in quotes:** `name: "Apple"`. If the text contains a `"`, use `\"` or write it with `'` quotes instead.
 - **Every line in a list or object ends with a comma.** A missing comma is the most common mistake: the check will fail and point to the line.
 - **Ids** are lowercase with underscores (`chocolate_bar`). They connect things together (a shop lists `"chocolate_bar"`), so **never rename an id** once it's in the game: old saves use it. Change the `name` or `label` instead, which is what players see.
-- **Money:** write `pounds(3.20)` for £3.20.
+- **Money:** whole pounds only, no pennies: `price: 20` is £20. Things that do the same should cost the same (decided by the user): see the tiers at the top of `town-items.js`, `town-actions.js` and `town-clothing.js`.
 - **Time:** durations are in **minutes** (`mins: 30`, `cooldown: 1440` = a day). Times of day are 24-hour text: `"07:30"`.
 - **Days:** `0` = Sunday, `1` = Monday … `6` = Saturday, or the shorthand `DAYS.WEEKDAYS`, `DAYS.SAT`, `DAYS.WEEKEND`…
 - **Stats** run from 0 to 100.
@@ -73,7 +78,6 @@ Content is written as JavaScript objects, but you only need a few rules:
 Shorthand from `town-kit.js`:
 
 ```js
-pounds(3.20)                         // £3.20
 DAYS.WEEKDAYS                        // Monday to Friday
 hours.daily("07:00", "22:00")        // open every day
 hours.on(DAYS.SAT, "09:00", "17:00") // open on Saturdays
@@ -99,10 +103,12 @@ Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: �
 | `{ stat: { id: "energy", min: 20, max: 80 } }` | a stat is in range |
 | `{ status: "tipsy" }` | an effect is on |
 | `{ skill: { id: "barista", min: 20 } }` | a skill is at least that level |
-| `{ money: { min: pounds(10) } }` | you have at least that much |
+| `{ money: { min: 10 } }` | you have at least £10 |
 | `{ has: "groceries" }` or `{ has: { item: "groceries", qty: 2 } }` | you have it with you (bag, or storage where you are) |
 | `{ wearing: "rain_jacket" }` or `{ wearing: { tag: "cosy" } }` | you're wearing it |
-| `{ outfit: { warmth: { min: 6 } } }` | your outfit's total warmth/formality is in range |
+| `{ wearing: { tag: "smart", min: 2 } }` | at least 2 things you're wearing have that tag |
+| `{ trait: "caffeine_addicted" }` | you have that trait |
+| `{ habit: { id: "coffee", days: 3, within: 7 } }` | you did that habit on 3 of the last 7 days |
 | `{ dressed: true }` | you're dressed to go out |
 | `{ at: "high_street" }` | you're there (or in one of its rooms) |
 | `{ open: true }` | where you are is open |
@@ -135,7 +141,9 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ statSet: { bladder: 0 } }` | set stats |
 | `{ status: "caffeinated" }` / `{ statusRemove: "caffeinated" }` | switch an effect on / off |
 | `{ status: { id: "calm", mins: 60 } }` | switch it on for a set time |
-| `{ money: { amount: pounds(5) } }` | earn money (negative = pay); add `account: "cash"` to choose |
+| `{ money: { amount: 5 } }` | earn £5 (negative = pay); add `account: "cash"` to choose |
+| `{ habit: "coffee" }` | count today towards a habit (traits are earned from habits) |
+| `{ trait: "gym_regular" }` / `{ traitRemove: "gym_regular" }` | give / take away a trait |
 | `{ item: { id: "apple", qty: 1 } }` | get an item (negative = use one up) |
 | `{ skill: { barista: 0.5 } }` | improve a skill |
 | `{ body: { weight: -0.2 } }` / `{ bodySet: { hair_colour: "pink" } }` | change / set a body part |
@@ -185,5 +193,5 @@ The build fails (red cross, nothing is published) if:
 Open the game with `?debug` on the end: https://turbotemple.github.io/TwineStory/?debug
 
 - Red banners at the top list any problems.
-- **Menu → Debug → Debug tools** lets you jump anywhere, skip time, add money, set stats, skills and relationships, jump a storyline to a stage, force or block events, and see the week's weather.
+- **Menu → Debug → Debug tools** lets you jump anywhere, skip time, add money, set stats, skills and relationships, give or take away traits, jump a storyline to a stage, force or block events, and see the week's weather.
 - If something looks wrong, take a screenshot and send it to Claude.

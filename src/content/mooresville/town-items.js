@@ -167,7 +167,7 @@
 			id: "energy_drink",
 			name: "Energy drink",
 			price: 2,
-			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 15, bladder: 8 } }, { status: "caffeinated" }] },
+			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 15, bladder: 8 } }, { status: "caffeinated" }, { habit: "coffee" }] },
 		});
 		drink({
 			id: "orange_juice",

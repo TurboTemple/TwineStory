@@ -81,6 +81,13 @@
 					for (const v of [0, 20, 50]) box.append(picker(`Set to ${v}`, skills, "Set", (id) => flow.perform(() => setup.skills.set(id, v))));
 				}
 
+				if (has("traits") && registry.all("trait").length) {
+					box.append(ui.el("h2", { text: "Traits" }));
+					const list = registry.all("trait").map((d) => [d.id, `${d.label}${setup.traits.has(d.id) ? " (have)" : ""}`]);
+					box.append(picker("Trait", list, "Give", (id) => flow.perform(() => setup.traits.gain(id))));
+					box.append(picker("Trait", list, "Take away", (id) => flow.perform(() => setup.traits.lose(id))));
+				}
+
 				if (has("storylines") && registry.all("storyline").length) {
 					box.append(ui.el("h2", { text: "Storylines" }));
 					box.append(ui.el("p", { class: "note", text: "Jump a storyline to a stage. Its entry event plays, as if you got there normally." }));

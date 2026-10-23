@@ -92,7 +92,7 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 	assert.equal(setup.fmt.time(setup.time.now()), "14:00");
 	assert.equal(setup.events.seen("grind_first_day"), 1);
 	assert.equal(L.stage("barista_job"), "trainee");
-	assert.equal(setup.money.balance("bank") - bank, 6000, "6 hours at the placeholder £10");
+	assert.equal(setup.money.balance("bank") - bank, 60, "6 hours at £10");
 	assert.match(plain(r.changes).map((c) => c.text).join(" "), /worked your shift: 6 hours/);
 	assert.equal(setup.jobs.shiftNow("grind_barista"), null, "one shift a day");
 
@@ -107,7 +107,7 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 	setup.skills.set("barista", 20);
 	assert.equal(L.stage("barista_job"), "barista");
 	assert.equal(setup.events.seen("grind_promotion"), 1);
-	assert.equal(setup.jobs.rate("grind_barista"), 1100);
+	assert.equal(setup.jobs.rate("grind_barista"), 11);
 	skipTo(setup, 6, "08:00");
 	setup.world.moveTo("grind_counter");
 	setup.jobs.work("grind_barista");

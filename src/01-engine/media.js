@@ -17,6 +17,7 @@
  *   npc/<id>/<part>          an NPC body-part picture
  *   bodyPart/<part>/<value>  the PC's body part at that value (or bodyPart/<part>)
  *   statusEffect/<id>        an active effect
+ *   trait/<id>               a trait
  *   pc/portrait              the player's portrait
  * A definition can also set `media` itself: a path or URL, or
  * { src, kind: "image" | "video", alt, poster }.

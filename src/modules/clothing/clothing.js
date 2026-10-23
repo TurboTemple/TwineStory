@@ -293,7 +293,7 @@
 								tick("wear", e.uid, `Put on ${def.name}`),
 								setup.media.thumb("item", def.id, def.name),
 								ui.el("span", { class: "inv-name", text: def.name }),
-								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)})` }))));
+								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)}${def.tags.length ? `; ${def.tags.join(", ")}` : ""})` }))));
 						}
 						box.append(list);
 					}

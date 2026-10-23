@@ -24,8 +24,8 @@ export function boot(opts = {}) {
 		before(setup) {
 			if (opts.includeTest) {
 				(setup.__testContent ??= []).push((R) => {
-					R.define("account", { id: "test_cash", label: "Cash", kind: "cash", start: 2000, order: 0 });
-					R.define("account", { id: "test_bank", label: "Bank card", kind: "bank", start: 10000, order: 1 });
+					R.define("account", { id: "test_cash", label: "Cash", kind: "cash", start: 20, order: 0 });
+					R.define("account", { id: "test_bank", label: "Bank card", kind: "bank", start: 100, order: 1 });
 				});
 			}
 			before?.(setup);

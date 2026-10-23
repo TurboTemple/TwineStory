@@ -18,11 +18,11 @@ function bootTown(opts) {
 	return g;
 }
 
-test("a new game starts in your bedroom at 07:00 with £215", () => {
+test("a new game starts in your bedroom at 07:00 with £215 (whole pounds)", () => {
 	const { setup } = bootTown();
 	assert.equal(setup.world.loc(), "home_bedroom");
 	assert.equal(setup.fmt.time(setup.time.now()), "07:00");
-	assert.equal(setup.fmt.money(setup.money.balance()), "£215.00");
+	assert.equal(setup.fmt.money(setup.money.balance()), "£215");
 	assert.equal(setup.character.age(), 18);
 });
 
@@ -93,7 +93,7 @@ test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
 	S.travel.go("elm_road", "walk");
 	const bus = S.travel.go("academy", "bus7");
 	assert.equal(bus.ok, true);
-	assert.equal(S.money.balance("cash"), 3500 - 180);
+	assert.equal(S.money.balance("cash"), 35 - 2);
 	go("academy_form_room");
 	assert.equal(S.fmt.time(S.time.now()), "07:41", "school isn't open until 07:45");
 	assert.equal(S.world.loc(), "academy");
@@ -166,7 +166,7 @@ test("Route 7 only runs from its stops, through each stop on the way", () => {
 	setup.world.moveTo("corner_shop");
 	assert.deepEqual(opts(setup, "bus7"), []);
 	setup.world.moveTo("elm_road");
-	assert.deepEqual(opts(setup, "bus7"), [["academy", 6, 180], ["high_street", 13, 180], ["arcade", 17, 180]]);
+	assert.deepEqual(opts(setup, "bus7"), [["academy", 6, 2], ["high_street", 13, 2], ["arcade", 17, 2]]);
 	const arcade = setup.travel.options().find((o) => o.mode.id === "bus7" && o.to === "arcade");
 	assert.deepEqual(plain(arcade.legs.map((l) => l.to)), ["academy", "high_street", "arcade"]);
 });
@@ -174,8 +174,8 @@ test("Route 7 only runs from its stops, through each stop on the way", () => {
 test("taxis go to hubs, only for trips longer than a 10-minute walk", () => {
 	const { setup } = bootTown();
 	setup.world.moveTo("elm_road");
-	// High Street: 25 min walk → 8 min taxi, £3.20 + 8 × 35p. Arcade: 35 → 11 min.
-	assert.deepEqual(opts(setup, "taxi"), [["high_street", 8, 600], ["arcade", 11, 705]]);
+	// High Street: 25 min walk → 8 min taxi, £3 + 8 × 50p = £7. Arcade: 35 → 11 min, £8.50 → £9.
+	assert.deepEqual(opts(setup, "taxi"), [["high_street", 8, 7], ["arcade", 11, 9]]);
 	setup.world.moveTo("corner_shop");
 	assert.ok(!opts(setup, "taxi").some(([to]) => to === "elm_road"), "Elm Road is only a 3-minute walk");
 });
@@ -188,16 +188,16 @@ test("travelling pays the fare from cash first, takes the time and arrives", () 
 	assert.equal(r.arrived, true);
 	assert.equal(setup.time.now() - t0, 17);
 	assert.equal(setup.world.loc(), "arcade");
-	assert.equal(setup.money.balance("cash"), 3500 - 180);
+	assert.equal(setup.money.balance("cash"), 35 - 2);
 });
 
 test("you can't travel if you can't pay; no time passes", () => {
 	const { setup, vars } = bootTown();
 	setup.world.moveTo("elm_road");
-	vars.money.balances = { cash: 100, bank: 0 };
+	vars.money.balances = { cash: 1, bank: 0 };
 	const o = setup.travel.options().find((x) => x.mode.id === "bus7" && x.to === "academy");
 	assert.equal(o.ok, false);
-	assert.match(o.reasons[0], /Not enough money \(£1\.80 needed\)/);
+	assert.match(o.reasons[0], /Not enough money \(£2 needed\)/);
 	const t0 = setup.time.now();
 	assert.equal(setup.travel.go("academy", "bus7").ok, false);
 	assert.equal(setup.time.now(), t0);

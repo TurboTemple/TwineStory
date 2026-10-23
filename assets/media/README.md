@@ -17,6 +17,7 @@ Put a file in the right folder with the right name and the game uses it automati
 | A part of your body, for a look | `bodyPart/<part>/<look>` | `bodyPart/weight/slim.webp`, `bodyPart/hair_colour/dark_brown.webp` |
 | A part of your body, any look | `bodyPart/<part>` | `bodyPart/bust.webp` |
 | An effect | `statusEffect/<id>` | `statusEffect/tipsy.gif` |
+| A trait | `trait/<id>` | `trait/caffeine_addicted.webp` |
 | Your portrait | `pc/portrait` | `pc/portrait.webp` |
 
 - **Ids** are the names used in the game files: e.g. `red_lion` in `src/content/mooresville/town-map.js`. On the Debug tools page, the place list shows every place.

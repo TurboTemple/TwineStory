@@ -27,7 +27,7 @@ test("getting dressed from the wardrobe; pyjamas go back in it", () => {
 	assert.equal(setup.clothing.dressed(), true);
 	assert.ok(uidOf(setup, "wardrobe", "pyjamas"), "pyjamas were swapped back into the wardrobe");
 	assert.equal(setup.cond.test({ wearing: "blue_jeans" }), true);
-	assert.deepEqual(plain(setup.clothing.outfitStats()), { warmth: 5, formality: 1 });
+	assert.equal(setup.cond.test({ wearing: { tag: "warm" } }), false, "a T-shirt and jeans aren't warm");
 });
 
 test("a dress covers top and bottom; you can only change in the right places", () => {
@@ -69,12 +69,16 @@ test("clothes switch effects on: cosy, smartly dressed; and items carry their ow
 	for (const id of ["oxford_shirt", "chinos", "smart_shoes"]) setup.inventory.add(id, 1, "wardrobe");
 	for (const id of ["oxford_shirt", "chinos", "smart_shoes"]) setup.clothing.wear(uidOf(setup, "wardrobe", id));
 	assert.equal(setup.status.has("cosy"), false);
-	assert.equal(setup.status.has("smartly_dressed"), true, "formality 3 + 3 + 4 = 10");
+	assert.equal(setup.status.has("smartly_dressed"), true, "three smart things (two are enough)");
 	assert.ok(setup.stats.modifiers("energy").some((m) => m.source === "item:smart_shoes"));
 	const r0 = setup.stats.rate("energy");
 	setup.clothing.wear(uidOf(setup, "wardrobe", "trainers"));
 	assert.equal(setup.stats.rate("energy"), r0 + 0.5, "trainers instead of smart shoes");
-	assert.equal(setup.status.has("smartly_dressed"), false);
+	assert.equal(setup.status.has("smartly_dressed"), true, "the shirt and chinos are still two smart things");
+	setup.clothing.wear(uidOf(setup, "wardrobe", "blue_jeans"));
+	assert.equal(setup.status.has("smartly_dressed"), false, "only one smart thing now");
+	// Better clothes lift your mood more (the tier).
+	assert.ok(setup.stats.modifiers("mood").some((m) => m.source === "item:oxford_shirt" && m.value === 2), "a good item: Mood +2");
 });
 
 /* ---- Shops and the bag ----------------------------------------------------- */
@@ -92,7 +96,7 @@ test("buying puts the item in your bag and takes the money", () => {
 	const r = setup.shops.buy("patels", "chocolate_bar");
 	assert.equal(r.ok, true);
 	assert.equal(setup.inventory.count("chocolate_bar", ["bag"]), 1);
-	assert.equal(setup.money.balance("cash"), 3500 - 95);
+	assert.equal(setup.money.balance("cash"), 35 - 1);
 	setup.shops.buy("patels", "chocolate_bar");
 	assert.equal(setup.inventory.entries("bag").length, 1, "stackable items share one entry");
 	assert.equal(setup.inventory.count("chocolate_bar", ["bag"]), 2);
@@ -113,9 +117,9 @@ test("shops: closed, too expensive, or your bag is full", () => {
 	at(setup, 0, "22:30");
 	assert.match(setup.shops.buy("patels", "cola").changes[0].text, /closed/);
 	at(setup, 1, "08:00");
-	vars.money.balances = { cash: 50, bank: 0 };
+	vars.money.balances = { cash: 0, bank: 0 };
 	assert.match(setup.shops.buy("patels", "cola").changes[0].text, /Not enough money/);
-	vars.money.balances.bank = 100000;
+	vars.money.balances.bank = 1000;
 	for (let i = 0; i < 8; i++) setup.shops.buy("patels", "groceries"); // 8 × size 2 = 16
 	assert.match(setup.shops.buy("patels", "cola").changes[0].text, /Not enough room in your bag/);
 });
@@ -141,7 +145,7 @@ test("buying clothes and changing in the fitting room", () => {
 	at(setup, 0, "10:00");
 	setup.world.moveTo("arcade_urban_thread");
 	assert.equal(setup.shops.buy("urban_thread", "denim_shorts").ok, true);
-	assert.equal(setup.money.balance(), 21500 - 1800);
+	assert.equal(setup.money.balance(), 215 - 20);
 	setup.world.walkTo("urban_thread_fitting");
 	assert.equal(setup.clothing.wear(uidOf(setup, "bag", "denim_shorts")).ok, true);
 	assert.ok(uidOf(setup, "bag", "blue_jeans"), "jeans went into your bag");

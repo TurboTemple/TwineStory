@@ -185,6 +185,7 @@
 			const sourceName = (src) => {
 				if (!src) return "";
 				if (src.startsWith("item:")) return registry.tryGet("item", src.slice(5))?.name ?? src;
+				if (src.startsWith("trait:")) return registry.tryGet("trait", src.slice(6))?.label ?? src;
 				return has("status") && registry.tryGet("statusEffect", src) ? setup.status.label(src) : src;
 			};
 

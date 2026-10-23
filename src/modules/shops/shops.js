@@ -147,13 +147,15 @@
 						const li = ui.el("li", { class: "inv-row" },
 							setup.media.thumb("item", item.id, item.name),
 							ui.el("span", { class: "inv-name", text: item.name }),
-							ui.el("span", { class: "inv-price", text: ` ${fmt.money(cost)}` }),
+							ui.el("span", { class: "inv-price", text: fmt.money(cost) }),
 							ui.action("Buy", () => {
 								flow.request("Shops_Shop");
 								return shops.buy(id, item.id);
 							}, { disabled: Boolean(closed) || setup.money.balance() < cost }));
 						if (owned) li.append(ui.el("span", { class: "note", text: ` (you have ${owned})` }));
-						if (item.desc) li.append(ui.el("p", { class: "note", text: item.desc }));
+						// Tags say what clothes do (warm, waterproof, smart…).
+						const tags = item.clothing ? item.tags : [];
+						if (item.desc || tags.length) li.append(ui.el("p", { class: "note", text: [tags.join(", "), item.desc].filter(Boolean).join(" · ") }));
 						ul.append(li);
 					}
 					box.append(ul);

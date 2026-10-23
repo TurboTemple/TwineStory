@@ -4,19 +4,19 @@ The day's weather, worked out from the climate data and the game's seed. It's th
 
 ## Data
 - `weatherKind` — `{ id, label, icon, wet, tags, order }` (tag `warm` nudges temperatures up)
-- `climate` — `{ id, months: { 1…12: { temp: [min, max], kinds: { [kind]: weight } } }, generate ("seasonal"), comfortTemp (18), warmthPerDegree (0.5) }`
+- `climate` — `{ id, months: { 1…12: { temp: [min, max], kinds: { [kind]: weight } } }, generate ("seasonal"), coldBelow (10), warmTag ("warm") }`
 
 Other generation models: `setup.weather.registerGenerator(name, (climate, day) => ({ kind, temp }))`.
 
 ## API (`setup.weather`)
-`onDay(day)`, `at(t)`, `warmthNeeded(t)`, `outdoors()`
+`onDay(day)`, `at(t)`, `isCold(t)`, `dressedWarm()`, `outdoors()`
 
-Outfit warmth needed = (comfortTemp − temperature) × warmthPerDegree, rounded, never below 0.
+Warmth is yes or no (decided by the user): a day below `coldBelow` °C is cold, and wearing anything tagged `warm` is enough to keep the cold off.
 
 ## Conditions
 - `{ weather: { kind?, wet?, tempMin?, tempMax? } }`
 - `{ outdoors: true }` (the location has `outdoor: true`)
-- `{ tooCold: true }` (outdoors and your outfit's warmth is below what's needed)
+- `{ tooCold: true }` (outdoors on a cold day, wearing nothing warm)
 
 Content uses these for the Cold and Getting wet effects, and for ambient lines.
 

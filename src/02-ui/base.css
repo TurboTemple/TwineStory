@@ -474,3 +474,9 @@
 .confirm {
 	margin-top: 0.5rem;
 }
+
+/* Prices sit a little apart from the item name. */
+.inv-price {
+	margin: 0 0.5rem;
+	font-variant-numeric: tabular-nums;
+}
