@@ -12,7 +12,7 @@ function game() {
 				R.define("location", { id: "t_home", name: "Home", tags: ["start"] });
 				R.define("location", { id: "t_street", name: "Street" });
 				R.define("location", { id: "t_pub", name: "Test Pub", hours: [{ from: "11:00", to: "23:00" }] });
-				R.define("location", { id: "t_pub_bar", name: "Bar", parent: "t_pub", innerMins: 2 });
+				R.define("location", { id: "t_pub_bar", name: "Bar", parent: "t_pub", innerMins: 2, links: ["t_pub", "t_pub_toilets"] });
 				R.define("location", { id: "t_pub_toilets", name: "Toilets", parent: "t_pub", tags: ["toilet"] });
 				R.define("location", { id: "t_pub_cubicle", name: "Cubicle", parent: "t_pub_toilets" });
 				R.define("travelMode", { id: "t_walk", label: "Walk", network: "t_walk" });

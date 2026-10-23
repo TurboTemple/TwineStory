@@ -75,7 +75,7 @@ async function begin(page, name) {
 /** Play the start of a day in the real town. */
 async function playTown(page, label) {
 	await begin(page, "Sam");
-	await expectPassage(page, "Here", /Your Bedroom[\s\S]*Around here[\s\S]*Sleep \(1 hour\)/, `${label}: bedroom`);
+	await expectPassage(page, "Here", /Your Bedroom[\s\S]*Around here[\s\S]*Sleep:[\s\S]*1 hr/, `${label}: bedroom`);
 	const side = await sidebar(page);
 	for (const bit of ["Sam", "18 · she/her", "07:00", "£35", "£180", "Energy", "Bladder", "Saves", "Settings"]) {
 		if (!side.includes(bit)) failures.push(`${label}: sidebar is missing "${bit}"`);
@@ -85,8 +85,15 @@ async function playTown(page, label) {
 	await click(page, "Have a shower");
 	await expectPassage(page, "Here", /Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Bathroom/, `${label}: shower`);
 	if (!(await sidebar(page)).includes("Refreshed")) failures.push(`${label}: Refreshed effect not in sidebar`);
+	// Rooms open onto each other: bedroom → living room → the hallway (the front door).
+	await click(page, "Your Bedroom");
+	if ((await page.textContent("#passages")).includes("Go to")) failures.push(`${label}: no travel from inside a room`);
+	await click(page, "Living Room");
+	await click(page, "Back to Your House");
 	// In pyjamas you can't go out: the travel buttons say why.
 	await expectPassage(page, "Here", /Go to[\s\S]*You need to get dressed/, `${label}: not dressed`);
+	if ((await page.textContent("#passages")).includes("Taxi")) failures.push(`${label}: taxis belong in the phone app`);
+	await click(page, "Living Room");
 	await click(page, "Your Bedroom");
 	await click(page, "Get changed");
 	await expectPassage(page, "Clothing_Wardrobe", /not dressed to go out[\s\S]*tick to put on/, `${label}: wardrobe`);
@@ -107,10 +114,12 @@ async function playTown(page, label) {
 		if (!prof.includes(bit)) failures.push(`${label}: Profile tab is missing "${bit}"`);
 	}
 	await page.evaluate(() => window.SugarCube.setup.shell.setTab("overview"));
-	await expectPassage(page, "Here", /Go to[\s\S]*Includes 1 minute to get outside/, `${label}: travel from a room`);
-	await click(page, "Elm Road (1 minute)");
+	await click(page, "Living Room");
+	await click(page, "Back to Your House");
+	await expectPassage(page, "Here", /Go to[\s\S]*Elm Road · 1 min/, `${label}: travel from the front door`);
+	await click(page, "Elm Road · 1 min");
 	// Shopping and eating from your bag.
-	await click(page, "Patel's Corner Shop (3 minutes)");
+	await click(page, "Patel's Corner Shop · 3 min");
 	await click(page, "Browse Patel's Corner Shop");
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Buy" }).click();
 	await expectPassage(page, "Shops_Shop", /Bought Chocolate bar for £1\./, `${label}: buy`);
@@ -118,10 +127,10 @@ async function playTown(page, label) {
 	await page.evaluate(() => window.SugarCube.Engine.play("Inventory_Bag"));
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Eat" }).click();
 	await expectPassage(page, "Here", /Eat: Chocolate bar/, `${label}: eat`);
-	await click(page, "Elm Road (3 minutes)");
+	await click(page, "Elm Road · 3 min");
 	// Keep the run predictable: no random bus delay.
 	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
-	await click(page, "Mooresville High Street (13 minutes, £2)");
+	await click(page, "Mooresville High Street · 13 min, £2");
 	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£2\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
 	if (!(await sidebar(page)).includes("£32")) failures.push(`${label}: cash should be £32 after the chocolate and the fare`);
 }
@@ -194,7 +203,7 @@ async function playJob(page) {
 	await skipTo(4, "22:00");
 	// An empty bladder, so nothing wakes you before the morning.
 	await page.evaluate(() => window.SugarCube.setup.stats.set("bladder", 0));
-	await click(page, "Sleep (until 07:00)");
+	await click(page, "until 07:00");
 	await expectPassage(page, "Journal_Summary", /Your day[\s\S]*Work: 1 shift/, "daily summary");
 	await click(page, "Get up");
 	await expectPassage(page, "Here", /Your Bedroom/, "after waking");

@@ -3,7 +3,7 @@
 Contacts, messages, an alarm, and the apps on the phone. Opening apps doesn't move time.
 
 ## Data
-`app` — `{ id, label, icon, view, order, conditions, badge }`. `view` is a named view; `badge` names a badge hook (`setup.phone.registerBadge(name, () => n)`, built in: `"unread"`).
+`app` — `{ id, label, icon, view, order, conditions, badge }`. `view` is a named view; `badge` names a badge hook (`setup.phone.registerBadge(name, () => n)`, built in: `"unread"`). The Taxi app uses the travel module's `app-taxi` view.
 
 Views provided: `app-messages`, `app-email` (emails: `{ message: { from, text, via: "email", subject } }`; badge `unread_email`), `app-calendar`, `app-alarm` (here), `app-bank` (money), `app-map` (world), `app-diary` (storylines).
 

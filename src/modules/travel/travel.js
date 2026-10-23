@@ -41,6 +41,9 @@
 					cost: "none",
 					fare: {},
 					payWith: null,
+					// viaPhone: true — booked from the phone's Taxi app (view
+					// "app-taxi") instead of listed under "Go to".
+					viaPhone: false,
 				},
 				refs: { payWith: "account" },
 				conditions: ["conditions"],
@@ -254,27 +257,55 @@
 
 			/* ---- UI --------------------------------------------------------- */
 
-			// Decided by the user: every place is a hub. All the places you can get
-			// to from here are buttons at the bottom of the page; one tap goes there.
-			setup.world.addHereSection("travel", 40, (box) => {
-				const opts = travel.options();
-				if (!opts.length) return;
+			/** @returns {boolean} Whether you're at a place's entrance (not in a room), where journeys start. */
+			travel.atEntrance = () => {
 				const loc = setup.world.loc();
-				const exit = setup.world.exitMins(loc);
+				return Boolean(loc) && !registry.get("location", loc).parent;
+			};
+
+			// Decided by the user: journeys start from a place's entrance (walk out
+			// through the rooms first), and taxis are booked on the phone. All the
+			// places you can get to are short buttons at the bottom of the page.
+			setup.world.addHereSection("travel", 40, (box) => {
+				if (!travel.atEntrance()) return;
+				const opts = travel.options().filter((o) => !o.mode.viaPhone);
+				if (!opts.length) return;
 				box.append(ui.el("h2", { text: "Go to" }));
-				if (exit) box.append(ui.el("p", { class: "note", text: `Includes ${fmt.duration(exit)} to get outside.` }));
 				const byMode = new Map();
 				for (const o of opts) byMode.set(o.mode, [...(byMode.get(o.mode) ?? []), o]);
 				for (const [mode, list] of byMode) {
 					const group = ui.el("div", { class: "go-group" }, ui.el("p", { class: "go-mode", text: mode.label }));
+					const row = ui.el("div", { class: "chips" });
 					for (const o of list) {
-						const meta = [fmt.duration(o.mins), o.cost ? fmt.money(o.cost) : null].filter(Boolean).join(", ");
-						group.append(ui.action(`${registry.get("location", o.to).name} (${meta})`, () => travel.go(o.to, mode.id), { disabled: !o.ok, title: o.reasons.join("; ") || null }));
+						const meta = [fmt.short(o.mins), o.cost ? fmt.money(o.cost) : null].filter(Boolean).join(", ");
+						row.append(ui.action(`${registry.get("location", o.to).name} · ${meta}`, () => travel.go(o.to, mode.id), { disabled: !o.ok, title: o.reasons.join("; ") || null }));
 					}
+					group.append(row);
 					const blocked = [...new Set(list.filter((o) => !o.ok).flatMap((o) => o.reasons))];
 					if (blocked.length) group.append(ui.el("p", { class: "locked", text: blocked.join("; ") }));
 					box.append(group);
 				}
+			});
+
+			// The phone's Taxi app: book a ride (modes with viaPhone). You're
+			// picked up outside, so you need to be at a place's entrance.
+			ui.view("app-taxi", (box) => {
+				const opts = travel.options().filter((o) => o.mode.viaPhone);
+				if (!travel.atEntrance()) {
+					box.append(ui.el("p", { class: "note", text: "Go outside first: the driver picks you up at the door." }));
+					return;
+				}
+				if (!opts.length) {
+					box.append(ui.el("p", { class: "note", text: "No rides from here." }));
+					return;
+				}
+				const ul = ui.el("ul", { class: "m-travel" });
+				for (const o of opts) {
+					const li = ui.el("li", {}, ui.action(`${registry.get("location", o.to).name} · ${fmt.short(o.mins)}${o.cost ? `, ${fmt.money(o.cost)}` : ""}`, () => travel.go(o.to, o.mode.id), { disabled: !o.ok }));
+					if (!o.ok) li.append(ui.el("p", { class: "locked", text: o.reasons.join("; ") }));
+					ul.append(li);
+				}
+				box.append(ul);
 			});
 
 			ui.view("travel", (box) => {

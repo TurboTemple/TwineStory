@@ -40,7 +40,7 @@ test("a dress covers top and bottom; you can only change in the right places", (
 	const worn = plain(setup.clothing.worn().filter((w) => w.item).map((w) => [w.slot.id, w.item.id]));
 	assert.deepEqual(worn.filter(([s]) => s === "top" || s === "bottom"), [["top", "summer_dress"], ["bottom", "summer_dress"]]);
 	assert.ok(uidOf(setup, "wardrobe", "white_tshirt") && uidOf(setup, "wardrobe", "blue_jeans"));
-	setup.world.walkTo("home");
+	setup.world.walkTo("home_living_room");
 	assert.equal(setup.clothing.canChangeHere(), false);
 	assert.equal(setup.clothing.takeOff(setup.clothing.wornItems()[0].uid).ok, false);
 });

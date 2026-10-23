@@ -19,7 +19,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 
 | To change… | Edit this file |
 |---|---|
-| Places, rooms, opening hours, walking times, the bus, taxis, starting money | `town-map.js` |
+| Places, rooms, opening hours, walking times, the bus, taxis, starting money | `town-map.js` (which rooms open onto which: `links`; taxis only on the phone: `viaPhone`) |
 | A place's description | `src/story/mooresville/locations.twee` (passage `Loc_<id>`) |
 | Atmosphere lines under a place ("Rain taps against the window.") | `town-map.js`, part 2 |
 | Stats (Energy, Hunger…), how fast they change, and effects (Hungry, Tipsy…) | `town-needs.js` |

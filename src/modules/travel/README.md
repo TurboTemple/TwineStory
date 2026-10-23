@@ -32,7 +32,7 @@ Journeys start from the site: if you're in a room, you walk out first (shown as 
 - Fare: `registerCostHook(name, (mins, legs, mode, ctx) => pence)`. Built in: `"none"`, `"flat"`, `"meter"`.
 
 ## Inline buttons
-The Here screen ends with **Go to**: one button per destination, grouped by Walk / Bus / Taxi, each with its time and fare. One tap travels. The walking rule (one neighbouring place at a time) is unchanged.
+The Here screen ends with **Go to**, but only at a place's entrance (a place with no parent: the hallway, the shop door), never from inside a room: one button per destination, grouped by Walk / Bus, each with its time and fare. One tap travels. Modes with `viaPhone: true` (the taxi) are left out there and booked from the phone's **Taxi** app instead (view `app-taxi`), also only from an entrance. `travel.atEntrance()` says whether you are at one. The walking rule (one neighbouring place at a time) is unchanged.
 
 ## API (`setup.travel`)
 `options()`, `go(to, modeId)`, `isTravelling()`

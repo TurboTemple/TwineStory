@@ -50,6 +50,12 @@
  *  Other fields:
  *   outdoor: true   → you're outside here (weather, cold and rain apply)
  *   ambient: [...]  → atmosphere lines; filled in from AMBIENT below
+ *   links: ["room_a", "room_b"]
+ *                   → the rooms you can walk to straight from here (doors).
+ *                     Links work both ways. Without `links`, a room opens
+ *                     onto its place's entrance and any rooms inside it.
+ *                     You can only travel to other places from a place's
+ *                     entrance (the place itself, e.g. your hallway).
  *   crowd: [{ when: CONDITION, level: "busy", text: "…" }, …]
  *                   → how busy it is: the first entry that's true shows its
  *                     text, and { crowd: "busy" } tests its level. Rooms use
@@ -180,11 +186,13 @@
 
 		/* ---- Elm Park (home) -------------------------------------------------- */
 
-		place({ id: "home", name: "Your House", district: "elm_park", tags: ["home"] });
-		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing", "computer"] });
-		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "changing"] });
-		room({ id: "home_kitchen", name: "Kitchen", parent: "home", tags: ["home", "kitchen"] });
-		room({ id: "home_living_room", name: "Living Room", parent: "home", tags: ["home", "sofa", "tv"] });
+		// Your house. `links` says which rooms open onto which (both ways): you
+		// walk bedroom → living room → hallway to get out of the front door.
+		place({ id: "home", name: "Your House", district: "elm_park", tags: ["home"], links: ["home_living_room", "home_kitchen"] });
+		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing", "computer"], links: ["home_bathroom", "home_living_room"] });
+		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "changing"], links: ["home_bedroom"] });
+		room({ id: "home_kitchen", name: "Kitchen", parent: "home", tags: ["home", "kitchen"], links: ["home_living_room"] });
+		room({ id: "home_living_room", name: "Living Room", parent: "home", tags: ["home", "sofa", "tv"], links: ["home_bedroom", "home_kitchen"] });
 
 		place({ id: "elm_road", name: "Elm Road", district: "elm_park", outdoor: true, tags: ["street", "hub", "bus_stop"] });
 
@@ -236,15 +244,16 @@
 			name: "The Daily Grind",
 			district: "town_centre",
 			tags: ["cafe"],
+			links: ["grind_counter", "grind_seating"], // the toilet is through the seating area
 			hours: [hours.on(DAYS.MON_SAT, "07:30", "18:00"), hours.on(DAYS.SUN, "09:00", "16:00")],
 			crowd: [
 				{ when: { weekday: DAYS.WEEKDAYS, time: { from: "07:30", to: "09:30" } }, level: "busy", text: "The morning rush: the queue is nearly out of the door." },
 				{ when: { time: { from: "14:00", to: "16:00" } }, level: "quiet", text: "It's the quiet part of the afternoon." },
 			],
 		});
-		room({ id: "grind_counter", name: "Counter", parent: "daily_grind", tags: ["cafe"] });
-		room({ id: "grind_seating", name: "Seating Area", parent: "daily_grind", tags: ["cafe", "seating"] });
-		room({ id: "grind_toilet", name: "Toilet", parent: "daily_grind", tags: ["toilet", "sink"] });
+		room({ id: "grind_counter", name: "Counter", parent: "daily_grind", tags: ["cafe"], links: ["daily_grind", "grind_seating"] });
+		room({ id: "grind_seating", name: "Seating Area", parent: "daily_grind", tags: ["cafe", "seating"], links: ["daily_grind", "grind_toilet"] });
+		room({ id: "grind_toilet", name: "Toilet", parent: "daily_grind", tags: ["toilet", "sink"], links: ["grind_seating"] });
 
 		// The Red Lion (pub). Open till midnight on Friday and Saturday.
 		place({
@@ -252,16 +261,18 @@
 			name: "The Red Lion",
 			district: "town_centre",
 			tags: ["pub"],
+			links: ["lion_bar"],
 			hours: [
 				hours.on([1, 2, 3, 4], "11:00", "23:00"), // Monday–Thursday
 				hours.on([5, 6], "11:00", "24:00"),       // Friday–Saturday
 				hours.on(DAYS.SUN, "12:00", "22:30"),
 			],
 		});
-		room({ id: "lion_bar", name: "The Bar", parent: "red_lion", tags: ["pub"] });
-		room({ id: "lion_lounge", name: "Lounge", parent: "red_lion", tags: ["pub", "seating"] });
-		room({ id: "lion_beer_garden", name: "Beer Garden", parent: "red_lion", tags: ["pub", "seating"], outdoor: true });
-		room({ id: "lion_toilets", name: "Toilets", parent: "red_lion", tags: ["toilet", "sink"] });
+		// The door opens into the bar; the lounge leads out to the beer garden.
+		room({ id: "lion_bar", name: "The Bar", parent: "red_lion", tags: ["pub"], links: ["red_lion", "lion_lounge", "lion_toilets"] });
+		room({ id: "lion_lounge", name: "Lounge", parent: "red_lion", tags: ["pub", "seating"], links: ["lion_bar", "lion_beer_garden", "lion_toilets"] });
+		room({ id: "lion_beer_garden", name: "Beer Garden", parent: "red_lion", tags: ["pub", "seating"], outdoor: true, links: ["lion_lounge"] });
+		room({ id: "lion_toilets", name: "Toilets", parent: "red_lion", tags: ["toilet", "sink"], links: ["lion_bar", "lion_lounge"] });
 
 		// Wellbeing Centre (Dr Okafor, the therapist)
 		place({
@@ -296,17 +307,19 @@
 		room({ id: "threadline_fitting", name: "Fitting Rooms", parent: "threadline", tags: ["clothes", "fitting_room", "changing"] });
 
 		// PulseFit Gym
-		place({ id: "pulsefit", name: "PulseFit Gym", district: "town_centre", tags: ["gym"], hours: [hours.daily("06:00", "22:00")] });
-		room({ id: "pulsefit_reception", name: "Reception", parent: "pulsefit", tags: ["gym"] });
+		place({ id: "pulsefit", name: "PulseFit Gym", district: "town_centre", tags: ["gym"], links: ["pulsefit_reception"], hours: [hours.daily("06:00", "22:00")] });
+		// Reception leads to the changing rooms and the gym floor.
+		room({ id: "pulsefit_reception", name: "Reception", parent: "pulsefit", tags: ["gym"], links: ["pulsefit", "pulsefit_changing", "pulsefit_floor"] });
 		room({
 			id: "pulsefit_floor",
 			name: "Gym Floor",
 			parent: "pulsefit",
 			tags: ["gym"],
+			links: ["pulsefit_reception", "pulsefit_changing"],
 			// Gym kit only: change in the changing rooms first.
 			dressCode: { when: { wearing: { attribute: "sportswear", min: 2 } }, text: "Gym kit only: trainers and a sporty top or bottoms (change in the changing rooms)" },
 		});
-		room({ id: "pulsefit_changing", name: "Changing Rooms", parent: "pulsefit", tags: ["gym", "toilet", "sink", "shower", "changing"] });
+		room({ id: "pulsefit_changing", name: "Changing Rooms", parent: "pulsefit", tags: ["gym", "toilet", "sink", "shower", "changing"], links: ["pulsefit_reception", "pulsefit_floor"] });
 
 		/* ---- Westgate (shopping centre) --------------------------------------- */
 
@@ -418,6 +431,7 @@
 		 *   destTag      only goes to places with this tag (taxis: "hub")
 		 *   minDistance  only offered when walking would take longer than this
 		 *   timeFactor   × the walking time (taxi: 0.3 = much faster)
+ *   viaPhone     true = booked from the phone's Taxi app instead of the "Go to" buttons
 		 *   cost + fare  in whole pounds:
 		 *                "flat": one price (fare.flat)
 		 *                "meter": fare.base + fare.perMin for each minute of the
@@ -452,6 +466,7 @@
 			timeFactor: 0.3,
 			cost: "meter",
 			fare: { base: 3, perMin: 0.5 }, // £3 + 50p a minute, rounded to whole pounds
+			viaPhone: true, // booked from the phone's Taxi app, not listed under "Go to" (decided by the user)
 		});
 
 		/* ======================================================================
