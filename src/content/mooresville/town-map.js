@@ -24,11 +24,80 @@
 		R.define("district", { id: "westgate", name: "Westgate", desc: "The newer side of town, built around the shopping centre." });
 		R.define("district", { id: "riverside", name: "Riverside", desc: "Green space along the River Moore." });
 
+		/* ---- Atmosphere ---------------------------------------------------- */
+
+		// One line is shown under a place's description, changing each hour.
+		// Lines with `when` are about right now (weather, time, how you feel)
+		// and take priority while they apply.
+		const wet = { weather: { wet: true } };
+		const sunny = { weather: { kind: "sunny" } };
+		const cold = { weather: { tempMax: 6 } };
+		const evening = { time: { from: "19:00", to: "05:00" } };
+		const morning = { time: { from: "06:00", to: "09:30" } };
+		const AMBIENT = {
+			home_bedroom: [
+				"Your phone charger is, as usual, just out of reach.",
+				"Posters you put up years ago are curling at the corners.",
+				{ text: "Rain taps against the window.", when: wet },
+				{ text: "Sunlight slants across the unmade bed.", when: { all: [sunny, morning] } },
+				{ text: "The street light outside throws an orange glow on the ceiling.", when: evening },
+			],
+			home_kitchen: [
+				"The fridge hums to itself.",
+				{ text: "The kettle is still warm from someone's morning tea.", when: morning },
+			],
+			elm_road: [
+				"A cat watches you from a garden wall.",
+				"Someone two doors down is mowing their lawn.",
+				{ text: "Rain drums on the roofs of the parked cars.", when: wet },
+				{ text: "Your breath clouds in the cold air.", when: cold },
+				{ text: "Curtains glow in the windows along the street.", when: evening },
+			],
+			high_street: [
+				"A busker plays something you almost recognise.",
+				"Pigeons squabble over a dropped sandwich.",
+				{ text: "Shoppers hurry between doorways under umbrellas.", when: wet },
+				{ text: "Café tables have spilled out onto the pavement in the sunshine.", when: sunny },
+				{ text: "The shops are dark; the pub windows are the brightest thing on the street.", when: evening },
+			],
+			grind_seating: [
+				"The coffee machine hisses and someone laughs at a corner table.",
+				"A student is asleep on their laptop by the window.",
+				{ text: "The windows are fogged up and every seat is taken by people sheltering from the rain.", when: wet },
+			],
+			lion_bar: [
+				"Someone is losing badly at the quiz machine.",
+				{ text: "The bar is three deep, and the noise is cheerful.", when: { all: [evening, { weekday: [5, 6] }] } },
+				{ text: "The room has a slight sway to it. Or maybe that's you.", when: { status: "tipsy" } },
+			],
+			elm_park_green: [
+				"A dog chases a ball it has no intention of bringing back.",
+				{ text: "The grass is soaked and squelches underfoot.", when: wet },
+				{ text: "People are sprawled on the grass in the sun.", when: sunny },
+			],
+			riverside_path: [
+				"Ducks drift past on the slow brown river.",
+				"A rowing team glides by, the cox shouting time.",
+				{ text: "Mist hangs low over the water.", when: { weather: { kind: "fog" } } },
+				{ text: "The river is high and fast after the rain.", when: wet },
+			],
+			arcade_concourse: [
+				"Piped music and the squeak of trainers on polished floors.",
+				"A child is having a meltdown outside the toy shop.",
+				{ text: "The concourse is packed with people escaping the rain.", when: wet },
+			],
+			academy_form_room: [
+				"Someone has drawn a surprisingly good cartoon of Mr Hale on the whiteboard.",
+				"The radiator clanks.",
+				{ text: "Everyone is half asleep. It's far too early for this.", when: morning },
+			],
+		};
+
 		/** A place (site) and, optionally, the rooms inside it. */
 		const place = (id, name, district, extra = {}) =>
-			R.define("location", { id, name, district, passage: `Loc_${id}`, ...extra });
+			R.define("location", { id, name, district, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...extra });
 		const room = (id, name, parent, extra = {}) =>
-			R.define("location", { id, name, parent, district: null, passage: `Loc_${id}`, ...extra });
+			R.define("location", { id, name, parent, district: null, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...extra });
 
 		/* ---- Elm Park ---------------------------------------------------- */
 

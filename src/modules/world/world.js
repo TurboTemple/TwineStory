@@ -20,12 +20,13 @@
 			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false, ambient: [] },
 				refs: { district: "district", parent: "location" },
 				passages: ["passage"],
-				conditions: ["entry"],
+				conditions: ["entry", "ambient[].when"],
 				check(def) {
 					const errs = [];
+					if (!def.ambient.every((a) => typeof a === "string" || typeof a?.text === "string")) errs.push('ambient lines must be text or { text, when }');
 					for (const h of def.hours ?? []) {
 						try {
 							time.parseHM(h.from);
@@ -75,6 +76,22 @@
 
 				/** @returns {string} The top-level location (site) containing `id`. */
 				site: (id) => world.chain(id).at(-1),
+
+				/**
+				 * A line of atmosphere for a place: one of its `ambient` lines whose
+				 * `when` condition passes (weather, time, how you feel…). The same
+				 * line stays for the hour, so it doesn't change on every tap.
+				 * @returns {string|null}
+				 */
+				ambientLine(id, t = time.now()) {
+					const ctx = { t, loc: id };
+					const lines = L(id).ambient.map((a) => (typeof a === "string" ? { text: a } : a)).filter((a) => cond.test(a.when ?? null, ctx));
+					if (!lines.length) return null;
+					// Lines with a condition are about right now, so they come first.
+					const specific = lines.filter((a) => a.when);
+					const pool = specific.length ? specific : lines;
+					return setup.rng.seeded(`ambient:${id}:${time.day(t)}:${time.hour(t)}`).pick(pool).text;
+				},
 
 				/** @returns {boolean} Whether `inner` is `outer` or inside it. */
 				within: (inner, outer) => world.chain(inner).includes(outer),
@@ -246,6 +263,8 @@
 				box.append(ui.el("h1", { text: here.name }));
 				if (here.passage) ui.wiki(box, here.passage);
 				else if (here.desc) box.append(ui.el("p", { text: here.desc }));
+				const line = world.ambientLine(here.id);
+				if (line) box.append(ui.el("p", { class: "ambient", text: line }));
 				if (!world.isOpen(here.id)) {
 					const hours = world.hoursOf(here.id);
 					const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(time.now())));

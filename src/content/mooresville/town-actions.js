@@ -31,7 +31,7 @@
 		/* ---- Home ----------------------------------------------------------- */
 
 		act(during("asleep", {
-			id: "sleep", label: "Sleep", atTag: "bed", durations: [60, 120, 240, 480, "07:00"],
+			id: "sleep", label: "Sleep", atTag: "bed", durations: [60, 120, 240, 480, "07:00"], tags: ["sleep"],
 			desc: "Get into bed. You'll wake early if you really need the toilet.",
 		}));
 		act(during("reading", { id: "read_book", label: "Read a book", at: "home_bedroom", mins: 60 }));
@@ -49,7 +49,7 @@
 		act({ id: "make_coffee", label: "Make a coffee", atTag: "kitchen", mins: 5, effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }] });
 
 		act(during("watching_tv", { id: "watch_tv", label: "Watch TV", atTag: "tv", mins: 60 }));
-		act(during("asleep", { id: "nap_sofa", label: "Nap on the sofa", atTag: "sofa", mins: 30 }));
+		act(during("asleep", { id: "nap_sofa", label: "Nap on the sofa", atTag: "sofa", mins: 30, tags: ["sleep"] }));
 
 		/* ---- Elm Road and the green ---------------------------------------- */
 

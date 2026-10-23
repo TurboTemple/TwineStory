@@ -73,7 +73,7 @@
 			dressed: { cover: [["top"], ["bottom"], ["feet"]], notOutside: ["sleepwear"] },
 		},
 		// Decided by the user: manual save slots in the Menu.
-		saves: { slots: 12 },
+		saves: { slots: 12, autosaves: 1 },
 		// Debug tools (§13). Pinned so a CDN update can't break debugging.
 		devtools: { erudaUrl: "https://cdn.jsdelivr.net/npm/eruda@3.4.3/eruda.js" },
 		debug,
@@ -90,6 +90,9 @@
 	Config.enableOptionalDebugging = debug;
 	Config.saves.version = setup.SCHEMA_VERSION;
 	Config.saves.maxSlotSaves = setup.config.saves.slots;
+	// One autosave slot. SugarCube autosaves as a passage finishes, when the
+	// rule allows: the journal allows it only on the wake-up summary.
+	Config.saves.maxAutoSaves = setup.config.saves.autosaves;
 
 	/*
 	 * Player preferences (Setting API). SugarCube loads saved settings straight

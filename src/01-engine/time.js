@@ -62,6 +62,9 @@
 			/** @returns {number} 0 = Sunday … 6 = Saturday. */
 			weekday: (t) => new Date(epochMs() + t * 60000).getUTCDay(),
 
+			/** @returns {number} Month, 1 = January … 12 = December. */
+			month: (t) => new Date(epochMs() + t * 60000).getUTCMonth() + 1,
+
 			/** @returns {{year: number, month: number, day: number, weekday: number}} month is 1–12. */
 			date(t) {
 				const d = new Date(epochMs() + t * 60000);
