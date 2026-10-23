@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { loadStoryJs } from "../scripts/lib/load.mjs";
+import { bootGame, loadStoryJs } from "../scripts/lib/load.mjs";
 import { validate } from "../scripts/validate.mjs";
 
 // Objects from the vm sandbox have different prototypes; compare as plain JSON.
@@ -39,12 +39,14 @@ test("file load order does not matter (§5.2)", () => {
 	assert.deepEqual(Object.keys(a).sort(), Object.keys(b).sort());
 });
 
-test("newGame creates $meta through setup.vars()", () => {
-	const { setup } = loadStoryJs(src);
-	const vars = {};
-	setup.vars = () => vars;
-	setup.newGame();
-	assert.deepEqual(plain(vars.meta), { schemaVersion: setup.SCHEMA_VERSION, schema: {} });
+test("newGame creates the engine slices and every module slice", () => {
+	const { setup, vars } = bootGame(src, { includeTest: false });
+	assert.equal(vars.meta.schemaVersion, setup.SCHEMA_VERSION);
+	assert.equal(vars.time.t, 7 * 60);
+	assert.deepEqual(plain(vars.sched), { jobs: [], seq: 0 });
+	for (const m of setup.modules.list()) {
+		if (m.state) assert.ok(m.state in vars, `missing $${m.state}`);
+	}
 });
 
 test("GameError carries data", () => {

@@ -57,3 +57,64 @@
 .sys-note {
 	font-style: italic;
 }
+
+/* Placeholder module UI (neutral; replaced by the Phase 2 shell). */
+.btn {
+	min-height: 44px;
+	margin: 0.2em 0.4em 0.2em 0;
+	padding: 0.4em 0.9em;
+	font-size: 16px;
+}
+
+.btn[disabled] {
+	opacity: 0.5;
+}
+
+.view ul {
+	list-style: none;
+	padding: 0;
+}
+
+.view li {
+	margin-bottom: 0.5em;
+}
+
+.status-line {
+	opacity: 0.8;
+}
+
+.result {
+	border-left: 4px solid currentColor;
+	padding: 0.25em 0.75em;
+	margin: 1em 0;
+}
+
+.result ul {
+	margin: 0;
+}
+
+.note,
+.locked {
+	font-size: 0.9em;
+	opacity: 0.8;
+	margin: 0.25em 0 0;
+}
+
+.locked::before {
+	content: "Locked: ";
+	font-weight: bold;
+}
+
+.sheet {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 0.25em 1em;
+}
+
+.sheet dt {
+	font-weight: bold;
+}
+
+.sheet dd {
+	margin: 0;
+}

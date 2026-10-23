@@ -125,7 +125,7 @@
 		 * @param {(save: object) => void} fn
 		 */
 		onSaveLoad(fn) {
-			// VERIFY: confirm in Phase 1 that history is already delta-decoded when handlers run.
+			// Checked in the 2.37.3 source: history is delta-decoded before handlers run.
 			Save.onLoad.add(fn);
 		},
 
@@ -144,6 +144,14 @@
 		 */
 		setSaveAllowed(fn) {
 			Config.saves.isAllowed = fn;
+		},
+
+		/**
+		 * Set the function that returns readable metadata stored with each save.
+		 * @param {() => object} fn
+		 */
+		setSaveMetadata(fn) {
+			Config.saves.metadata = fn;
 		},
 
 		/** Open SugarCube's built-in saves dialog. */
@@ -178,6 +186,17 @@
 				Setting.save();
 			},
 			open: () => UI.settings(),
+		},
+
+		/* ---- Macros ----------------------------------------------------- */
+
+		/**
+		 * Define a macro. Check the name doesn't clash with a built-in first.
+		 * @param {string} name
+		 * @param {object} def  SugarCube macro definition ({ handler, tags?, skipArgs? }).
+		 */
+		addMacro(name, def) {
+			Macro.add(name, def);
 		},
 
 		/* ---- Events ----------------------------------------------------- */

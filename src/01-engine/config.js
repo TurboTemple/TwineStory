@@ -30,11 +30,11 @@
 
 	/** Static game configuration. */
 	setup.config = {
-		// DESIGN: user to decide — game title (also set in StoryTitle).
+		// Decided by the user ("for now"); also set in StoryTitle.
 		title: "Life Sim",
-		// DESIGN: user to decide — the city the game is set in.
-		city: "Placeholder City",
-		// DESIGN: user to decide — language, currency and clock format.
+		// Decided by the user.
+		city: "Mooresville",
+		// Decided by the user: language, currency and clock format.
 		locale: {
 			lang: "en-GB",
 			currency: "GBP",
@@ -42,12 +42,17 @@
 			minorPerMajor: 100,
 			clock: "24h",
 		},
-		// DESIGN: user to decide — calendar day 0 (UTC). $time.t counts minutes from here.
+		// Decided by the user: calendar day 0 (UTC). $time.t counts minutes from here.
 		epoch: "2026-09-01T00:00:00Z",
-		// DESIGN: user to decide — when a new game starts, relative to the epoch.
+		// Decided by the user: when a new game starts, relative to the epoch.
 		start: { day: 0, time: "07:00" },
-		// DESIGN: user to decide — how many manual save slots the Menu offers.
-		saves: { slots: 8 },
+		// Decided by the user (§1): the player character is 18 at game start.
+		pc: { startAge: 18 },
+		// Decided by the user: random events roll each event's own `chance`
+		// (see the events module). "none" turns random events off.
+		events: { selector: "chance" },
+		// Decided by the user: manual save slots in the Menu.
+		saves: { slots: 12 },
 		// Debug tools (§13). Pinned so a CDN update can't break debugging.
 		devtools: { erudaUrl: "https://cdn.jsdelivr.net/npm/eruda@3.4.3/eruda.js" },
 		debug,

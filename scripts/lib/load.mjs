@@ -66,6 +66,7 @@ export function loadStoryJs(srcDir, opts = {}) {
 		Save: makeStub("Save", config),
 		Setting: makeStub("Setting", config),
 		Serial: makeStub("Serial", config),
+		Macro: makeStub("Macro", config),
 		jQuery: makeStub("jQuery", config),
 		$: makeStub("$", config),
 	};
@@ -80,22 +81,30 @@ export function loadStoryJs(srcDir, opts = {}) {
 }
 
 /**
- * Run the queued content functions (`setup.__content`) against a recording
- * registry and return every definition, grouped by type.
- * @param {object} setup
- * @returns {{ defs: { type: string, def: object }[], aliases: { type: string, from: string, to: string }[] }}
+ * Load the Story JavaScript, swap SugarCube-dependent adapter calls for
+ * Node-friendly fakes, boot the engine and start a new game.
+ * @param {string} srcDir
+ * @param {{ debug?: boolean, includeTest?: boolean, passages?: Iterable<string>, seed?: number, order?: (files: string[]) => string[] }} [opts]
+ * @returns {{ setup: object, vars: object, played: string[], config: object }}
  */
-export function collectContent(setup) {
-	const defs = [];
-	const aliases = [];
-	const R = {
-		define(type, def) {
-			defs.push({ type, def });
-		},
-		alias(type, from, to) {
-			aliases.push({ type, from, to });
-		},
-	};
-	for (const fn of setup.__content ?? []) fn(R);
-	return { defs, aliases };
+export function bootGame(srcDir, opts = {}) {
+	const { setup, config } = loadStoryJs(srcDir, { search: opts.debug ? "?debug" : "", order: opts.order });
+	const vars = {};
+	const played = [];
+	const passages = opts.passages ? new Set(opts.passages) : null;
+	const random = setup.mulberry32(opts.seed ?? 12345);
+	Object.assign(setup.sc, {
+		vars: () => vars,
+		random,
+		play: (name) => played.push(name),
+		hasPassage: (name) => (passages ? passages.has(name) : true),
+		banner() {},
+		wikiPassage() {},
+		loadScript: () => Promise.resolve(),
+		on() {},
+	});
+	setup.vars = () => vars;
+	setup.boot({ includeTest: opts.includeTest ?? true });
+	setup.newGame();
+	return { setup, vars, played, config };
 }

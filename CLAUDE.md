@@ -184,6 +184,8 @@ Each `.js` file only **queues** work:
   (setup.__content ??= []).push((R) => { R.define("item", { id: "…", /* … */ }); });
 })();
 ```
+Test content in `src/content/_test/` queues onto `setup.__testContent` instead of `setup.__content`, so boot can load it only in debug mode.
+
 Boot runs from `:: Sys_Boot [init nobr]` → `<<run setup.boot()>>`:
 1. Create the engine services.
 2. Topologically sort the modules by `deps`, failing loudly on a cycle or a missing dependency.
@@ -219,6 +221,8 @@ Each module owns exactly one top-level slice:
 $meta  $time  $sched  $pc  $inv  $wear  $home  $money  $bills  $world  $npcs  $school  $job  $phone  $story  $journal
 ```
 The fields inside each slice are defined in that module's README and grow as the user designs content.
+
+Engine-owned slices: `$meta` (schema versions, seed, generic `flags`/`counters`, `returnTo`), `$time`, `$sched`. The PC's current location is `$pc.loc`, owned by `character`; other modules change it only through `setup.world.moveTo()`.
 
 - Keep state lean: static data lives in `setup`, NPC state is created lazily (only once met), and logs are capped.
 - Serialised state should stay well under 200 KB. Every `*.github.io` site shares one browser storage quota.
@@ -370,7 +374,7 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 - **HUD:** time/date, money, and the stats with `hud: true`, in their `order`. What appears is decided through stat data, not code.
 - **Bottom nav:** Here · Phone · Bag · Me · Menu, each ≥44 px. Menu contains saves, settings, and debug in debug mode.
 - **Widgets:** `<<btn>>`, `<<card>>`, `<<bar>>`, `<<chip>>`, `<<sheet>>`, `<<tabs>>`, `<<locked>>`, `<<result>>`, `<<gchoice>>`. Check that each name doesn't clash with a built-in macro.
-- **Long lists:** build them with DOM helpers (`setup.ui`), not by wikifying large strings.
+- **Long lists:** build them with DOM helpers (`setup.ui`), not by wikifying large strings. Modules register named views with `setup.ui.view(name, fn)`; passages show them with `<<view "name">>`.
 - **Styling:**
   - Mobile-first. Body text ≥16 px.
   - Safe-area insets. No hover-only interactions.
@@ -505,3 +509,17 @@ Each phase ends with: validator ✅, tests ✅, build ✅, README updated, phone
 - Use deprecated SugarCube APIs: `Config.saves.onLoad/onSave`, `JSON.reviveWrapper`, `Dialog.setup`, `$args`, the built-in `<<choice>>`/`<<actions>>`, `UIBar.update`.
 - Create a classmate or student NPC who isn't 18, or romance content open to anyone under 18.
 - Leave the build, validator or tests failing.
+
+---
+
+## 16. Progress log
+
+Keep this up to date so a new session knows where things stand.
+
+| Date | What | Notes |
+|---|---|---|
+| 2026-10-23 | Phase 0 | Merged to `main`. Pages source must be set to GitHub Actions by the user. |
+| 2026-10-23 | Phase 1 engine core + early `character` (minimal), `world`, `npcs`, `actions`, `travel`, `events` | Built ahead of the phase order because the user asked for a test therapy storyline. The rest of each module's §7 scope still comes in its phase. |
+
+User decisions so far: title "Life Sim" (for now); city Mooresville; en-GB, £, 24-hour clock; epoch 1 Sept 2026, start 07:00 day 0; 12 save slots; NPC age lives on each NPC's character sheet (the `npc` definition); random events roll their own `chance` (`setup.config.events.selector = "chance"`).
+

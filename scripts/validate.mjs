@@ -2,15 +2,16 @@
 //
 //   node scripts/validate.mjs
 //
-// 1. Loads every src/**/*.js into a sandbox with stubbed SugarCube globals.
-// 2. Runs the queued content functions (including _test content).
-// 3. Parses every src/**/*.twee file.
-// 4. Checks passages, links, banned APIs, ids and the age rules.
+// 1. Parses every src/**/*.twee file; checks passages, links and banned APIs.
+// 2. Loads every src/**/*.js into a sandbox with stubbed SugarCube globals
+//    and boots the real engine, including _test content.
+// 3. Runs registry validation (refs, passages, condition/effect operators,
+//    per-type checks, module checks) and the age rules.
 
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { collectContent, listFiles, loadStoryJs } from "./lib/load.mjs";
+import { bootGame, listFiles } from "./lib/load.mjs";
 import { checkDefs, checkLinks, checkPassages, checkSources } from "./lib/rules.mjs";
 import { findPassageRefs, parseTwee } from "./lib/twee.mjs";
 
@@ -31,20 +32,15 @@ export function validate() {
 	errors.push(...checkLinks(passages, findPassageRefs));
 	errors.push(...checkSources(sources));
 
-	let setup;
+	// Boot the real engine (with _test content) and check every definition.
 	try {
-		({ setup } = loadStoryJs(src, { search: "?debug" }));
+		const names = new Set(passages.map((p) => p.name));
+		const { setup } = bootGame(src, { includeTest: true, passages: names });
+		errors.push(...setup.validate({ hasPassage: (n) => names.has(n) }));
+		errors.push(...checkDefs(setup.registry.entries()));
 	}
 	catch (ex) {
-		errors.push(`Story JavaScript failed to load: ${ex.stack ?? ex}`);
-		return errors;
-	}
-	try {
-		const { defs } = collectContent(setup);
-		errors.push(...checkDefs(defs));
-	}
-	catch (ex) {
-		errors.push(`Content failed to load: ${ex.stack ?? ex}`);
+		errors.push(`Engine failed to boot: ${ex.stack ?? ex}`);
 	}
 	return errors;
 }
