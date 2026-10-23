@@ -1,15 +1,15 @@
 /*
  * shops — buying items.
  *
- * A shop is data: where it is, and which tags it sells. It doesn't list its
- * stock: every item tagged with the shop's id (or with one of the shop's
- * `sells` tags) is for sale there, so adding an item to a shop is just
- * adding a tag to the item. Prices come from a hook (default: the item's
+ * A shop is data: where it is, and what it is. It doesn't list its stock:
+ * every item whose `shops` list includes the shop's id (or whose kind is in
+ * the shop's `sells`) is for sale there, so putting an item on sale is just
+ * adding the shop to the item. Prices come from a hook (default: the item's
  * own price). Bought items go in your bag.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-shops.js (the shops)
- *   town-items.js, town-clothing.js (each item's tags say which shops sell it)
+ *   town-items.js, town-clothing.js (each item's `shops` say where it's sold)
  * Every field, condition, effect and event is listed in src/modules/shops/README.md.
  */
 (function () {
@@ -23,8 +23,8 @@
 		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
 			registry.defineType("shop", {
 				required: ["name", "at"],
-				// sells: extra tags whose items this shop sells, on top of items
-				// tagged with the shop's own id (e.g. sells: ["snack"]).
+				// sells: kinds of item this shop sells all of, on top of items
+				// that list the shop in their `shops` (e.g. sells: ["food"]).
 				defaults: { desc: "", sells: [], conditions: null, price: "default", payWith: null, mins: 2 },
 				refs: { at: "location", payWith: "account" },
 				conditions: ["conditions"],
@@ -49,14 +49,13 @@
 				},
 
 				/**
-				 * Everything a shop sells: items tagged with its id or one of its
-				 * `sells` tags, in the order the items are defined.
+				 * Everything a shop sells: items that list it in `shops`, or whose
+				 * kind is in its `sells`, in the order the items are defined.
 				 * @returns {object[]} item definitions
 				 */
 				stock(shop) {
 					const def = typeof shop === "string" ? registry.get("shop", shop) : shop;
-					const tags = [def.id, ...def.sells];
-					return registry.all("item").filter((it) => it.tags.some((t) => tags.includes(t)));
+					return registry.all("item").filter((it) => it.shops.includes(def.id) || def.sells.includes(it.kind));
 				},
 
 				/** @returns {number} What an item costs in a shop. */
@@ -148,11 +147,10 @@
 				box.append(ui.el("p", { class: "note", text: `You have ${fmt.money(setup.money.balance())}.${space != null ? ` Bag space: ${space}.` : ""}` }));
 				const closed = shops.closedReason(id);
 				if (closed) box.append(ui.el("p", { class: "locked", text: closed }));
-				// Grouped under headings by each item's first tag ("food", "clothing"…).
-				const shopIds = new Set(registry.all("shop").map((s) => s.id));
+				// Grouped under headings by kind ("food", "clothing"…).
 				const groups = new Map();
 				for (const item of shops.stock(def)) {
-					const kind = item.tags[0] ?? "other";
+					const kind = item.kind;
 					groups.set(kind, [...(groups.get(kind) ?? []), item]);
 				}
 				for (const [kind, items] of groups) {
@@ -169,11 +167,9 @@
 								flow.request("Shops_Shop");
 								return shops.buy(id, item.id);
 							}, { disabled: Boolean(closed) || setup.money.balance() < cost }));
-						// One note line: its qualities (every tag except its kind and the
-						// shops that sell it, so "warm, waterproof" on a coat), its
-						// description, and how many you already have.
-						const tags = item.tags.slice(1).filter((t) => !shopIds.has(t));
-						const note = [tags.join(", "), item.desc, owned ? `you have ${owned}` : ""].filter(Boolean).join(" · ");
+						// One note line: its attributes ("warm, waterproof" on a coat),
+						// its description, and how many you already have.
+						const note = [item.attributes.join(", "), item.desc, owned ? `you have ${owned}` : ""].filter(Boolean).join(" · ");
 						if (note) li.append(ui.el("p", { class: "note", text: note }));
 						ul.append(li);
 					}
@@ -187,7 +183,7 @@
 			const errs = [];
 			for (const s of setup.registry.all("shop")) {
 				if (!setup.shops.hasPriceHook(s.price)) errs.push(`shop "${s.id}": unknown price hook "${s.price}"`);
-				if (!setup.shops.stock(s).length) errs.push(`shop "${s.id}" sells nothing: tag some items "${s.id}"`);
+				if (!setup.shops.stock(s).length) errs.push(`shop "${s.id}" sells nothing: add "${s.id}" to some items' shops`);
 			}
 			return errs;
 		},

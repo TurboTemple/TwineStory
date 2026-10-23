@@ -1,11 +1,11 @@
 /*
  * clothing — what you wear, the wardrobe and outfits.
  *
- * An item is clothing when it has the "clothing" tag and `slots` (where on
- * the body it goes). That's all the wardrobe needs. Everything else about
- * it is an ordinary item field: price, `modifiers` (stat changes that apply
- * while it's worn) and tags for its qualities ("warm", "waterproof",
- * "smart"…), which other systems and effects check.
+ * An item is clothing when its `kind` is "clothing" and it has `slots`
+ * (where on the body it goes). That's all the wardrobe needs. Everything
+ * else about it is an ordinary item field: price, `stats` (stat changes
+ * that apply while it's worn) and `attributes` for its qualities ("warm",
+ * "waterproof", "smart"…), which other systems and effects check.
  *
  * Worn clothes live in the hidden "worn" storage place; $wear maps each
  * body slot to the item worn there. You can change only where it makes
@@ -19,12 +19,12 @@
 (function () {
 	"use strict";
 
-	/** The tag that marks an item as clothing. */
-	const TAG = "clothing";
-	/** @returns {boolean} Can this item be worn? (tagged "clothing", with slots) */
-	const isWearable = (def) => Boolean(def?.tags?.includes(TAG) && def.slots?.length);
-	/** An item's qualities for display: its tags minus "clothing" and shop ids ("warm, waterproof"). */
-	const qualities = (def) => def.tags.filter((t) => t !== TAG && !setup.registry.has("shop", t));
+	/** The item kind that marks it as clothing. */
+	const KIND = "clothing";
+	/** @returns {boolean} Can this item be worn? (kind "clothing", with slots) */
+	const isWearable = (def) => Boolean(def?.kind === KIND && def.slots?.length);
+	/** An item's qualities for display ("warm, waterproof"). */
+	const qualities = (def) => def.attributes;
 
 	(setup.__modules ??= []).push({
 		id: "clothing",
@@ -39,7 +39,7 @@
 			registry.extendType("item", {
 				defaults: { slots: null },
 				refs: { slots: "clothingSlot" },
-				check: (def) => (def.tags.includes(TAG) && !(Array.isArray(def.slots) && def.slots.length) ? [`items tagged "${TAG}" need slots (where they're worn)`] : []),
+				check: (def) => (def.kind === KIND && !(Array.isArray(def.slots) && def.slots.length) ? [`${KIND} items need slots (where they're worn)`] : []),
 			});
 			// Each piece of clothing is its own thing (no stacks of jeans).
 			setup.inventory.addUniqueRule((def) => isWearable(def));
@@ -81,13 +81,13 @@
 				/**
 				 * Are you decently dressed? Uses setup.config.clothing.dressed:
 				 * every group in `cover` needs one of its slots covered, and nothing
-				 * worn may have a tag in `notOutside`.
+				 * worn may have an attribute in `notOutside`.
 				 */
 				dressed() {
 					const rule = config.clothing?.dressed;
 					if (!rule) return true;
 					const coverOk = (rule.cover ?? []).every((group) => group.some((s) => clothing.covers(s)));
-					const tagsOk = clothing.wornItems().every((w) => !w.item.tags.some((t) => (rule.notOutside ?? []).includes(t)));
+					const tagsOk = clothing.wornItems().every((w) => !w.item.attributes.some((a) => (rule.notOutside ?? []).includes(a)));
 					return coverOk && tagsOk;
 				},
 
@@ -212,17 +212,17 @@
 			setup.clothing = clothing;
 
 			// { wearing: "item_id" } — you have it on.
-			// { wearing: { tag: "smart", min: 2 } } — at least `min` (default 1)
-			// things you're wearing have that tag.
+			// { wearing: { attribute: "smart", min: 2 } } — at least `min`
+			// (default 1) things you're wearing have that attribute.
 			cond.register("wearing", {
 				test(spec) {
 					const worn = clothing.wornItems();
 					if (typeof spec === "string") return worn.some((w) => w.item.id === spec);
-					return worn.filter((w) => w.item.tags.includes(spec.tag)).length >= (spec.min ?? 1);
+					return worn.filter((w) => w.item.attributes.includes(spec.attribute)).length >= (spec.min ?? 1);
 				},
 				describe: (spec) => (typeof spec === "string"
 					? `Wearing ${registry.tryGet("item", spec)?.name ?? spec}`
-					: `Wearing ${spec.min > 1 ? `${spec.min} things` : "something"} ${spec.tag}`),
+					: `Wearing ${spec.min > 1 ? `${spec.min} things` : "something"} ${spec.attribute}`),
 			});
 
 			// { dressed: true } — decently dressed (see clothing.dressed()).
@@ -339,9 +339,9 @@
 		},
 
 		ready() {
-			// Clothes' own stat modifiers apply while they're worn.
+			// Clothes' `stats` apply while they're worn.
 			if (setup.modules.has("stats")) {
-				setup.stats.addModifierSource(() => setup.clothing.wornItems().flatMap((w) => w.item.modifiers.map((m) => ({ ...m, source: `item:${w.item.id}` }))));
+				setup.stats.addModifierSource(() => setup.clothing.wornItems().flatMap((w) => w.item.stats.map((m) => ({ ...m, source: `item:${w.item.id}` }))));
 			}
 		},
 

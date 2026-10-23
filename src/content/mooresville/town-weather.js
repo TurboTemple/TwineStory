@@ -94,7 +94,7 @@
 			label: "Getting wet",
 			good: false,
 			desc: "It's wet out and you've no waterproof. A rain jacket or puffer would help.",
-			whileCond: { all: [{ outdoors: true }, { weather: { wet: true } }, { not: { wearing: { tag: "waterproof" } } }] },
+			whileCond: { all: [{ outdoors: true }, { weather: { wet: true } }, { not: { wearing: { attribute: "waterproof" } } }] },
 			modifiers: [mod.add("mood", -4), mod.perHour("hygiene", -3)],
 		});
 	});

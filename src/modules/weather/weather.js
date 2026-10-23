@@ -8,7 +8,7 @@
  *
  * Warmth is simple (decided by the user): a day is "cold" when it's at or
  * below the climate's `coldAt` temperature (5°C in the town), and an item of clothing is either
- * warm (tagged "warm") or not. Outdoors on a cold day without anything warm
+ * warm (attribute "warm") or not. Outdoors on a cold day without anything warm
  * on, you're too cold.
  *
  * Content uses the conditions `weather`, `outdoors` and `tooCold` for
@@ -33,7 +33,7 @@
 			});
 			registry.defineType("climate", {
 				required: ["months"],
-				defaults: { generate: "seasonal", coldAt: 5, warmTag: "warm" },
+				defaults: { generate: "seasonal", coldAt: 5, warmAttribute: "warm" },
 				check(def) {
 					const errs = [];
 					for (let m = 1; m <= 12; m++) {
@@ -76,10 +76,10 @@
 					return Boolean(w) && w.temp <= climate().coldAt;
 				},
 
-				/** @returns {boolean} Is the PC wearing anything warm (tagged "warm")? */
+				/** @returns {boolean} Is the PC wearing anything warm (attribute "warm")? */
 				dressedWarm() {
 					if (!setup.modules.has("clothing")) return true;
-					return setup.clothing.wornItems().some((x) => x.item.tags.includes(climate()?.warmTag ?? "warm"));
+					return setup.clothing.wornItems().some((x) => x.item.attributes.includes(climate()?.warmAttribute ?? "warm"));
 				},
 
 				/** @returns {boolean} Whether the PC is outside right now. */
