@@ -6,6 +6,7 @@ Active effects on the PC, shown in the sidebar's **Effects** list. They feed mod
 `statusEffect` — `{ id, label, desc, mins, stacking, maxStacks, stackLabels, expire, modifiers[], while, onExpire[], hidden, good }`
 - `mins`: how long it lasts (`null` = until removed)
 - `while: { stat, min?, max? }`: active whenever that stat is in range ("Needs the toilet" while bladder ≥ 70)
+- `whileCond`: active whenever any condition holds (e.g. `{ wearing: { tag: "cosy" } }` → "Cosy"). Re-checked when clothes, body, inventory, location or stats change.
 - `stacking`:
   - `"refresh"`: restart the timer (the default)
   - `"extend"`: add time

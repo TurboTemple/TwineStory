@@ -141,6 +141,7 @@
 						const cost = shops.price(def, entry);
 						const owned = setup.inventory.count(item.id, Object.keys(setup.vars().inv.places));
 						const li = ui.el("li", { class: "inv-row" },
+							setup.media.thumb("item", item.id, item.name),
 							ui.el("span", { class: "inv-name", text: item.name }),
 							ui.el("span", { class: "inv-price", text: ` ${fmt.money(cost)}` }),
 							ui.action("Buy", () => {

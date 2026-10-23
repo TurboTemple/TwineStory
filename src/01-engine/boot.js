@@ -18,7 +18,7 @@
 		registry: setup.registry, bus: setup.bus, cond: setup.cond, effects: setup.effects,
 		time: setup.time, sched: setup.sched, rng: setup.rng, flow: setup.flow, fmt: setup.fmt,
 		text: setup.text, ui: setup.ui, config: setup.config, balance: setup.balance,
-		save: setup.save, modules: setup.modules,
+		save: setup.save, modules: setup.modules, media: setup.media,
 	});
 
 	/**
@@ -43,6 +43,7 @@
 		setup.fmt = setup.createFmt();
 		setup.text = setup.createText();
 		setup.ui = setup.createUi();
+		setup.media = setup.createMedia();
 		setup.save = setup.createSave();
 		setup.modules = setup.createModules();
 		setup.coreOps.install();

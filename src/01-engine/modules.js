@@ -11,7 +11,7 @@
 	"use strict";
 
 	/** Engine services every module may depend on without declaring a module. */
-	const SERVICES = new Set(["registry", "bus", "cond", "effects", "time", "sched", "rng", "flow", "fmt", "text", "ui", "config", "balance", "save"]);
+	const SERVICES = new Set(["registry", "bus", "cond", "effects", "time", "sched", "rng", "flow", "fmt", "text", "ui", "config", "balance", "save", "media"]);
 
 	/**
 	 * Topologically sort descriptors by `deps`. Throws on a missing dependency

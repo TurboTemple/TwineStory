@@ -23,16 +23,17 @@
 				required: ["label"],
 				defaults: {
 					desc: "", mins: null, stacking: "refresh", maxStacks: 1, stackLabels: null, expire: "all",
-					modifiers: [], while: null, onExpire: [], tags: [], hidden: false, good: null,
+					modifiers: [], while: null, whileCond: null, onExpire: [], tags: [], hidden: false, good: null,
 				},
 				refs: { "modifiers[].stat": "stat", "while.stat": "stat" },
 				effects: ["onExpire"],
+				conditions: ["whileCond"],
 				check(def) {
 					const errs = [];
 					if (!STACKING.includes(def.stacking)) errs.push(`stacking must be one of ${STACKING.join(", ")}`);
 					if (!["all", "one"].includes(def.expire)) errs.push('expire must be "all" or "one"');
 					if (def.mins != null && !(Number.isInteger(def.mins) && def.mins > 0)) errs.push("mins must be whole minutes > 0 (or null)");
-					if (def.while && def.mins != null) errs.push("a `while` status can't also have mins");
+					if ((def.while || def.whileCond) && def.mins != null) errs.push("a `while`/`whileCond` status can't also have mins");
 					return errs;
 				},
 			});
@@ -106,12 +107,19 @@
 					}));
 				},
 
-				/** Bring `while` statuses in line with current stat values. */
+				/**
+				 * Bring condition-driven statuses in line: `while` (a stat in range)
+				 * and `whileCond` (any condition, e.g. what you're wearing).
+				 */
 				sync() {
 					for (const def of registry.all("statusEffect")) {
-						if (!def.while) continue;
-						const v = setup.stats.base(def.while.stat);
-						const on = (def.while.min == null || v >= def.while.min) && (def.while.max == null || v <= def.while.max);
+						if (!def.while && !def.whileCond) continue;
+						let on;
+						if (def.while) {
+							const v = setup.stats.base(def.while.stat);
+							on = (def.while.min == null || v >= def.while.min) && (def.while.max == null || v <= def.while.max);
+						}
+						else on = cond.test(def.whileCond, {});
 						if (on && !status.has(def.id)) status.add(def.id);
 						else if (!on && status.has(def.id)) status.remove(def.id);
 					}
@@ -151,6 +159,8 @@
 				status.sync();
 			});
 			bus.on("stat:changed", () => status.sync());
+			// Things that can switch a `whileCond` status on or off.
+			for (const ev of ["clothing:changed", "body:changed", "inventory:added", "inventory:removed", "world:enter"]) bus.on(ev, () => status.sync());
 
 			// { status: "id" } — that status is active.
 			cond.register("status", {

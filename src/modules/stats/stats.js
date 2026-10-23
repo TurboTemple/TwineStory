@@ -111,6 +111,23 @@
 				/** @returns {boolean} */
 				hasChangeHook: (name) => changeHooks.has(name),
 
+				/**
+				 * Plain English for a modifier, e.g. "Mood +6", "Energy −1 an hour".
+				 * @param {{stat: string, op: string, value: number}} m
+				 */
+				describeModifier(m) {
+					const label = registry.tryGet("stat", m.stat)?.label ?? m.stat;
+					const n = Math.round(m.value * 100) / 100;
+					const signed = n >= 0 ? `+${n}` : `−${Math.abs(n)}`;
+					switch (m.op) {
+						case "add": return `${label} ${signed}`;
+						case "mul": return `${label} ×${n}`;
+						case "rateAdd": return `${label} ${signed} an hour`;
+						case "rateMul": return n < 1 ? `${label} changes ${Math.round((1 - n) * 100)}% slower` : `${label} changes ${Math.round((n - 1) * 100)}% faster`;
+						default: return `${label} (${m.op} ${n})`;
+					}
+				},
+
 				/** @returns {string} A value rounded for display. */
 				display: (id) => String(Math.round(stats.get(id))),
 			};

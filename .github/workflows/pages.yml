@@ -55,6 +55,9 @@ jobs:
           cat formats.txt
           grep -q "SugarCube (2.37.3)" formats.txt || { echo "::error::SugarCube 2.37.3 not available to Tweego"; exit 1; }
 
+      - name: List media files
+        run: node scripts/media-manifest.mjs
+
       - name: Build
         shell: bash
         run: |

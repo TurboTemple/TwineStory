@@ -20,7 +20,7 @@
 		install({ registry, cond, time, ui, flow }) {
 			registry.defineType("npc", {
 				required: ["name", "age"],
-				defaults: { pronouns: "they/them", role: "", tags: [], desc: "", home: null, schedule: [], portrait: null, passage: null },
+				defaults: { pronouns: "they/them", role: "", tags: [], desc: "", home: null, schedule: [], body: {}, passage: null },
 				refs: { home: "location", "schedule[].at": "location" },
 				passages: ["passage"],
 				check(def) {
@@ -28,6 +28,13 @@
 					if (!Number.isInteger(def.age)) errs.push("age must be a whole number");
 					const student = STUDENT_MARKERS.includes(def.role) || def.tags.some((t) => STUDENT_MARKERS.includes(t));
 					if (student && def.age !== ADULT) errs.push(`classmates and students must be exactly ${ADULT}`);
+					// Appearance values must be valid for the PC's body parts, if those exist.
+					for (const [part, v] of Object.entries(def.body ?? {})) {
+						const bp = registry.tryGet("bodyPart", part);
+						if (!bp) continue;
+						const ok = bp.kind === "choice" ? bp.options.includes(v) : bp.bands ? bp.bands.some((b) => b.label === v) : typeof v === "number";
+						if (!ok) errs.push(`body.${part}: "${v}" isn't one of ${bp.label}'s options`);
+					}
 					for (const s of def.schedule) {
 						if (!s.at || !s.from || !s.to) errs.push("each schedule entry needs at, from and to");
 					}
@@ -192,11 +199,27 @@
 						["Right now", where ? registry.tryGet("location", where)?.name ?? where : "Unknown"],
 						["Met you", npcs.hasMet(id) ? "Yes" : "Not yet"],
 					];
-					box.append(
-						ui.el("h1", { text: def.name }),
-						ui.el("dl", { class: "sheet" }, ...rows.flatMap(([k, v]) => [ui.el("dt", { text: k }), ui.el("dd", { text: v })])),
-					);
+					// Profile picture: assets/media/npc/<id>.*
+					const pic = setup.media.render("npc", id, { class: "portrait-large", alt: def.name });
+					box.append(ui.el("div", { class: "profile-head" },
+						pic ?? ui.el("span", { class: "portrait-large thumb-empty", text: def.name.charAt(0), attrs: { "aria-hidden": "true" } }),
+						ui.el("h1", { text: def.name })));
+					box.append(ui.el("dl", { class: "sheet" }, ...rows.flatMap(([k, v]) => [ui.el("dt", { text: k }), ui.el("dd", { text: v })])));
 					if (def.desc) box.append(ui.el("p", { text: def.desc }));
+					// Their body, part by part, each with its picture: assets/media/npc/<id>/<part>.*
+					const parts = Object.entries(def.body);
+					if (parts.length) {
+						box.append(ui.el("h2", { text: "Appearance" }));
+						const ul = ui.el("ul", { class: "parts" });
+						for (const [part, value] of parts) {
+							const label = registry.tryGet("bodyPart", part)?.label ?? part;
+							ul.append(ui.el("li", { class: "inv-row" },
+								setup.media.thumb("npc", id, label, { sub: part }),
+								ui.el("span", { class: "inv-slot", text: `${label}: ` }),
+								ui.el("span", { text: String(value) })));
+						}
+						box.append(ul);
+					}
 					if (def.passage) ui.wiki(box, def.passage);
 				}
 				box.append(ui.button("Back", () => flow.go(flow.home)));

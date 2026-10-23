@@ -92,7 +92,7 @@ async function playTown(page, label) {
 	await click(page, "Your Bedroom");
 	await click(page, "Get changed");
 	await expectPassage(page, "Clothing_Wardrobe", /not dressed to go out[\s\S]*In your wardrobe/, `${label}: wardrobe`);
-	for (const item of ["Black T-shirt", "Blue jeans", "Pair of socks", "White trainers"]) {
+	for (const item of ["White T-shirt", "Blue jeans", "Pair of socks", "White trainers"]) {
 		await page.locator("#passages li", { hasText: item }).locator("button", { hasText: "Wear" }).first().click();
 		await page.waitForSelector('[data-passage="Here"], [data-passage="Clothing_Wardrobe"]');
 		await page.evaluate(() => window.SugarCube.Engine.play("Clothing_Wardrobe"));
@@ -101,8 +101,15 @@ async function playTown(page, label) {
 	await click(page, "Back");
 	// The Me page shows your body and clothes.
 	await page.evaluate(() => window.SugarCube.Engine.play("Character_Me"));
-	await expectPassage(page, "Character_Me", /Height\s*168 cm[\s\S]*Hair length[\s\S]*Wearing[\s\S]*black t-shirt/, `${label}: me page`);
+	await expectPassage(page, "Character_Me", /Height:\s*average[\s\S]*Hair:\s*shoulder-length[\s\S]*Wearing[\s\S]*White T-shirt/, `${label}: me page`);
 	await click(page, "Back");
+	// The sidebar's Profile tab: detailed stats and what effects do.
+	await page.evaluate(() => window.SugarCube.setup.shell.setTab("profile"));
+	const prof = await sidebar(page);
+	for (const bit of ["Stats in detail", "Underlying", "Refreshed", "What it does", "White T-shirt", "Total"]) {
+		if (!prof.includes(bit)) failures.push(`${label}: Profile tab is missing "${bit}"`);
+	}
+	await page.evaluate(() => window.SugarCube.setup.shell.setTab("overview"));
 	await click(page, "Go somewhere else");
 	await expectPassage(page, "Travel_Pick", /Leaving Your House \(1 minute to get outside\)/, `${label}: travel from a room`);
 	await click(page, "Elm Road (1 minute)");
@@ -118,6 +125,8 @@ async function playTown(page, label) {
 	await expectPassage(page, "Here", /Eat: Chocolate bar/, `${label}: eat`);
 	await click(page, "Go somewhere else");
 	await click(page, "Elm Road (3 minutes)");
+	// Keep the run predictable: no random bus delay.
+	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
 	await click(page, "Go somewhere else");
 	await click(page, "Mooresville High Street (13 minutes, £1.80)");
 	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£1\.80\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);

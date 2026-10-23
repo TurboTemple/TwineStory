@@ -20,7 +20,7 @@ test("you wake up in pyjamas and need to get dressed to go out", () => {
 test("getting dressed from the wardrobe; pyjamas go back in it", () => {
 	const { setup } = bootTown();
 	const t0 = setup.time.now();
-	for (const id of ["black_tshirt", "blue_jeans", "socks", "trainers"]) {
+	for (const id of ["white_tshirt", "blue_jeans", "socks", "trainers"]) {
 		assert.equal(setup.clothing.wear(uidOf(setup, "wardrobe", id)).ok, true, id);
 	}
 	assert.equal(setup.time.now() - t0, 4, "a minute per item");
@@ -44,8 +44,15 @@ test("a dress covers top and bottom; you can only change in the right places", (
 	assert.equal(setup.clothing.takeOff(setup.clothing.wornItems()[0].uid).ok, false);
 });
 
+test("you start with pyjamas and one outfit for going out", () => {
+	const { setup } = bootTown();
+	assert.deepEqual(plain(setup.inventory.entries("wardrobe").map((e) => e.item).sort()), ["blue_jeans", "socks", "trainers", "white_tshirt"]);
+});
+
 test("outfits: save what you're wearing and change back into it", () => {
 	const { setup } = bootTown();
+	setup.inventory.add("grey_hoodie", 1, "wardrobe");
+	setup.inventory.add("joggers", 1, "wardrobe");
 	for (const id of ["grey_hoodie", "joggers", "trainers"]) setup.clothing.wear(uidOf(setup, "wardrobe", id));
 	setup.clothing.saveOutfit("Lazy day");
 	setup.clothing.wear(uidOf(setup, "wardrobe", "pyjamas"));
@@ -56,12 +63,26 @@ test("outfits: save what you're wearing and change back into it", () => {
 	assert.equal(setup.cond.test({ wearing: "pyjamas" }), false);
 });
 
+test("clothes switch effects on: cosy, smartly dressed; and items carry their own modifiers", () => {
+	const { setup } = bootTown();
+	assert.equal(setup.status.has("cosy"), true, "pyjamas are cosy");
+	for (const id of ["oxford_shirt", "chinos", "smart_shoes"]) setup.inventory.add(id, 1, "wardrobe");
+	for (const id of ["oxford_shirt", "chinos", "smart_shoes"]) setup.clothing.wear(uidOf(setup, "wardrobe", id));
+	assert.equal(setup.status.has("cosy"), false);
+	assert.equal(setup.status.has("smartly_dressed"), true, "formality 3 + 3 + 4 = 10");
+	assert.ok(setup.stats.modifiers("energy").some((m) => m.source === "item:smart_shoes"));
+	const r0 = setup.stats.rate("energy");
+	setup.clothing.wear(uidOf(setup, "wardrobe", "trainers"));
+	assert.equal(setup.stats.rate("energy"), r0 + 0.5, "trainers instead of smart shoes");
+	assert.equal(setup.status.has("smartly_dressed"), false);
+});
+
 /* ---- Shops and the bag ----------------------------------------------------- */
 
 function atShop() {
 	const g = bootTown();
 	const S = g.setup;
-	for (const id of ["black_tshirt", "blue_jeans", "trainers"]) S.clothing.wear(uidOf(S, "wardrobe", id));
+	for (const id of ["white_tshirt", "blue_jeans", "trainers"]) S.clothing.wear(uidOf(S, "wardrobe", id));
 	S.world.moveTo("corner_shop");
 	return g;
 }
@@ -116,7 +137,7 @@ test("groceries: cooking needs them; put them in the cupboards", () => {
 
 test("buying clothes and changing in the fitting room", () => {
 	const { setup } = bootTown();
-	for (const id of ["black_tshirt", "blue_jeans", "trainers"]) setup.clothing.wear(uidOf(setup, "wardrobe", id));
+	for (const id of ["white_tshirt", "blue_jeans", "trainers"]) setup.clothing.wear(uidOf(setup, "wardrobe", id));
 	at(setup, 0, "10:00");
 	setup.world.moveTo("arcade_urban_thread");
 	assert.equal(setup.shops.buy("urban_thread", "denim_shorts").ok, true);
@@ -128,21 +149,28 @@ test("buying clothes and changing in the fitting room", () => {
 
 /* ---- Body ------------------------------------------------------------------ */
 
-test("body parts: numbers clamp, choices must be valid", () => {
+test("body parts read as words: bands for numbers, choices for the rest", () => {
 	const { setup } = bootTown();
-	assert.equal(setup.body.display("height"), "168 cm");
-	assert.equal(setup.body.display("weight"), "62.0 kg");
-	setup.body.set("height", 300);
-	assert.equal(setup.body.get("height"), 205);
+	assert.equal(setup.body.display("height"), "average");
+	assert.equal(setup.body.display("weight"), "average");
+	assert.equal(setup.body.display("bust"), "B");
+	assert.equal(setup.body.display("hair_length"), "shoulder-length");
+	setup.body.set("weight", 300);
+	assert.equal(setup.body.get("weight"), 100, "clamped");
+	assert.equal(setup.body.display("weight"), "fat");
+	setup.body.set("weight", setup.body.bandValue("weight", "slim"));
+	assert.equal(setup.body.get("weight"), 25);
+	assert.equal(setup.cond.test({ body: { id: "weight", is: "slim" } }), true);
+	assert.equal(setup.body.mediaKey("hair_length"), "hair_length/shoulder_length");
 	assert.throws(() => setup.body.set("eye_colour", "purple"), /can't be "purple"/);
-	assert.equal(setup.cond.test({ body: { id: "eye_colour", is: "brown" } }), true);
+	assert.throws(() => setup.body.bandValue("weight", "huge"), /no band "huge"/);
 });
 
 test("hair grows over time, and Snips can cut and dye it", () => {
 	const { setup } = bootTown();
 	at(setup, 50, "07:00");
 	assert.equal(setup.body.get("hair_length"), 22, "+0.04 cm a day for 50 days");
-	for (const id of ["black_tshirt", "blue_jeans", "trainers"]) setup.clothing.wear(uidOf(setup, "wardrobe", id), { force: true });
+	for (const id of ["white_tshirt", "blue_jeans", "trainers"]) setup.clothing.wear(uidOf(setup, "wardrobe", id), { force: true });
 	at(setup, 50, "10:00");
 	setup.world.moveTo("snips");
 	assert.equal(setup.actions.do("haircut_short").ok, true);
@@ -154,6 +182,10 @@ test("hair grows over time, and Snips can cut and dye it", () => {
 
 test("exercise and big meals nudge your weight", () => {
 	const { setup } = bootTown();
-	setup.effects.apply([{ body: { weight: -0.06 } }, { body: { weight: 0.04 } }]);
-	assert.equal(setup.body.get("weight"), 61.98);
+	setup.effects.apply([{ body: { weight: -0.4 } }, { body: { weight: 0.3 } }]);
+	assert.equal(setup.body.get("weight"), 49.9);
+	setup.body.set("weight", 34.9);
+	assert.equal(setup.body.display("weight"), "slim");
+	setup.effects.apply([{ body: { weight: 0.3 } }]);
+	assert.equal(setup.body.display("weight"), "average", "crossed into the next band");
 });

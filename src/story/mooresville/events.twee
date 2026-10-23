@@ -1,4 +1,5 @@
 :: Ev_therapy_interrupted
+<<view "event-media">>
 <h1>A knock at the door</h1>
 
 You're halfway through the session when there's a knock. Tom leans round the door, apologetic. "Sorry, Dr Okafor, there's an urgent call I really need you to take."
@@ -8,6 +9,7 @@ She sighs, closes her notebook and turns back to you. "I'm so sorry. We'll have 
 <<view "event-end">>
 
 :: Ev_woken_by_bladder
+<<view "event-media">>
 <h1>Awake</h1>
 
 You surface from sleep with one very urgent thought: you need the toilet. Right now.
@@ -15,6 +17,7 @@ You surface from sleep with one very urgent thought: you need the toilet. Right 
 <<view "event-end">>
 
 :: Ev_bus_traffic
+<<view "event-media">>
 <h1>Stuck in traffic</h1>
 
 The bus crawls to a stop behind a queue of cars. Roadworks, by the look of it. You lose ten minutes before it gets moving again.
@@ -22,6 +25,7 @@ The bus crawls to a stop behind a queue of cars. Roadworks, by the look of it. Y
 <<view "event-end">>
 
 :: Ev_closing_time
+<<view "event-media">>
 <h1>Closing time</h1>
 
 The lights flick on and someone calls out that they're closing. You gather your things and head out.

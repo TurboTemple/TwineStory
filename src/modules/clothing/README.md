@@ -4,7 +4,8 @@ What you wear, the wardrobe and outfits.
 
 ## Data
 - `clothingSlot` — `{ id, label, order }` (coat, top, bottoms, bra, underwear, socks, shoes, accessory)
-- the `clothing` block on an item — `{ slots[], warmth, formality, … }`. A dress uses two slots (top + bottoms). Any number attributes are added up by `outfitStats()`.
+- the `clothing` block on an item — `{ slots[], warmth, formality, modifiers[], … }`. A dress uses two slots (top + bottoms). Number attributes are added up by `outfitStats()`. `modifiers` are stat modifiers that apply while the item is worn (smart shoes tire you a little).
+- Effects from what you wear are statuses with `whileCond`, e.g. "Cosy" while wearing anything tagged `cosy`, "Smartly dressed" while outfit formality ≥ 9. Events can check these with `{ status: "smartly_dressed" }` or `{ wearing: { tag: "evening" } }`.
 - `outfit` — `{ id, label, items[], start }`. The `start` outfit is put on at a new game (pyjamas).
 
 ## Rules
@@ -20,11 +21,11 @@ What you wear, the wardrobe and outfits.
 `wear(uid)`, `takeOff(uid, to?)`, `worn()`, `wornItems()`, `dressed()`, `canChangeHere()`, `outfitStats()`, `saveOutfit(name)`, `wearOutfit(name)`, `deleteOutfit(name)`
 
 ## Conditions
-`{ wearing: "item" }` / `{ wearing: { tag } }`, `{ dressed: true }`
+`{ wearing: "item" }` / `{ wearing: { tag } }`, `{ dressed: true }`, `{ outfit: { formality: { min: 9 } } }`
 
 ## UI
 "Get changed" on Here (where you can change) and on the Me page → `Clothing_Wardrobe`.
 
 ## Open decisions
-- What warmth and formality affect (weather, dress codes).
+- Weather, so that warmth matters.
 - Dirty clothes and laundry.

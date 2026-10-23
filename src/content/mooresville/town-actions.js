@@ -44,7 +44,7 @@
 		const groceries = (n) => ({ costs: [{ item: { id: "groceries", qty: -n } }], conditions: { has: { item: "groceries", qty: n } } });
 		act({ id: "make_breakfast", label: "Make breakfast", atTag: "kitchen", mins: 15, effects: [{ stat: { food: 30, drink: 5 } }], ...groceries(1), conditions: { has: "groceries", time: { from: "05:00", to: "11:30" } } });
 		act({ id: "make_sandwich", label: "Make a sandwich", atTag: "kitchen", mins: 10, effects: [{ stat: { food: 25 } }], ...groceries(1) });
-		act({ id: "cook_meal", label: "Cook a proper meal", atTag: "kitchen", mins: 45, effects: [{ stat: { food: 55, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.02 } }], ...groceries(2) });
+		act({ id: "cook_meal", label: "Cook a proper meal", atTag: "kitchen", mins: 45, effects: [{ stat: { food: 55, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.1 } }], ...groceries(2) });
 		act({ id: "glass_of_water", label: "Have a glass of water", atTag: "kitchen", mins: 1, effects: [{ stat: { drink: 20, bladder: 4 } }] });
 		act({ id: "make_tea", label: "Make a cup of tea", atTag: "kitchen", mins: 6, effects: [{ stat: { drink: 15, bladder: 6, mood: 2 } }] });
 		act({ id: "make_coffee", label: "Make a coffee", atTag: "kitchen", mins: 5, effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }] });
@@ -54,7 +54,7 @@
 
 		/* ---- Elm Road and the green ---------------------------------------- */
 
-		act(during("jogging", { id: "go_jogging", label: "Go for a jog", at: ["elm_road", "riverside_path"], mins: 30, conditions: { stat: { id: "energy", min: 20 } }, effects: [{ body: { weight: -0.03 } }] }));
+		act(during("jogging", { id: "go_jogging", label: "Go for a jog", at: ["elm_road", "riverside_path"], mins: 30, conditions: { stat: { id: "energy", min: 20 } }, effects: [{ body: { weight: -0.2 } }] }));
 		act(during("walking", { id: "walk_green", label: "Walk round the green", at: "elm_park_green", mins: 20 }));
 		act({ id: "feed_ducks", label: "Feed the ducks", at: "elm_green_pond", mins: 15, effects: [{ stat: { mood: 4, stress: -3 } }] });
 
@@ -74,7 +74,7 @@
 		act(during("studying", { id: "study_library", label: "Study", at: "academy_library", mins: 60 }));
 		act(during("reading", { id: "read_library", label: "Read quietly", at: "academy_library", mins: 30 }));
 		buy("canteen_lunch", "Buy school lunch", "academy_canteen", 260, 20, [{ stat: { food: 40, drink: 10 } }], { conditions: { time: { from: "11:45", to: "13:45" } } });
-		act(during("exercising", { id: "shoot_hoops", label: "Shoot some hoops", at: "academy_sports_hall", mins: 30, effects: [{ body: { weight: -0.03 } }] }));
+		act(during("exercising", { id: "shoot_hoops", label: "Shoot some hoops", at: "academy_sports_hall", mins: 30, effects: [{ body: { weight: -0.2 } }] }));
 		act(during("walking", { id: "walk_field", label: "Walk laps of the field", at: "academy_field", mins: 20 }));
 
 		/* ---- The Daily Grind ------------------------------------------------ */
@@ -93,7 +93,7 @@
 		buy("pub_wine", "Order a glass of wine", "lion_bar", 610, 10, [{ stat: { drink: 8, bladder: 12, mood: 3 } }, { status: "tipsy" }], { conditions: adults });
 		buy("pub_soft_drink", "Order a soft drink", "lion_bar", 280, 5, [{ stat: { drink: 20, bladder: 12 } }]);
 		buy("pub_crisps", "Buy a packet of crisps", "lion_bar", 140, 2, [{ stat: { food: 8 } }]);
-		buy("pub_meal", "Order a pub meal", "lion_lounge", 1250, 35, [{ stat: { food: 55, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.04 } }], {
+		buy("pub_meal", "Order a pub meal", "lion_lounge", 1250, 35, [{ stat: { food: 55, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }], {
 			conditions: { time: { from: "12:00", to: "21:00" } }, desc: "The kitchen serves 12:00–21:00.",
 		});
 		buy("pub_pool", "Play a game of pool", "lion_lounge", 100, 20, [{ stat: { mood: 5, stress: -3 } }]);
@@ -123,13 +123,13 @@
 		act(during("exercising", {
 			id: "gym_workout", label: "Work out", at: "pulsefit_floor", mins: 60,
 			conditions: { status: "gym_pass", stat: { id: "energy", min: 20 } },
-			effects: [{ status: "post_workout" }, { body: { weight: -0.06 } }],
+			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }],
 		}));
 
 		/* ---- The Arcade Shopping Centre ------------------------------------- */
 
 		act(during("browsing", { id: "window_shop", label: "Window-shop", at: "arcade_concourse", mins: 30 }));
-		buy("food_court_burger", "Buy a burger meal", "arcade_food_court", 749, 20, [{ stat: { food: 50, drink: 15, bladder: 8, mood: 3 } }, { body: { weight: 0.04 } }]);
+		buy("food_court_burger", "Buy a burger meal", "arcade_food_court", 749, 20, [{ stat: { food: 50, drink: 15, bladder: 8, mood: 3 } }, { body: { weight: 0.3 } }]);
 		buy("food_court_noodles", "Buy a noodle box", "arcade_food_court", 680, 15, [{ stat: { food: 45, mood: 2 } }]);
 		buy("food_court_bubble_tea", "Buy a bubble tea", "arcade_food_court", 450, 5, [{ stat: { drink: 20, bladder: 10, mood: 4 } }]);
 		act(during("browsing", { id: "urban_thread_browse", label: "Browse the clothes", at: "arcade_urban_thread", mins: 20 }));

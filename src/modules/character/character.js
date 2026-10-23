@@ -62,8 +62,9 @@
 				 * @returns {HTMLElement}
 				 */
 				portrait() {
-					const src = pc().portrait;
-					if (src) return ui.el("img", { class: "portrait", attrs: { src, alt: `Portrait of ${character.name()}`, loading: "lazy" } });
+					// assets/media/pc/portrait.*, else a path saved on the character.
+					const m = setup.media.byKey("pc/portrait") ?? setup.media.normalise(pc().portrait);
+					if (m) return setup.media.element(m, { class: "portrait", alt: `Portrait of ${character.name()}` });
 					const initial = character.name().charAt(0).toUpperCase() || "?";
 					const box = ui.el("div", { class: "portrait portrait-placeholder", attrs: { role: "img", "aria-label": `Portrait of ${character.name()}` } });
 					box.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="38" r="20"/><path d="M14 96c4-22 18-32 36-32s32 10 36 32z"/></svg><span>${initial.replace(/[<>&"]/g, "")}</span>`;
@@ -86,12 +87,16 @@
 				meSections.sort((a, b) => a.order - b.order);
 			};
 
-			ui.view("me", (box) => {
-				box.classList.add("m-character");
-				box.append(ui.el("div", { class: "side-who" },
+			/**
+			 * Draw the full profile (portrait, then every Me section) into a box.
+			 * Used by the Me page and the sidebar's Profile tab.
+			 */
+			character.renderMe = (box) => {
+				box.classList.add("m-character", "profile");
+				box.append(ui.el("div", { class: "profile-head" },
 					character.portrait(),
 					ui.el("div", {},
-						ui.el("h1", { text: character.name() }),
+						ui.el("p", { class: "who-name", text: character.name() }),
 						ui.el("p", { class: "note", text: `${character.age()} · ${character.pronouns()}` }))));
 				for (const s of meSections) {
 					const part = ui.el("section", { class: `me-${s.name}` });
@@ -103,6 +108,10 @@
 					}
 					if (part.childNodes.length) box.append(part);
 				}
+			};
+
+			ui.view("me", (box) => {
+				character.renderMe(box);
 				box.append(ui.button("Back", () => flow.go(flow.home)));
 			});
 
