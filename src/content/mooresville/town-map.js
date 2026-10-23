@@ -41,6 +41,7 @@
  *   seating                → "Sit and relax"
  *   bed, sofa, tv, kitchen → sleeping, napping, TV, cooking (see town-actions.js)
  *   changing               → you can get changed here (bedroom, fitting rooms…)
+ *   computer               → your computer: playing online, streaming (stories/)
  *   hub                    → taxis can drop you here
  *   bus_stop               → (for your own reference; the bus uses its routes)
  *   start                  → where a new game begins (if config doesn't say)
@@ -180,7 +181,7 @@
 		/* ---- Elm Park (home) -------------------------------------------------- */
 
 		place({ id: "home", name: "Your House", district: "elm_park", tags: ["home"] });
-		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing"] });
+		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing", "computer"] });
 		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "changing"] });
 		room({ id: "home_kitchen", name: "Kitchen", parent: "home", tags: ["home", "kitchen"] });
 		room({ id: "home_living_room", name: "Living Room", parent: "home", tags: ["home", "sofa", "tv"] });
@@ -191,6 +192,11 @@
 
 		place({ id: "elm_park_green", name: "Elm Park Green", district: "elm_park", outdoor: true, tags: ["park"] });
 		room({ id: "elm_green_pond", name: "The Duck Pond", parent: "elm_park_green", outdoor: true, tags: ["seating"], innerMins: 2 });
+
+		// Lenny's: an old-fashioned café on the corner of the green (story-coffee-shop.js).
+		place({ id: "lennys", name: "Lenny's Café", district: "elm_park", tags: ["cafe"], hours: [hours.on(DAYS.MON_SAT, "07:00", "15:00")] });
+		room({ id: "lennys_counter", name: "Counter", parent: "lennys", tags: ["cafe"] });
+		room({ id: "lennys_tables", name: "Tables", parent: "lennys", tags: ["cafe", "seating"] });
 
 		/* ---- Northfield (school) ---------------------------------------------- */
 
@@ -207,6 +213,11 @@
 		room({ id: "academy_sports_hall", name: "Sports Hall", parent: "academy", tags: ["school"], innerMins: 3 });
 		room({ id: "academy_field", name: "Playing Field", parent: "academy", tags: ["school"], outdoor: true, innerMins: 3 });
 		room({ id: "academy_toilets", name: "Toilets", parent: "academy", tags: ["toilet", "sink"] });
+
+		// The community centre: halls for clubs (the cosplay club: story-cosplay-club.js).
+		place({ id: "community_centre", name: "Northfield Community Centre", district: "northfield", hours: [hours.daily("09:00", "22:00")] });
+		room({ id: "community_hall", name: "Main Hall", parent: "community_centre", tags: ["seating", "changing"], innerMins: 2 });
+		room({ id: "community_toilets", name: "Toilets", parent: "community_centre", tags: ["toilet", "sink"] });
 
 		/* ---- Town Centre ------------------------------------------------------- */
 
@@ -331,9 +342,20 @@
 		const flatOnly = { livesAt: "riverside_flat" };
 		place({ id: "riverside_court", name: "Riverside Court", district: "riverside", tags: ["flats"] });
 		room({ id: "flat_living", name: "Flat 4: Living Room", parent: "riverside_court", tags: ["home", "sofa"], entry: flatOnly, innerMins: 2 });
-		room({ id: "flat_bedroom", name: "Flat 4: Bedroom", parent: "flat_living", tags: ["home", "bed", "changing"] });
+		room({ id: "flat_bedroom", name: "Flat 4: Bedroom", parent: "flat_living", tags: ["home", "bed", "changing", "computer"] });
 		room({ id: "flat_bathroom", name: "Flat 4: Bathroom", parent: "flat_living", tags: ["home", "toilet", "sink", "shower", "changing"] });
 		room({ id: "flat_kitchen", name: "Flat 4: Kitchen", parent: "flat_living", tags: ["home", "kitchen"] });
+
+		/* ---- Calm Waters Hypnotherapy (High Street; story-hypnotherapist.js) --- */
+
+		place({
+			id: "calm_waters",
+			name: "Calm Waters Hypnotherapy",
+			district: "town_centre",
+			hours: [hours.on(DAYS.WEEKDAYS, "10:00", "18:00")],
+		});
+		room({ id: "calm_waters_waiting", name: "Waiting Room", parent: "calm_waters", tags: ["seating"] });
+		room({ id: "calm_waters_room", name: "Therapy Room", parent: "calm_waters", tags: ["seating"] });
 
 		/* ---- Letting agent (High Street) -------------------------------------- */
 
@@ -373,6 +395,9 @@
 		walk({ from: "arcade", to: "riverside_park", mins: 15 });
 		walk({ from: "riverside_park", to: "riverside_court", mins: 4 });
 		walk({ from: "high_street", to: "keys_lettings", mins: 2 });
+		walk({ from: "high_street", to: "calm_waters", mins: 3 });
+		walk({ from: "elm_park_green", to: "lennys", mins: 2 });
+		walk({ from: "academy", to: "community_centre", mins: 5 });
 
 		/* ======================================================================
 		 *  5. The Route 7 bus

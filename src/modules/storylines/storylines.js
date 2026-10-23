@@ -15,6 +15,16 @@
  * skills, relationships, a new day…). Storylines also keep counters
  * (shifts done, workouts…) that gates and events can test.
  *
+ * Every storyline has a main counter, its progression (e.g. how many
+ * sessions you've had with the hypnotherapist):
+ *   { progression: "hypnotherapist" }                     effect: +1
+ *   { progression: { id: "hypnotherapist", add: -1 } }    effect: take one away
+ *   { progression: { id: "hypnotherapist", min: 5 } }     condition: 5 or more
+ *
+ * A storyline can start by itself: begin: { on: ["npc:met"], when: CONDITION }
+ * starts it (at `stage`, default the first) the first time that bus event
+ * happens with the condition true, e.g. when you first meet its character.
+ *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-work.js → part 3a (the barista career)
  * Every field, condition, effect and event is listed in src/modules/storylines/README.md.
@@ -32,10 +42,10 @@
 		install({ registry, cond, effects, time, bus, ui }) {
 			registry.defineType("storyline", {
 				required: ["label", "stages"],
-				defaults: { desc: "", start: null, hidden: false, order: 0 },
+				defaults: { desc: "", start: null, begin: null, hidden: false, order: 0 },
 				refs: { "stages[].enter": "storylet", "stages[].events": "storylet" },
 				effects: ["stages[].onEnter"],
-				conditions: ["stages[].gates[].when"],
+				conditions: ["stages[].gates[].when", "begin.when"],
 				check(def) {
 					const errs = [];
 					const ids = new Set(def.stages.map((s) => s.id));
@@ -45,6 +55,10 @@
 						for (const g of st.gates ?? []) if (!ids.has(g.to)) errs.push(`stage "${st.id}": gate goes to unknown stage "${g.to}"`);
 					}
 					if (def.start && !ids.has(def.start)) errs.push(`start stage "${def.start}" doesn't exist`);
+					if (def.begin) {
+						if (!Array.isArray(def.begin.on) || !def.begin.on.length) errs.push('begin needs on: ["some:event"]');
+						if (def.begin.stage && !ids.has(def.begin.stage)) errs.push(`begin stage "${def.begin.stage}" doesn't exist`);
+					}
 					return errs;
 				},
 			});
@@ -65,6 +79,9 @@
 
 				/** @returns {boolean} */
 				started: (id) => Boolean(A()[id]),
+
+				/** @returns {number} The storyline's main counter (see `progression` above). */
+				progression: (id) => storylines.count(id, "progression"),
 
 				/** @returns {number} A storyline counter (0 if unset). */
 				count: (id, key) => A()[id]?.counts[key] ?? 0,
@@ -186,6 +203,24 @@
 				},
 			});
 
+			// { progression: { id, min?, max? } } — the storyline's main counter in range.
+			cond.register("progression", {
+				test(spec) {
+					const v = storylines.progression(spec.id);
+					return (spec.min == null || v >= spec.min) && (spec.max == null || v <= spec.max);
+				},
+				describe: (spec) => `${registry.tryGet("storyline", spec.id)?.label ?? spec.id}: ${spec.min != null ? `at least ${spec.min}` : `at most ${spec.max}`}`,
+			});
+
+			// { progression: "id" } (+1) or { progression: { id, add } }
+			effects.register("progression", {
+				apply(spec, ctx) {
+					const { id, add = 1 } = typeof spec === "string" ? { id: spec } : spec;
+					storylines.addCount(id ?? ctx.storyline, "progression", add);
+				},
+				describe: (spec) => `Moves on ${registry.tryGet("storyline", typeof spec === "string" ? spec : spec.id)?.label ?? ""}`,
+			});
+
 			// { storylineCount: { id, key, add } }
 			effects.register("storylineCount", {
 				apply(spec, ctx) {
@@ -217,6 +252,17 @@
 
 		ready() {
 			setup.storylines.reindex();
+			// Storylines that start by themselves (`begin`).
+			for (const d of setup.registry.all("storyline").filter((x) => x.begin)) {
+				for (const ev of d.begin.on) {
+					setup.bus.on(ev, (payload = {}) => {
+						if (setup.storylines.started(d.id)) return;
+						const ctx = { ...(payload.ctx ?? {}), ...payload, t: setup.time.now() };
+						if (!setup.cond.test(d.begin.when, ctx)) return;
+						setup.storylines.moveTo(d.id, d.begin.stage ?? d.stages[0].id);
+					});
+				}
+			}
 		},
 
 		newGame() {

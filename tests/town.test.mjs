@@ -70,7 +70,8 @@ test("all students in form 12B are 18; every NPC appears somewhere", () => {
 	const students = setup.registry.byTag("npc", "student");
 	assert.ok(students.length >= 5);
 	for (const s of students) assert.equal(s.age, 18, s.id);
-	for (const n of setup.registry.all("npc")) assert.ok(n.schedule.length > 0, `${n.id} has no schedule`);
+	// Online people aren't anywhere in town.
+	for (const n of setup.registry.all("npc").filter((x) => !x.online)) assert.ok(n.schedule.length > 0, `${n.id} has no schedule`);
 });
 
 test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {

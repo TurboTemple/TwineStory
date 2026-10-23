@@ -96,6 +96,10 @@
 						const [id, stage] = v.split("|");
 						flow.perform(() => setup.storylines.moveTo(id, stage));
 					}));
+					// Each storyline's progression counter, with +1 / −1.
+					const lines = registry.all("storyline").map((d) => [d.id, `${d.label}: progression ${setup.storylines.progression(d.id)}`]);
+					box.append(picker("Progression", lines, "+1", (id) => flow.perform(() => setup.storylines.addCount(id, "progression", 1))));
+					box.append(picker("Progression", lines, "−1", (id) => flow.perform(() => setup.storylines.addCount(id, "progression", -1))));
 				}
 
 				if (has("relationships") && registry.all("relTrack").length) {

@@ -48,7 +48,7 @@
 		subject({ id: "history", label: "History", teacher: "Mr Hale", homeworkDays: 3 });
 		subject({ id: "biology", label: "Biology", teacher: "Dr Fry", homeworkDays: 4 });
 		subject({ id: "art", label: "Art", teacher: "Ms Costa", homeworkDays: null });
-		subject({ id: "pe", label: "PE", teacher: "Mr Grant", homeworkDays: null });
+		subject({ id: "pe", label: "PE", teacher: "Mark", homeworkDays: null }); // Mark: story-gym-teacher.js
 
 		/* ======================================================================
 		 *  2 & 3. The school: lesson times, the weekly timetable, term dates
