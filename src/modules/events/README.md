@@ -49,7 +49,9 @@ Each time a trigger happens:
 `handle(trigger, payload)`, `eligible(trigger, ctx)`, `blockedBy(storylet)`, `randomBlockedBy()`, `fire(id, ctx?)`, `seen(id)`, `force(id, true | false | null)` (debug/tests)
 
 ## Events
-`event:fired { id }`
+`event:fired { id, ctx }`
+
+`setup.events.addHeader(fn)` adds something to the top of every event passage (the writing module shows a choice's summary there).
 
 ## Open decisions
 - All real event content.

@@ -10,6 +10,8 @@ Views provided: `app-messages`, `app-calendar`, `app-alarm` (here), `app-bank` (
 ## State
 `$phone = { contacts: [npcId], messages: [{ from, text, t, read, mine }], alarm: "HH:MM" | null }` (last 60 messages)
 
+Alarm settings are in `setup.config.phone`: `alarmTimes` (the choices offered) and `alarmWakesIf` (a condition; the alarm wakes you while it's true, by default `{ status: "asleep" }`).
+
 ## API (`setup.phone`)
 `contacts()`, `hasContact(npc)`, `addContact(npc)`, `message(from, text)`, `thread(npc)`, `unread(npc?)`, `markRead(npc)`, `apps()`, `open(appId)`, `addCalendarSource(fn)`, `calendar(from, to)`, `alarm()`, `setAlarm(hm | null)`
 

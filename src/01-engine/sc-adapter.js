@@ -216,6 +216,24 @@
 			Macro.add(name, def);
 		},
 
+		/**
+		 * Define a macro in place of a built-in one of the same name (the
+		 * deprecated <<choice>> is replaced by the story macro).
+		 * @param {string} name @param {object} def
+		 */
+		replaceMacro(name, def) {
+			if (Macro.has(name)) Macro.delete(name);
+			Macro.add(name, def);
+		},
+
+		/**
+		 * Render passage markup into an element (the contents of a <<when>>).
+		 * @param {Element} target @param {string} source
+		 */
+		wiki(target, source) {
+			jQuery(target).wiki(source);
+		},
+
 		/* ---- Events ----------------------------------------------------- */
 
 		/**

@@ -1,0 +1,15 @@
+/* writing — story choices (<<choice>>) and macro errors. */
+.m-writing.choice {
+	margin: 0.5rem 0;
+}
+.m-writing.choice .btn-choice {
+	width: 100%;
+	text-align: left;
+}
+.m-writing.choice .locked {
+	margin: 0.25rem 0 0;
+}
+.m-writing.macro-error {
+	color: var(--bad);
+	font-weight: 600;
+}

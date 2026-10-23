@@ -12,6 +12,7 @@ A tour of `src/` for anyone reading or changing the engine. To change the *game*
 | `modules/` | One folder per game system (stats, clothing, jobs, weather…). Each has a `README.md` listing its data fields, conditions, effects and events |
 | `content/mooresville/` | The town: every place, person, item, action and event, as data |
 | `story/mooresville/` | The words: one passage per place and event |
+| `../templates/` | A complete storyline to copy (not part of the game) |
 
 Tweego (the build tool) combines all of this into one `index.html`. Every `.js` file is joined into the "Story JavaScript"; every `.twee` file becomes passages.
 

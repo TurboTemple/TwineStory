@@ -4,7 +4,7 @@ School: terms, the timetable, lessons, homework, and what happens when you skip.
 
 ## Data
 - `subject` — `{ id, label, teacher, homeworkDays, desc }`. `homeworkDays: null` sets no homework.
-- `school` — `{ id, label, room, periods: [{ from, to }], days, terms: [{ from, to }], keyDates: [{ date, label }], timetable ("weekly"), week: { 1: [subject per period], … }, status, earlyMins, lateMins, lastEntryMins }`. Dates are `"YYYY-MM-DD"`.
+- `school` — `{ id, label, room, periods: [{ from, to }], days, terms: [{ from, to }], keyDates: [{ date, label }], timetable ("weekly"), week: { 1: [subject per period], … }, status, earlyMins, lateMins, lastEntryMins, homeworkDue ("08:40") }`. Dates are `"YYYY-MM-DD"`.
 
 Other timetables: `setup.education.registerTimetable(name, (school, day, period) => subjectId)`.
 

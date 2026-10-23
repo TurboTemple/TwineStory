@@ -199,6 +199,25 @@ async function playJob(page) {
 	if (me !== "trainee") failures.push(`job: expected the trainee stage, got ${me}`);
 }
 
+/** Debug mode: an event with story choices (<<when>>, <<choice>>, <<first>>). */
+async function playChoice(page) {
+	await page.evaluate(() => {
+		const s = window.SugarCube.setup;
+		s.flow.perform(() => {
+			s.storylines.moveTo("barista_job", "barista", { quiet: true });
+			s.stats.set("stress", 70);
+			s.stats.set("beauty", 10);
+			s.events.fire("grind_barista_rude", { npc: "jess_marlow" });
+		});
+	});
+	await expectPassage(page, "Ev_grind_barista_rude", /wound tight[\s\S]*Smile and remake it[\s\S]*Needs: Beauty/, "choice event");
+	if (!(await page.locator("#passages button", { hasText: "Charm him" }).first().isDisabled())) failures.push("choice: the Beauty choice should be locked");
+	await click(page, "Smile and remake it");
+	await expectPassage(page, "Ev_grind_barista_rude_polite", /Stress \+6[\s\S]*Jess appears/, "after the choice");
+	await click(page, "Continue");
+	await expectPassage(page, "Here", null, "back from the choice");
+}
+
 // Release mode.
 {
 	const { page, errors } = await openPage(base);
@@ -228,6 +247,7 @@ async function playJob(page) {
 	}
 	await playTherapy(page);
 	await playJob(page);
+	await playChoice(page);
 	failures.push(...errors.map((e) => `debug: ${e}`));
 	await page.close();
 }

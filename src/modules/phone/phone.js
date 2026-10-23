@@ -122,7 +122,7 @@
 			// The alarm wakes you if you're asleep.
 			sched.handle("phone:alarm", () => {
 				bus.emit("phone:alarm", { t: time.now() });
-				if (setup.modules.has("status") && setup.status.has("asleep")) {
+				if (cond.test(setup.config.phone?.alarmWakesIf ?? false, { t: time.now() })) {
 					ui.notify("Your alarm went off.");
 					time.interrupt("alarm");
 				}
@@ -204,7 +204,7 @@
 					if (!ul.childNodes.length) ul.append(ui.el("li", { class: "note", text: "No messages yet." }));
 					box.append(ul, ui.button("All messages", () => {
 						threadWith = null;
-						phone.open("messages");
+						phone.open(phone.app);
 					}));
 					return;
 				}
@@ -220,7 +220,7 @@
 					ul.append(ui.el("li", {},
 						ui.button(`${setup.npcs.get(id).name}${n ? ` (${n} new)` : ""}`, () => {
 							threadWith = id;
-							phone.open("messages");
+							phone.open(phone.app);
 						}),
 						last ? ui.el("p", { class: "note", text: last.text.length > 60 ? `${last.text.slice(0, 57)}…` : last.text }) : null));
 				}
@@ -248,17 +248,23 @@
 			ui.view("app-alarm", (box) => {
 				const cur = phone.alarm();
 				box.append(ui.el("p", { text: cur ? `Your alarm is set for ${cur} every day. It wakes you if you're asleep.` : "No alarm set." }));
-				const times = ["05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "10:00"];
+				const times = setup.config.phone?.alarmTimes ?? [];
 				const sel = ui.el("select", { attrs: { "aria-label": "Alarm time" } }, ...times.map((hm) => ui.el("option", { text: hm, attrs: { value: hm, selected: hm === (cur ?? "07:00") } })));
 				box.append(ui.el("div", { class: "debug-row" }, sel, ui.button("Set alarm", () => {
 					phone.setAlarm(sel.value);
-					phone.open("alarm");
+					phone.open(phone.app);
 				})));
 				if (cur) box.append(ui.button("Turn it off", () => {
 					phone.setAlarm(null);
-					phone.open("alarm");
+					phone.open(phone.app);
 				}));
 			});
+		},
+
+		validate() {
+			// The alarm's wake condition (config.js → phone.alarmWakesIf) must use real condition names.
+			const c = setup.config.phone?.alarmWakesIf;
+			return setup.cond.ops(c ?? false).filter((op) => !setup.cond.has(op)).map((op) => `config phone.alarmWakesIf: unknown condition "${op}"`);
 		},
 	});
 })();

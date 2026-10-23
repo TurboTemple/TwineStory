@@ -39,7 +39,8 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Weather and the climate | `town-weather.js` |
 | Apps on the phone | `town-phone.js` |
 | Body parts (height, weight, hair…) | `town-body.js` |
-| Game-wide settings: title, start date, random-event limits, the "dressed to go out" rule | `src/01-engine/config.js` |
+| Game-wide settings: title, start date, random-event limits, the "dressed to go out" rule, time to get changed, alarm times | `src/01-engine/config.js` |
+| A new storyline from scratch | copy `templates/storyline.js` and `templates/storyline.twee` (see "Writing a storyline from scratch") |
 | Pictures, GIFs and videos | `assets/media/` (see `assets/media/README.md`) |
 
 ## Quick changes
@@ -62,8 +63,11 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | How fast hunger, thirst and the rest change | `town-needs.js`, part 1: `perHour` |
 | When a place opens | `town-map.js`: `hours` |
 | Where a person is | `town-people.js`: `schedule` |
-| Term dates, the timetable | `town-school.js` |
+| Term dates, the timetable, when homework is due | `town-school.js` |
 | Random events per day, gap between them | `src/01-engine/config.js`: `events` |
+| When homework is due, how early or late you can go into a lesson | `town-school.js`: `homeworkDue`, `earlyMins`, `lateMins`, `lastEntryMins` |
+| How long getting changed takes | `src/01-engine/config.js`: `clothing.minsPerItem`, `outfitMins` |
+| The alarm times on the phone, and what the alarm wakes you from | `src/01-engine/config.js`: `phone` |
 
 ## The basics
 
@@ -182,6 +186,7 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ moveTo: "home_bedroom" }` | put the player somewhere |
 | `{ time: 10 }` | 10 more minutes pass |
 | `{ note: "Text" }` | a line in the summary box |
+| `{ goto: "Ev_my_scene" }` | show that passage next (e.g. a Talk option that opens a scene) |
 | `{ interrupt: "reason" }` | stop what you're doing (sleep, an action, a journey) |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", add: 1 } }` | set your own flags and counters |
 | `{ if: { cond: { … }, then: [ … ], else: [ … ] } }` | do one thing or another |
@@ -217,9 +222,65 @@ A small grey cat is crying on the wall.
 ```
 
 - Places are `Loc_<place id>`; events are `Ev_<event id>`.
-- Event passages start with `<<view "event-media">>` (the event's picture) and end with `<<view "event-end">>` (the Continue button).
+- Event passages start with `<<view "event-media">>` (the event's picture) and end with `<<view "event-end">>` (the Continue button), or with choices instead.
 - A blank line starts a new paragraph. `<h1>…</h1>` is a heading. `//text//` is italic and `''text''` is bold (two single quotes each side).
 - British English, second person ("You…"), present tense.
+
+### Story tools: choices, text that changes, names
+
+These use the same conditions and effects as the content files (the tables above), written into the passage. The checker reads them too.
+
+**Text that depends on the situation:**
+
+```
+<<when { stat: { id: "mood", min: 60 } }>>You feel great.
+<<orwhen { status: "tipsy" }>>The room is spinning a little.
+<<otherwise>>You feel fine.
+<</when>>
+```
+
+The first part whose condition is true is shown. `<<orwhen>>` and `<<otherwise>>` are optional. Any condition works: `{ weekday: [0, 6] }` (the weekend), `{ wearing: { attribute: "smart" } }`, `{ storyline: { id: "barista_job", stage: "barista" } }`, `{ flag: "helped_the_cat" }`…
+
+**Choices:**
+
+```
+<<choice "Help her" "Ev_lost_cat_help" { effects: [{ stat: { mood: 5 } }, { flag: "helped_the_cat" }] }>>
+<<choice "Charm her (needs Beauty)" "Ev_lost_cat_charm" { conditions: { stat: { id: "beauty", min: 40 } } }>>
+<<choice "Walk on">>
+```
+
+- The label comes first, then the passage it leads to. Leave the passage out to carry on (back to where you were).
+- `effects`: what choosing it does. Set a `{ flag: "…" }` to remember the choice, and test it later with `{ flag: "…" }`.
+- `conditions`: when it can be chosen. Otherwise the button is greyed out and says what's needed; add `hidden: true` to hide it instead.
+- `npc: "jess_marlow"`: who `{ rel: … }` effects are about. Usually not needed: it's whoever the event or conversation is with.
+- What a choice did ("Mood +5") appears at the top of the next passage.
+
+See `Ev_grind_barista_rude` in `work.twee` for a real example.
+
+**Names and pronouns** (never type a name or pronoun that the player can change):
+
+| Write | Shows |
+|---|---|
+| `<<name>>` | the player's name |
+| `<<name "jess_marlow">>`, `<<first "jess_marlow">>` | "Jess Marlow", "Jess" |
+| `<<they "jess_marlow">>`, `<<them …>>`, `<<their …>>`, `<<theirs …>>`, `<<themself …>>` | her pronouns ("she", "her"…) |
+| `<<they>>`, `<<their>>`… (no name) | the player's pronouns |
+| `<<They "jess_marlow">>` | the same with a capital letter ("She") |
+
+## Writing a storyline from scratch
+
+`templates/storyline.js` and `templates/storyline.twee` are a complete, working storyline to copy: someone on the High Street asks for help (an event with two choices); saying yes starts the storyline; "Help out" is the task you repeat, with random outcomes; after 3 goes the next stage starts with its own event and unlocks a reward.
+
+1. **Copy the two files** into the game: `templates/storyline.js` → `src/content/mooresville/town-<story>.js`, and `templates/storyline.twee` → `src/story/mooresville/<story>.twee`.
+2. **Rename** every `my_story` to your own id (lowercase_with_underscores), and change `high_street` to where your story happens.
+3. **The stages** (part 1): give each a `label`, `desc` and `hint` (the Diary shows them), and `gates` for when it moves on. Gates can test a counter, a skill, a stat, a friendship, another storyline… anything in the conditions table.
+4. **How it starts** (part 2): an event with `kind: "story"` and a trigger (`"world:enter"` when you arrive somewhere, `"time:hour"`, `"npc:met"`…), or `start: "first_stage"` on the storyline to begin with a new game, or a Talk option (below).
+5. **The task** (part 3): an action whose effects add to the counter, with a `random` outcome. Several tasks can feed the same counter.
+6. **Rewards** (part 4): anything with `conditions: { storyline: { id: "my_story", stage: "done" } }` and `hidden: true` appears only from that stage.
+7. **Write the text** in the `.twee` file: one `Ev_` passage per event, with choices and `<<when>>` where you want them.
+8. **Test** it at the game's address with `?debug`. Debug → Debug tools lets you jump the storyline to any stage, set stats and skip time. The checker will have caught typos before the game was published.
+
+**A conversation that opens a scene:** give a Talk option (in `town-social.js`) the effect `{ goto: "Ev_my_scene" }`, and optionally `npcs: ["jess_marlow"]` so only she has it. The scene's choices then know who you're talking to.
 
 ## Rules the checker enforces
 
@@ -227,7 +288,8 @@ The build fails (red cross, nothing is published) if:
 
 - an id is used twice, or something points at an id that doesn't exist (a typo like `at: "hgih_street"`);
 - a passage is missing (e.g. an event without its `Ev_` passage);
-- a condition or effect name is misspelt;
+- a condition or effect name is misspelt (in a content file or in a passage's `<<when>>`/`<<choice>>`);
+- a `<<choice>>` goes to a passage that doesn't exist, or `<<name>>`/`<<they>>` names someone who doesn't exist;
 - an item that isn't worn (no `slots`) has `stats`;
 - **a person has no `age`; a classmate or student isn't exactly 18; or anything tagged `romance` lacks `{ ageAtLeast: 18 }`.**
 

@@ -315,7 +315,7 @@
 
 		shiftEvents("barista", {
 			art: [{ stat: { mood: 5 } }, tips(3)],
-			rude: [{ stat: { stress: 8, mood: -5 } }],
+			rude: [{ stat: { stress: 2, mood: -3 } }], // the rest depends on your choice (work.twee)
 			newbie: [{ skill: { barista: 0.5 } }, { stat: { mood: 2 } }],
 			quiet: [{ stat: { stress: -4 } }, tips(1)],
 		});

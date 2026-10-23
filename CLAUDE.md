@@ -104,6 +104,7 @@ APIs relied on:
 ├── assets/                         # images/audio/fonts → copied to dist/assets/ at build
 ├── scripts/validate.mjs            # content validator (§11)
 ├── tests/                          # Node unit tests (§11)
+├── templates/                      # a complete storyline to copy (not built into the game)
 ├── src/
 │   ├── README.md                   # tour of how the code fits together
 │   ├── 00-story/                   # StoryData, StoryTitle, StoryInit, StoryInterface, boot passage
@@ -363,6 +364,7 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 | **jobs** | `job` (id, location, storyline, pay, shift length, per-shift skill and effects) | `$job` | Built on a storyline (hire/quit = stages); one tap works one shift while the place is open, as often as you like; pay, skill and random outcomes per shift; job events | Jobs, hiring, performance, promotion, firing |
 | **education** | `school` (id, location, terms, day structure, key dates), `subject` | `$school` | Calendar of terms and key dates from data, timetable generated deterministically from data plus seed, attendance tracking hook, tasks/assignments framework, grade records | Subjects, attendance consequences, grading, exams, post-school paths |
 | **city-events** | `cityEvent` (id, location, schedule, conditions, actions, ticket) | `$world` | Scheduled events attach actions to a location while active; listed in Calendar | Which events, when |
+| **writing** | — | `$scene` (who the event/conversation is with) | Story macros for passages, using the content condition/effect data: `<<when>>`/`<<orwhen>>`/`<<otherwise>>`, `<<choice>>` (replaces the deprecated built-in), `<<name>>`/`<<first>>`, pronoun macros. Data read by `setup.util.parseData` (no eval). The validator checks them. | — |
 | **events** | `storylet` (id, passage, triggers, conditions, tags, plus open fields) | `$story.storylets` | Generic **event framework**: triggers subscribe to bus events, eligible events are filtered by conditions, then a **selection hook** chooses (default: none, i.e. no random events fire until the user designs the rules). Display through the flow controller. `<<gchoice>>` widget and `<<eventEnd>>` record history. | Selection rules, frequency, cooldowns, all event content |
 | **goals** | `quest` (id, title, stages with done conditions and effects) | `$story.quests` | Stage evaluation on bus events, journal UI | Quest content |
 | **achievements** | `achievement` (id, title, condition or event) | `$story.ach` | Evaluation and display | Achievement list |
@@ -377,7 +379,7 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 - **`StoryInterface`** replaces the default sidebar: a `#hud` header, a `#toasts` region, `#passages`, and a `#bottomnav`. Use `data-passage` regions for the HUD and nav.
 - **HUD:** time/date, money, and the stats with `hud: true`, in their `order`. What appears is decided through stat data, not code.
 - **Bottom nav:** Here · Phone · Bag · Me · Menu, each ≥44 px. Menu contains saves, settings, and debug in debug mode.
-- **Widgets:** `<<btn>>`, `<<card>>`, `<<bar>>`, `<<chip>>`, `<<sheet>>`, `<<tabs>>`, `<<locked>>`, `<<result>>`, `<<gchoice>>`. Check that each name doesn't clash with a built-in macro.
+- **Widgets:** `<<btn>>`, `<<card>>`, `<<bar>>`, `<<chip>>`, `<<sheet>>`, `<<tabs>>`, `<<locked>>`, `<<result>>`. Check that each name doesn't clash with a built-in macro. Story choices are the writing module's `<<choice>>` (it replaces SugarCube's deprecated built-in of that name).
 - **Long lists:** build them with DOM helpers (`setup.ui`), not by wikifying large strings. Modules register named views with `setup.ui.view(name, fn)`; passages show them with `<<view "name">>`.
 - **Styling:**
   - Mobile-first. Body text ≥16 px.
@@ -443,6 +445,7 @@ Text style (voice, tense, spelling) is set by the user. Use British English in U
    - **NPCs without `age`**
    - **classmates or students whose age isn't 18**
    - **romance-tagged content without an 18+ condition**
+   - mistakes in story macros in passages (`<<when>>`, `<<choice>>`, `<<name>>`, pronouns): unknown conditions/effects, missing passages, unknown people
 
 **Unit tests (`node --test tests/*.test.mjs` — a bare directory argument does not work on Node 22)** cover:
 - time maths and breakpoints
@@ -518,7 +521,7 @@ Each phase ends with: validator ✅, tests ✅, build ✅, README updated, phone
 - Edit or commit `dist/`. Change the IFID. Rename shipped ids without an alias.
 - Store functions, classes, `Date`, `Map` or `Set`, or static data, in `$variables`.
 - Use `Math.random()`. Set `$time.t` directly. Call `Engine.play()` outside the flow controller.
-- Use deprecated SugarCube APIs: `Config.saves.onLoad/onSave`, `JSON.reviveWrapper`, `Dialog.setup`, `$args`, the built-in `<<choice>>`/`<<actions>>`, `UIBar.update`.
+- Use deprecated SugarCube APIs: `Config.saves.onLoad/onSave`, `JSON.reviveWrapper`, `Dialog.setup`, `$args`, the built-in `<<actions>>`, `UIBar.update`. (`<<choice>>` is now the game's own story macro.)
 - Create a classmate or student NPC who isn't 18, or romance content open to anyone under 18.
 - Leave the build, validator or tests failing.
 
@@ -545,6 +548,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Readability pass: content rewritten with edit guides and named fields (definitions proven identical), `town-kit.js` shorthand, plain-English headers across the engine and modules, `EDITING.md`, `src/README.md` | Asked for by the user. No gameplay changes. |
 | 2026-10-23 | Shift-based jobs (one tap = one 2-hour shift, no rota), random shift outcomes, occasional shift events (`chance` on pool storylets), Beauty stat and makeup kit, only worn items carry stats | Asked for by the user. `jobs` is at version 2; SCHEMA_VERSION 6. |
 | 2026-10-23 | Phone Diary (storylines with a `hint` per stage; no progress numbers), `weightIf` on random branches (stats change the odds), checker validates conditions inside effects; examples: staff-coffee perk, two crossover interactions, a "Getting fit" storyline | Asked for by the user, who then asked to stop adding scope: from here, build reusable, easily edited frameworks; existing content is only examples for testing. |
+| 2026-10-23 | Review pass. New `writing` module: `<<when>>`, `<<choice>>`, `<<name>>`/`<<first>>`, pronoun macros, checked by the validator; `templates/` storyline to copy; EDITING.md walkthrough. Rules moved from code to data: homework due time (`school.homeworkDue`), time to change (`config.clothing`), alarm times and wake condition (`config.phone`) | Asked for by the user. SCHEMA_VERSION 7 (new `$scene` slice). |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -579,6 +583,7 @@ User decisions so far:
 - Keep things simple where possible, and build frameworks with examples rather than lots of content (the user felt the scope had crept). **No more scope creep:** the goal is a very good, scalable, easily editable foundation of reusable frameworks and modules. The current content (the café, the gym…) is only examples to test with. Every variable (story, pay, stats…) must be easy for the user to change when they write the story. Don't propose new features unless asked.
 - Progress towards the next stage is never shown (it's a surprise). The phone's Diary shows each storyline's stage and a `hint` of what to do next ("Keep working at the café").
 - Stats can change the odds of random outcomes (`weightIf`); stages can unlock rewards (conditions on stage); storylines can cross over (conditions on another storyline's skill, stat or stage).
+- Story passages are written with the writing macros, not code: `<<when>>` for text that changes, `<<choice>>` for choices (effects, conditions, locked choices show what's needed), `<<name>>` and pronoun macros. New storylines start from `templates/`.
 - Items are modular and self-contained, in labelled sections: `kind` (what it is), `shops` (where it's sold), `attributes` (what it's like: warm, smart…), `stats` (stat modifiers) and `use`. Clothing is an item of kind `clothing` with `slots`. Shops have no stock lists.
 - Warmth is yes/no: an item has the attribute `warm` or not, and wearing one warm thing keeps the Cold effect off on a cold day (5°C or below). Smartness is the same (`smart`; two smart things = Smartly dressed).
 - Money is whole pounds, no pennies. Prices follow what something gives you, in tiers: clothing £10 basic / £20 cheap (small boost) / £50 good / £100 top; food and drink in steps of £1–£8. Claude set these at the user's request; they can be tuned.

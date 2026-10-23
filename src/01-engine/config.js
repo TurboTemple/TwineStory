@@ -35,7 +35,7 @@
 	 * (A brand-new module doesn't need a bump: save.js adds its slice.)
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 6;
+	setup.SCHEMA_VERSION = 7;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -83,6 +83,14 @@
 		// be filled; `notOutside` lists clothing attributes you can't go out in.
 		clothing: {
 			dressed: { cover: [["top"], ["bottom"], ["feet"]], notOutside: ["sleepwear"] },
+			minsPerItem: 1, // minutes to put on or take off each thing
+			outfitMins: 3,  // minutes to change into a saved outfit
+		},
+		// The phone's alarm: the times you can pick, and when it wakes you
+		// (a condition: here, while you have the "Asleep" effect).
+		phone: {
+			alarmTimes: ["05:30", "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "10:00"],
+			alarmWakesIf: { status: "asleep" },
 		},
 		// Decided by the user: manual save slots in the Menu.
 		saves: { slots: 12, autosaves: 1 },

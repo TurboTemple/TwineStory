@@ -194,7 +194,7 @@
 				 *    20  people       who's here                          (npcs)
 				 *    25  areas        rooms you can walk to               (world)
 				 *    27  lessons      "Go to English"                     (education)
-				 *    28  work         "Start your shift"                  (jobs)
+				 *    28  work         "Work a shift"                      (jobs)
 				 *    28  shops        "Browse …"                          (shops)
 				 *    30  actions      "Things to do"                      (actions)
 				 *    32  wardrobe     "Get changed"                       (clothing)

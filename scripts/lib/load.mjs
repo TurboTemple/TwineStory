@@ -46,7 +46,8 @@ function makeStub(label, record) {
  * Evaluate every `.js` file under `srcDir` in one sandbox, in the order
  * given (callers can shuffle it to prove load-order independence).
  * @param {string} srcDir
- * @param {{ search?: string, order?: (files: string[]) => string[] }} [opts]
+ * @param {{ search?: string, order?: (files: string[]) => string[], extra?: string[] }} [opts]
+ *   extra: more .js files to load after src/ (tests use it for templates/).
  * @returns {{ setup: object, config: Record<string, unknown>, context: object, files: string[] }}
  */
 export function loadStoryJs(srcDir, opts = {}) {
@@ -75,6 +76,7 @@ export function loadStoryJs(srcDir, opts = {}) {
 	vm.createContext(context);
 	let files = listFiles(srcDir, ".js");
 	if (opts.order) files = opts.order(files);
+	files = files.concat(opts.extra ?? []);
 	for (const file of files) {
 		const code = fs.readFileSync(file, "utf8");
 		vm.runInContext(code, context, { filename: file });
@@ -91,7 +93,7 @@ export function loadStoryJs(srcDir, opts = {}) {
  * @returns {{ setup: object, vars: object, played: string[], config: object }}
  */
 export function bootGame(srcDir, opts = {}) {
-	const { setup, config } = loadStoryJs(srcDir, { search: opts.debug ? "?debug" : "", order: opts.order });
+	const { setup, config } = loadStoryJs(srcDir, { search: opts.debug ? "?debug" : "", order: opts.order, extra: opts.extra });
 	const vars = {};
 	const played = [];
 	const passages = opts.passages ? new Set(opts.passages) : null;

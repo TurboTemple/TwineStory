@@ -204,7 +204,7 @@
 					}
 					events.current = id;
 					flow.request(s.passage, flow.PRIORITY.event);
-					bus.emit("event:fired", { id });
+					bus.emit("event:fired", { id, ctx });
 					return result;
 				},
 
@@ -237,8 +237,18 @@
 			/** The storylet most recently fired (not saved). */
 			events.current = null;
 
+			/** Extra things shown at the top of every event, before its picture. */
+			const headers = [];
+			/**
+			 * Add something to the top of every event passage (the writing
+			 * module shows the summary of the choice that led here).
+			 * @param {(box: HTMLElement) => void} fn
+			 */
+			events.addHeader = (fn) => headers.push(fn);
+
 			// The event's picture or clip: <<view "event-media">> at the top of an Ev_ passage.
 			ui.view("event-media", (box) => {
+				for (const fn of headers) fn(box);
 				const here = setup.sc.passage();
 				const s = registry.all("storylet").find((x) => x.passage === here) ?? (events.current ? registry.get("storylet", events.current) : null);
 				const pic = s ? setup.media.render("storylet", s.id, { class: "media-wide" }) : null;

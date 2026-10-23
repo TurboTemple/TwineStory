@@ -88,9 +88,36 @@ The tip jar is noticeably heavier by lunchtime.
 <<view "event-media">>
 <h1>Difficult customer</h1>
 
-A man in a suit snaps that his coffee is too hot, then too cold, then that he asked for skimmed. He didn't. You remake it with a smile that hurts.
+A man in a suit snaps that his coffee is too hot, then too cold, then that he asked for skimmed. He didn't.
+<<when { stat: { id: "stress", min: 60 } }>>
+You're already wound tight, and you can feel your jaw clench.
+<<otherwise>>
+You take a slow breath.
+<</when>>
 
-Jess appears at your shoulder after he's gone. "You handled that better than I would have."
+<<choice "Smile and remake it" "Ev_grind_barista_rude_polite" { effects: [{ stat: { stress: 6 } }, { skill: { barista: 0.5 } }, { rel: { friendship: 2 } }], npc: "jess_marlow" }>>
+<<choice "Tell him he didn't ask for skimmed" "Ev_grind_barista_rude_snap" { effects: [{ stat: { mood: 3, stress: -4 } }] }>>
+<<choice "Charm him into a better mood" "Ev_grind_barista_rude_charm" { conditions: { stat: { id: "beauty", min: 40 } }, effects: [{ stat: { mood: 4 } }, { money: { amount: 2, account: "cash", reason: "Tips" } }] }>>
+
+:: Ev_grind_barista_rude_polite
+<<view "event-media">>
+You remake it with a smile that hurts. He takes it without a word.
+
+<<first "jess_marlow">> appears at your shoulder after he's gone. "You handled that better than I would have."
+
+<<view "event-end">>
+
+:: Ev_grind_barista_rude_snap
+<<view "event-media">>
+"I didn't say skimmed," he says. "Yes, you did," you say, "no, you didn't." He storms out.
+
+<<first "jess_marlow">> raises an eyebrow. "Satisfying. Don't make a habit of it, though."
+
+<<view "event-end">>
+
+:: Ev_grind_barista_rude_charm
+<<view "event-media">>
+You laugh, tell him it's clearly been one of those days, and slide a biscuit onto his saucer. By the time his remade coffee is ready he's almost smiling, and he drops a couple of pounds in the jar.
 
 <<view "event-end">>
 

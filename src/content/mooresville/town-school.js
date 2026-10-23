@@ -6,9 +6,10 @@
  * How school works in the game:
  *   - On a school day, go to Form Room 12B. During a lesson's time a
  *     "Go to <subject>" button appears. You can join from 5 minutes before
- *     until 15 minutes before the end; more than 5 minutes late is noted.
+ *     until 15 minutes before the end; more than 5 minutes late is noted
+ *     (earlyMins, lastEntryMins and lateMins in part 2).
  *   - A lesson in a subject that sets homework gives you homework, due at
- *     08:40 that many days later (only one piece per subject at a time).
+ *     08:40 (homeworkDue) that many days later (only one piece per subject at a time).
  *     "Do homework" (your bedroom) or "Study" (the library) finishes it.
  *   - The next day, every lesson you missed counts as skipped, and homework
  *     past its due time counts as late. Mr Hale has a word about it when
@@ -58,6 +59,11 @@
 			label: "Mooresville Academy",
 			room: "academy_form_room", // where lessons happen
 			status: "in_lessons",      // the hidden effect while in a lesson (town-needs.js)
+
+			earlyMins: 5,        // you can go into a lesson this many minutes before it starts
+			lateMins: 5,         // more than this many minutes after the start counts as late
+			lastEntryMins: 15,   // you can't go in during the last this-many minutes of a lesson
+			homeworkDue: "08:40", // homework is due at this time on its due day
 
 			// Lesson slots, in order. Break is 11:00–11:20, lunch 12:20–13:10.
 			periods: [

@@ -8,7 +8,7 @@
  *
  *   view        what the app shows. These are built into the game:
  *                 "app-messages"  texts from your contacts
- *                 "app-calendar"  shifts, lessons, homework and term dates for 7 days
+ *                 "app-calendar"  lessons, homework and term dates for 7 days
  *                 "app-bank"      balances and recent spending
  *                 "app-map"       every place, and whether it's open now
  *                 "app-alarm"     set a daily alarm that wakes you up
