@@ -1,0 +1,81 @@
+name: Validate, build and deploy
+
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  TWEEGO_URL: "https://github.com/tmedwards/tweego/releases/download/v2.1.1/tweego-2.1.1-linux-x64.zip"
+  TWEEGO_SHA256: "2ed11c3aa66c88ec5382b51061c7782152632b88916777428ab57a66feb7e5aa"
+  SUGARCUBE_URL: "https://github.com/tmedwards/sugarcube-2/releases/download/v2.37.3/sugarcube-2.37.3-for-twine-2.1-local.zip"
+  SUGARCUBE_SHA256: "da00a8c15ec4e88a9e231a3ff6c516c57055f84231bb999f869ed34ade353dab"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate content
+        run: node scripts/validate.mjs
+
+      - name: Unit tests
+        shell: bash
+        run: node --test tests/*.test.mjs
+
+      - name: Install Tweego + SugarCube
+        shell: bash
+        run: |
+          curl -fsSL -o tweego.zip "$TWEEGO_URL"
+          echo "$TWEEGO_SHA256  tweego.zip" | sha256sum -c -
+          unzip -q tweego.zip -d tweego && chmod +x tweego/tweego
+          echo "$PWD/tweego" >> "$GITHUB_PATH"
+          mkdir -p storyformats
+          curl -fsSL -o sc.zip "$SUGARCUBE_URL"
+          echo "$SUGARCUBE_SHA256  sc.zip" | sha256sum -c -
+          unzip -q sc.zip -d storyformats
+          test -n "$(find storyformats -name format.js)" || { echo "::error::SugarCube format.js not found"; exit 1; }
+          echo "TWEEGO_PATH=$PWD/storyformats" >> "$GITHUB_ENV"
+
+      - name: Check story formats
+        shell: bash
+        run: |
+          # `tweego --list-formats` always exits 1, so check its output instead.
+          tweego --list-formats > formats.txt 2>&1 || true
+          cat formats.txt
+          grep -q "SugarCube (2.37.3)" formats.txt || { echo "::error::SugarCube 2.37.3 not available to Tweego"; exit 1; }
+
+      - name: Build
+        shell: bash
+        run: |
+          mkdir -p dist
+          tweego -o dist/index.html src/ 2>&1 | tee build.log
+          if grep -qi "warning" build.log; then echo "::error::Tweego warnings"; exit 1; fi
+          if [ -d assets ]; then cp -r assets dist/; fi
+          rm -f dist/assets/.gitkeep
+
+      - uses: actions/upload-pages-artifact@v5
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: dist
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,168 @@
+// rules.mjs — pure validation rules (§11). Each function returns a list of
+// error strings; an empty list means the check passed.
+
+export const ID_RE = /^[a-z][a-z0-9_]*$/;
+export const SUGARCUBE_VERSION = "2.37.3";
+// The IFID must never change once generated (§15).
+export const IFID = "FC145B33-A829-4D04-9BDF-7639A05F2455";
+// Roles/tags that mark an NPC as a classmate or school student (§1).
+export const STUDENT_MARKERS = ["student", "classmate"];
+// Leaf condition operator that guarantees every participant is at least N.
+// The operator itself is registered by the npcs/relationships modules.
+export const AGE_CONDITION_OP = "ageAtLeast";
+export const ADULT_AGE = 18;
+
+const SPECIAL_PASSAGES = new Set([
+	"StoryData", "StoryTitle", "StoryInit", "StoryInterface", "StoryCaption",
+	"StoryBanner", "StoryMenu", "StoryAuthor", "StorySubtitle", "StoryShare",
+	"PassageReady", "PassageDone", "PassageHeader", "PassageFooter",
+]);
+
+const where = (p) => `${p.file}:${p.line} (${p.name})`;
+
+/**
+ * Story-level checks: duplicate passages, StoryData, start passage, links.
+ * @param {{ name: string, tags: string[], text: string, file: string, line: number }[]} passages
+ */
+export function checkPassages(passages) {
+	const errors = [];
+	const byName = new Map();
+	for (const p of passages) {
+		if (byName.has(p.name)) {
+			errors.push(`Duplicate passage "${p.name}": ${where(byName.get(p.name))} and ${where(p)}`);
+		}
+		else byName.set(p.name, p);
+	}
+
+	const data = byName.get("StoryData");
+	let start = "Start";
+	if (!data) errors.push("Missing StoryData passage");
+	else {
+		try {
+			const json = JSON.parse(data.text);
+			if (json.ifid !== IFID) errors.push(`StoryData ifid changed (expected ${IFID}); the IFID must never change`);
+			if (json.format !== "SugarCube") errors.push(`StoryData format must be "SugarCube"`);
+			if (json["format-version"] !== SUGARCUBE_VERSION) errors.push(`StoryData format-version must be ${SUGARCUBE_VERSION}`);
+			if (json.start) start = json.start;
+		}
+		catch (ex) {
+			errors.push(`StoryData is not valid JSON: ${ex.message}`);
+		}
+	}
+	if (!byName.has(start)) errors.push(`Start passage "${start}" does not exist`);
+	if (!byName.has("StoryTitle")) errors.push("Missing StoryTitle passage");
+
+	for (const p of passages) {
+		const isWidget = p.tags.includes("widget");
+		if (/<<widget\b/.test(p.text) && !isWidget) {
+			errors.push(`${where(p)}: <<widget>> defined outside a widget-tagged passage`);
+		}
+		if (isWidget && (SPECIAL_PASSAGES.has(p.name) || p.tags.includes("init"))) {
+			errors.push(`${where(p)}: widget tag on a special/init passage`);
+		}
+	}
+	return errors;
+}
+
+/**
+ * Every literal link/goto/include target must exist.
+ * @param {{ name: string, file: string, line: number }[]} passages
+ * @param {(text: string) => string[]} findRefs
+ */
+export function checkLinks(passages, findRefs) {
+	const names = new Set(passages.map((p) => p.name));
+	const errors = [];
+	for (const p of passages) {
+		if (p.name === "StoryData") continue;
+		for (const ref of findRefs(p.text)) {
+			if (!names.has(ref)) errors.push(`${where(p)}: links to missing passage "${ref}"`);
+		}
+	}
+	return errors;
+}
+
+const BANNED = [
+	{ re: /\bMath\.random\s*\(/, msg: "uses Math.random(); use setup.rng (§4.5)" },
+	{ re: /\bConfig\.saves\.on(Load|Save)\b/, msg: "uses deprecated Config.saves.onLoad/onSave; use Save.onLoad/onSave" },
+	{ re: /\bJSON\.reviveWrapper\b/, msg: "uses deprecated JSON.reviveWrapper; use Serial.createReviver" },
+	{ re: /\bDialog\.setup\b/, msg: "uses deprecated Dialog.setup; use Dialog.create" },
+	{ re: /\bUIBar\.update\b/, msg: "uses deprecated UIBar.update; use UI.update" },
+	{ re: /\$args\b/, msg: "uses deprecated $args; use _args" },
+	{ re: /<<(choice|actions)\b/, msg: "uses the deprecated <<choice>>/<<actions>> macros" },
+	{ re: /\beval\s*\(|\bnew\s+Function\s*\(/, msg: "uses eval/new Function (§9)" },
+];
+
+/**
+ * Source-level bans (§15). `Engine.play` is only allowed in the adapter.
+ * @param {{ file: string, text: string }[]} sources
+ */
+export function checkSources(sources) {
+	const errors = [];
+	for (const { file, text } of sources) {
+		// Strip line and block comments from JS so docs can mention banned names.
+		const code = file.endsWith(".js")
+			? text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1")
+			: text;
+		for (const { re, msg } of BANNED) {
+			if (re.test(code)) errors.push(`${file}: ${msg}`);
+		}
+		if (/\bEngine\.play\s*\(/.test(code) && !file.endsWith("sc-adapter.js")) {
+			errors.push(`${file}: calls Engine.play directly; use setup.flow (§5.3)`);
+		}
+	}
+	return errors;
+}
+
+/** True if `cond` guarantees every participant is at least ADULT_AGE. */
+export function guaranteesAdult(cond) {
+	if (cond == null || typeof cond !== "object") return false;
+	if (Array.isArray(cond)) return cond.some(guaranteesAdult);
+	if (Array.isArray(cond.all)) return cond.all.some(guaranteesAdult);
+	if (Array.isArray(cond.any)) return cond.any.length > 0 && cond.any.every(guaranteesAdult);
+	if (AGE_CONDITION_OP in cond) {
+		const spec = cond[AGE_CONDITION_OP];
+		const n = typeof spec === "number" ? spec : spec?.age;
+		return Number.isFinite(n) && n >= ADULT_AGE;
+	}
+	return false;
+}
+
+const hasMarker = (def) =>
+	STUDENT_MARKERS.includes(def.role) ||
+	(Array.isArray(def.tags) && def.tags.some((t) => STUDENT_MARKERS.includes(t)));
+
+/**
+ * Content checks: ids, duplicates, and the age rules (§1).
+ * @param {{ type: string, def: object }[]} defs
+ */
+export function checkDefs(defs) {
+	const errors = [];
+	const seen = new Set();
+	for (const { type, def } of defs) {
+		const label = `${type} "${def?.id}"`;
+		if (!def || typeof def.id !== "string" || !ID_RE.test(def.id)) {
+			errors.push(`${label}: id must match ${ID_RE}`);
+			continue;
+		}
+		const key = `${type}:${def.id}`;
+		if (seen.has(key)) errors.push(`${label}: duplicate id`);
+		seen.add(key);
+
+		if (type === "npc") {
+			if (!Number.isInteger(def.age)) errors.push(`${label}: every NPC needs an explicit integer age`);
+			else if (hasMarker(def) && def.age !== ADULT_AGE) {
+				errors.push(`${label}: classmates and students must be exactly ${ADULT_AGE} (got ${def.age})`);
+			}
+			else if (def.age < ADULT_AGE && Array.isArray(def.tags) && def.tags.includes("romance")) {
+				errors.push(`${label}: romance-tagged NPC must be ${ADULT_AGE}+`);
+			}
+		}
+
+		if (Array.isArray(def.tags) && def.tags.includes("romance") && type !== "npc") {
+			if (!guaranteesAdult(def.conditions)) {
+				errors.push(`${label}: romance-tagged content needs a { ${AGE_CONDITION_OP}: ${ADULT_AGE} } condition (not under any/not)`);
+			}
+		}
+	}
+	return errors;
+}

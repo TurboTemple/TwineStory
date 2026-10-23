@@ -1,0 +1,16 @@
+:: StoryTitle
+Life Sim
+
+:: StoryData
+{
+	"ifid": "FC145B33-A829-4D04-9BDF-7639A05F2455",
+	"format": "SugarCube",
+	"format-version": "2.37.3",
+	"start": "Start"
+}
+
+:: StoryInit [nobr]
+<<run setup.newGame()>>
+
+:: Sys_Boot [init nobr]
+<<run setup.boot()>>

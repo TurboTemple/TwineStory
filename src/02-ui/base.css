@@ -1,0 +1,59 @@
+/*
+ * base.css — Phase 0 placeholder styles. The real UI shell, tokens and
+ * themes arrive in Phase 2 (§8). Neutral look only: the visual design is
+ * the user's decision.
+ */
+#sys-banners {
+	position: fixed;
+	top: env(safe-area-inset-top, 0);
+	left: 0;
+	right: 0;
+	z-index: 100000;
+}
+
+.sys-banner {
+	display: flex;
+	align-items: center;
+	gap: 0.75em;
+	padding: 0.75em 1em;
+	font-size: 16px;
+	background: #333;
+	color: #fff;
+}
+
+.sys-banner-error {
+	background: #8b1a1a;
+}
+
+.sys-banner span {
+	flex: 1;
+}
+
+.sys-banner button {
+	min-height: 44px;
+	min-width: 44px;
+}
+
+.sys-checks {
+	list-style: none;
+	padding: 0;
+}
+
+.sys-ok,
+.sys-fail {
+	display: inline-block;
+	min-width: 3.5em;
+	font-weight: bold;
+}
+
+.sys-ok {
+	color: #2e7d32;
+}
+
+.sys-fail {
+	color: #c62828;
+}
+
+.sys-note {
+	font-style: italic;
+}

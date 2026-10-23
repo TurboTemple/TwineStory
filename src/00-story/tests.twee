@@ -1,0 +1,30 @@
+:: Test_Index
+<h1>Test index</h1>
+<<if setup.config.debug>>
+Scenario checks for proving the framework works. These pages only matter in debug mode.
+
+* [[Phase 0 — setup checks|Test_Phase0]]
+
+[[Back to start|Start]]
+<<else>>
+Test pages are only available in debug mode.
+<</if>>
+
+:: Test_Phase0 [nobr]
+<h1>Phase 0 — setup checks</h1>
+<<set _checks to [
+	["SugarCube version is 2.37.3", [version.major, version.minor, version.patch].join(".") === "2.37.3"],
+	["History keeps one moment", Config.history.maxStates === 1],
+	["History controls hidden", Config.history.controls === false],
+	["Wikifier output cleanup on", Config.cleanupWikifierOutput === true],
+	["Seeded random is on", setup.sc.prngEnabled()],
+	["Save version matches schema", Config.saves.version === setup.SCHEMA_VERSION],
+	["Game state created ($meta)", typeof $meta === "object" && $meta.schemaVersion === setup.SCHEMA_VERSION],
+	["window.GAME is set in debug", window.GAME === setup],
+]>>
+<ul class="sys-checks">
+<<for _c range _checks>>
+	<li><<if _c[1]>><span class="sys-ok">PASS</span><<else>><span class="sys-fail">FAIL</span><</if>> <<= _c[0]>></li>
+<</for>>
+</ul>
+<p>[[Back to test index|Test_Index]]</p>

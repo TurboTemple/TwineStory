@@ -1,0 +1,101 @@
+// load.mjs — load the game's Story JavaScript into a Node `vm` sandbox with
+// stubbed SugarCube globals, so the validator and tests can inspect `setup`.
+
+import fs from "node:fs";
+import path from "node:path";
+import vm from "node:vm";
+
+/** Recursively list files under `dir` with the given extension, sorted. */
+export function listFiles(dir, ext) {
+	const out = [];
+	const walk = (d) => {
+		for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+			const p = path.join(d, entry.name);
+			if (entry.isDirectory()) walk(p);
+			else if (entry.name.endsWith(ext)) out.push(p);
+		}
+	};
+	walk(dir);
+	return out.sort();
+}
+
+/**
+ * A permissive stand-in for a SugarCube global: any property read returns
+ * another stub, any call returns a stub, any assignment is recorded.
+ */
+function makeStub(label, record) {
+	const target = function () {};
+	return new Proxy(target, {
+		get(t, prop) {
+			if (prop === Symbol.toPrimitive) return () => `[stub ${label}]`;
+			if (prop in t && prop !== "prototype") return t[prop];
+			return (t[prop] = makeStub(`${label}.${String(prop)}`, record));
+		},
+		set(t, prop, value) {
+			record[`${label}.${String(prop)}`] = value;
+			t[prop] = value;
+			return true;
+		},
+		apply() {
+			return makeStub(`${label}()`, record);
+		},
+	});
+}
+
+/**
+ * Evaluate every `.js` file under `srcDir` in one sandbox, in the order
+ * given (callers can shuffle it to prove load-order independence).
+ * @param {string} srcDir
+ * @param {{ search?: string, order?: (files: string[]) => string[] }} [opts]
+ * @returns {{ setup: object, config: Record<string, unknown>, context: object, files: string[] }}
+ */
+export function loadStoryJs(srcDir, opts = {}) {
+	const config = {};
+	const setup = {};
+	const context = {
+		setup,
+		console,
+		URLSearchParams,
+		window: { location: { search: opts.search ?? "" } },
+		Config: makeStub("Config", config),
+		State: makeStub("State", config),
+		Story: makeStub("Story", config),
+		Engine: makeStub("Engine", config),
+		UI: makeStub("UI", config),
+		Dialog: makeStub("Dialog", config),
+		Save: makeStub("Save", config),
+		Setting: makeStub("Setting", config),
+		Serial: makeStub("Serial", config),
+		jQuery: makeStub("jQuery", config),
+		$: makeStub("$", config),
+	};
+	vm.createContext(context);
+	let files = listFiles(srcDir, ".js");
+	if (opts.order) files = opts.order(files);
+	for (const file of files) {
+		const code = fs.readFileSync(file, "utf8");
+		vm.runInContext(code, context, { filename: file });
+	}
+	return { setup, config, context, files };
+}
+
+/**
+ * Run the queued content functions (`setup.__content`) against a recording
+ * registry and return every definition, grouped by type.
+ * @param {object} setup
+ * @returns {{ defs: { type: string, def: object }[], aliases: { type: string, from: string, to: string }[] }}
+ */
+export function collectContent(setup) {
+	const defs = [];
+	const aliases = [];
+	const R = {
+		define(type, def) {
+			defs.push({ type, def });
+		},
+		alias(type, from, to) {
+			aliases.push({ type, from, to });
+		},
+	};
+	for (const fn of setup.__content ?? []) fn(R);
+	return { defs, aliases };
+}
