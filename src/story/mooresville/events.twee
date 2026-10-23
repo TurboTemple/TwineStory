@@ -31,3 +31,18 @@ The bus crawls to a stop behind a queue of cars. Roadworks, by the look of it. Y
 The lights flick on and someone calls out that they're closing. You gather your things and head out.
 
 <<view "event-end">>
+
+:: Ev_tutor_word
+<<view "event-media">>
+<h1>A word, please</h1>
+
+<<set _t to setup.education.lastTrouble>>\
+Mr Hale catches your eye as you come in and nods towards his desk. "A quick word."
+
+He looks at his register, then at you. <<if _t.lessons gt 0>>"You've missed <<= _t.lessons>> <<= _t.lessons is 1 ? "lesson" : "lessons">> since I last saw you."<</if>><<if _t.homework gt 0>> <<if _t.lessons gt 0>>"And<<else>>"<</if>> <<= _t.homework>> piece<<if _t.homework isnot 1>>s<</if>> of homework came in late, or not at all."<</if>>
+
+He sighs. "This is your final year. I'm not going to shout, but I am going to notice. Is everything all right?"
+
+You mumble something. He lets it go, for now.
+
+<<view "event-end">>

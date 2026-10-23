@@ -146,3 +146,33 @@ test("two events at once: the second waits for Continue", () => {
 	setup.flow.continue();
 	assert.equal(played.at(-1), "Here");
 });
+
+test("school: term days, skipping lessons, late homework, your tutor's word", () => {
+	const { setup } = town();
+	const E = setup.education;
+	assert.ok(!E.schoolDay("academy", 0), "Tue 1 Sept is before term");
+	assert.ok(E.schoolDay("academy", 2), "Thu 3 Sept is the first day");
+	assert.ok(!E.schoolDay("academy", 4), "not on Saturdays");
+	assert.equal(E.lessonsOn("academy", 2).length, 5);
+	// Stay home on Thursday: five lessons skipped.
+	setup.time.advance(setup.time.at(3, "07:00") - setup.time.now());
+	assert.equal(E.trouble().lessons, 5);
+	// Homework that goes past its due time is late.
+	E.setHomework("maths");
+	setup.time.advance(setup.time.at(6, "07:00") - setup.time.now());
+	assert.equal(E.trouble().homework, 1);
+	assert.equal(E.homework().length, 0);
+	// Monday: Mr Hale has a word when you walk into the form room.
+	setup.world.moveTo("academy");
+	setup.time.advance(setup.time.at(6, "08:45") - setup.time.now());
+	setup.world.walkTo("academy_form_room");
+	assert.equal(setup.events.seen("tutor_word"), 1);
+	assert.equal(E.trouble().lessons, 0);
+	assert.equal(E.lastTrouble.homework, 1);
+	// Homework is finished by the homework action.
+	E.setHomework("english");
+	setup.world.moveTo("home_bedroom");
+	setup.actions.do("homework");
+	assert.equal(E.homework().length, 0);
+	assert.equal(E.totals().homeworkDone, 1);
+});

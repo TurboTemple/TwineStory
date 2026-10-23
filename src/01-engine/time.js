@@ -40,6 +40,16 @@
 			/** @returns {number} Current time in minutes since the epoch. */
 			now: () => setup.vars().time.t,
 
+			/**
+			 * Day number of a calendar date.
+			 * @param {string} ymd "YYYY-MM-DD" @returns {number}
+			 */
+			dayOf(ymd) {
+				const ms = Date.parse(`${ymd}T00:00:00Z`);
+				if (Number.isNaN(ms)) throw new setup.GameError(`Bad date "${ymd}" (use YYYY-MM-DD)`);
+				return Math.floor((ms - epochMs()) / 86400000);
+			},
+
 			/** @returns {number} Day number (0 = epoch day). */
 			day: (t) => Math.floor(t / MIN_PER_DAY),
 
