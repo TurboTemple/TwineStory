@@ -25,7 +25,7 @@
 			id: "wolfhowl",
 			name: "xXWolfHowlXx",
 			age: 22,
-			pronouns: "they/them",
+			pronouns: "he/him",
 			role: "clan leader (online)",
 			tags: ["story", "online"],
 			online: true, // their sheet says "Online" instead of a place

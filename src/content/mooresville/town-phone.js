@@ -12,10 +12,11 @@
  *                 "app-bank"      balances and recent spending
  *                 "app-map"       every place, and whether it's open now
  *                 "app-alarm"     set a daily alarm that wakes you up
+ *                 "app-email"     emails ({ message: { from, text, via: "email" } })
  *                 "app-diary"     every storyline you've started and its
  *                                 `hint` (what to do next)
  *   icon        an emoji (or any short text)
- *   badge       "unread" shows the number of unread messages on the icon
+ *   badge       "unread" (texts) or "unread_email" shows how many are unread on the icon
  *   conditions  only show the app when this is true
  *
  * To remove an app, delete its line. Opening the phone never uses up time.
@@ -31,6 +32,7 @@
 		app({ id: "bank", label: "Bank", icon: "🏦", order: 2, view: "app-bank" });
 		app({ id: "map", label: "Map", icon: "🗺️", order: 3, view: "app-map" });
 		app({ id: "alarm", label: "Alarm", icon: "⏰", order: 4, view: "app-alarm" });
+		app({ id: "email", label: "Email", icon: "✉️", order: 1, view: "app-email", badge: "unread_email" });
 		app({ id: "diary", label: "Diary", icon: "📔", order: 5, view: "app-diary" });
 	});
 })();
