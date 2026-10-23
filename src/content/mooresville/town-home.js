@@ -179,18 +179,21 @@
 			effects: [{ rel: { npc: "dad", friendship: 2 } }, { rel: { npc: "mum", friendship: 1 } }, { stat: { energy: -3 } }],
 		});
 
-		// The curfew: living at home and still out at 11pm, Mum texts and isn't
-		// pleased. Once a night.
+		// The curfew (decided by the user: 10pm): living at home and still out at
+		// 10pm, Mum texts and isn't pleased. Once a night. Each late night adds 1
+		// to the "late_home" counter; after more than three, your parents send
+		// you to hypnotherapy (stories/story-hypnotherapist.js).
 		R.define("storylet", {
 			id: "curfew",
 			kind: "story",
 			passage: "Ev_curfew",
 			triggers: ["time:hour"],
-			conditions: { livesAt: "family_home", atHome: false, time: { from: "23:00", to: "05:00" }, not: { status: "asleep" } },
+			conditions: { livesAt: "family_home", atHome: false, time: { from: "22:00", to: "05:00" }, not: { status: "asleep" } },
 			cooldown: 720,
 			effects: [
-				{ message: { from: "mum", text: "It's gone 11. Where are you? Home. Now, please." } },
+				{ message: { from: "mum", text: "It's gone 10. Where are you? Home. Now, please." } },
 				{ rel: { npc: "mum", friendship: -3 } },
+				{ counter: { name: "late_home" } }, // one more late night
 			],
 		});
 	});
