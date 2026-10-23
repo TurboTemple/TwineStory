@@ -1,25 +1,45 @@
 # travel
 
-Moving between locations. **Travel always takes time.**
+Moving between locations. **Travel always takes time, and may cost money.**
+
+## How travel works (decided by the user)
+- **Walking goes one place at a time.** You can only walk to a neighbouring place; to get further you walk through each place on the way.
+- **Public transport goes to hubs.** A bus runs along its own line and drops you at any stop on it. A taxi can be taken anywhere and goes to places tagged `hub` (e.g. the city centre or a suburb).
+- **Travel costs money.** The fare is paid before you set off; if you can't pay, you can't go.
+- **Interruptions depend on the event.** A journey pauses at each stop on the way (`travel:checkpoint`). An event that interrupts it leaves you at the last place you reached. Its effects can also move you somewhere else with `{ moveTo: "loc" }`.
 
 ## Data
-- `travelMode` — `{ id, label, conditions, time: hookName, cost: hookName, order }`
-- `route` — `{ id, from, to, mins, modes? }` — usable in both directions; `modes` limits which modes can use it
+- `route` — `{ id, from, to, mins, network }`. A link between two neighbouring places, usable both ways. `network` defaults to `"walk"`; a bus line uses its own network name.
+- `travelMode` —
+  `{ id, label, order, conditions, network, multiHop, boardTag, destTag, stopsOnWay, timeFactor, time, cost, fare, payWith }`
+
+  | Field | Meaning |
+  |---|---|
+  | `network` | which routes it follows (`"walk"` or a line's network) |
+  | `multiHop` | `false`: neighbours only (walking). `true`: anywhere reachable on the network |
+  | `boardTag` / `destTag` | only start from / go to places with this tag (e.g. `destTag: "hub"`) |
+  | `stopsOnWay` | `true`: passes each stop (checkpoints). `false`: one direct trip (taxi) |
+  | `timeFactor` | multiplies route minutes (a taxi at 0.25 is four times faster than walking) |
+  | `time` / `cost` | names of the time and fare hooks |
+  | `fare` | numbers for the fare hook: `{ flat }` or `{ base, perMin }` (pence) |
+  | `payWith` | account ids allowed (default: any) |
 
 ## Hooks
-- Time: `setup.travel.registerTimeHook(name, (route, mode, ctx) => minutes)`. Default `"route"` = the route's `mins`.
-- Cost: `setup.travel.registerCostHook(name, (route, mode, ctx) => pence)`. Default `"none"` = free (charging needs the money module).
+- Time: `registerTimeHook(name, (legs, mode, ctx) => minutesPerLeg[])`. Default `"path"`: each leg's minutes × `timeFactor`, rounded up.
+- Fare: `registerCostHook(name, (mins, legs, mode, ctx) => pence)`. Built in: `"none"`, `"flat"`, `"meter"`.
 
 ## API (`setup.travel`)
-`destinations()`, `go(to, modeId)`, `routesFrom(loc)`
+`options()`, `go(to, modeId)`, `isTravelling()`
+
+## Conditions
+`{ travel: { mode?, to?, at? } }` — for events during a journey.
 
 ## Events
-`travel:depart { from, to, mode, mins }`, `travel:arrived { from, to, mode, mins }`
+`travel:depart`, `travel:checkpoint { mode, from, to, at, elapsed, interrupt() }`, `travel:arrived`, `travel:interrupted`
 
 ## UI
-"Go somewhere else" on Here → `Travel_Pick` (`<<view "travel">>`).
+"Go somewhere else" on Here → `Travel_Pick`, grouped by mode, showing time, fare and stops.
 
 ## Open decisions
-- Travel modes (walk, bus, …), their speeds and costs.
-- Whether only directly-connected places are reachable, or journeys chain through several routes.
-- What an interruption mid-journey means (now: you still arrive).
+- Bus timetables (waiting for the next bus) — buses currently leave as soon as you board.
+- Discovering new places (all routes are known from the start).

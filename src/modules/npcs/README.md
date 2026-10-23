@@ -19,7 +19,11 @@ NPC character sheets, schedules and who is where.
 ## Conditions
 - `{ npcHere: "id" }` — that NPC is at the PC's location now
 - `{ npcMet: "id" }`
+- `{ withNpc: "id" }` — the NPC in the event's context (e.g. the one just met)
 - `{ ageAtLeast: 18 }` — the PC and every NPC in the context (`ctx.npc` / `ctx.npcs`) are at least that age. **Required on anything tagged `romance`.**
+
+## Meeting
+Decided by the user: **the first encounter counts as meeting.** An NPC is met when the PC arrives where they are, or when they're there as time passes. This emits `npc:met`, which storylets can use for first-meeting scenes.
 
 ## Events
 `npc:met { npc }`
@@ -29,4 +33,4 @@ NPC character sheets, schedules and who is where.
 
 ## Open decisions
 - The cast and their schedules.
-- When the PC counts as having "met" someone (nothing calls `meet()` yet).
+

@@ -518,8 +518,17 @@ Keep this up to date so a new session knows where things stand.
 
 | Date | What | Notes |
 |---|---|---|
-| 2026-10-23 | Phase 0 | Merged to `main`. Pages source must be set to GitHub Actions by the user. |
+| 2026-10-23 | Phase 0 | Merged to `main`; GitHub Pages is on (source: GitHub Actions). |
 | 2026-10-23 | Phase 1 engine core + early `character` (minimal), `world`, `npcs`, `actions`, `travel`, `events` | Built ahead of the phase order because the user asked for a test therapy storyline. The rest of each module's §7 scope still comes in its phase. |
 
-User decisions so far: title "Life Sim" (for now); city Mooresville; en-GB, £, 24-hour clock; epoch 1 Sept 2026, start 07:00 day 0; 12 save slots; NPC age lives on each NPC's character sheet (the `npc` definition); random events roll their own `chance` (`setup.config.events.selector = "chance"`).
+| 2026-10-23 | Travel rules, `money` (early), event rules, locked actions, NPC meeting | Built from the user's answers to the PR #1 decisions. |
 
+User decisions so far:
+- Title "Life Sim" (for now); city Mooresville; en-GB, £, 24-hour clock; epoch 1 Sept 2026, start 07:00 day 0; 12 save slots.
+- NPC age lives on each NPC's character sheet (the `npc` definition).
+- Random events roll their own `chance` (`setup.config.events.selector = "chance"`). The test therapy interruption is 50%.
+- The event rules (story before random, cooldowns, groups, daily limits, game-wide limits of 4 a day and 60 minutes apart) were proposed by Claude at the user's request and are open to adjustment.
+- Locked actions show their requirements but not what the action is.
+- Travel: walking goes one neighbouring place at a time. Public transport only goes to hubs (a bus to its stops, a taxi to the city or suburbs). Travel costs money. What an interrupted journey means depends on the event.
+- Travel times should be sensible for the distance (e.g. 5 minutes to a house on the same street, much longer across town).
+- An NPC is met at the first encounter.

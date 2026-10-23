@@ -26,7 +26,7 @@
 	 * Save-schema version. Bump whenever any module's `version` bumps (§6.10).
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 1;
+	setup.SCHEMA_VERSION = 2;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -48,9 +48,17 @@
 		start: { day: 0, time: "07:00" },
 		// Decided by the user (§1): the player character is 18 at game start.
 		pc: { startAge: 18 },
-		// Decided by the user: random events roll each event's own `chance`
-		// (see the events module). "none" turns random events off.
-		events: { selector: "chance" },
+		// Random events (see the events module README).
+		events: {
+			// Decided by the user: random events roll each event's own `chance`.
+			// "none" turns random events off.
+			selector: "chance",
+			// Proposed by Claude at the user's request; adjust freely.
+			// At most this many random events per in-game day (null = no limit).
+			maxRandomPerDay: 4,
+			// At least this many minutes between two random events.
+			minGapMins: 60,
+		},
 		// Decided by the user: manual save slots in the Menu.
 		saves: { slots: 12 },
 		// Debug tools (§13). Pinned so a CDN update can't break debugging.

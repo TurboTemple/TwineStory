@@ -113,10 +113,27 @@
 			};
 			setup.npcs = npcs;
 
+			// Decided by the user: the first encounter counts as meeting. An NPC is
+			// met when the PC arrives where they are, or they are there as time passes.
+			const meetEveryoneHere = (t) => {
+				// Mid-journey you're not really at the place you left.
+				if (setup.modules.has("travel") && setup.travel.isTravelling()) return;
+				const loc = setup.world.loc();
+				if (loc) for (const id of npcs.peopleAt(loc, t)) npcs.meet(id);
+			};
+			setup.bus.on("world:enter", () => meetEveryoneHere(time.now()));
+			setup.bus.on("time:advanced", (p) => meetEveryoneHere(p.to));
+
 			// { npcHere: "id" } — that NPC is at the PC's location right now.
 			cond.register("npcHere", {
 				test: (spec, ctx) => npcs.whereIs(spec, ctx.t ?? time.now()) === setup.world.loc(),
 				describe: (spec) => `${registry.tryGet("npc", spec)?.name ?? spec} is here`,
+			});
+
+			// { withNpc: "id" } — the NPC in context (e.g. the one just met, ctx.npc).
+			cond.register("withNpc", {
+				test: (spec, ctx) => setup.util.toArray(spec).includes(ctx.npc),
+				describe: (spec) => `With ${registry.tryGet("npc", spec)?.name ?? spec}`,
 			});
 
 			// { npcMet: "id" } — the PC has met that NPC.

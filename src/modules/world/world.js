@@ -12,7 +12,7 @@
 		state: "world",
 		defaultState: () => ({ visited: {} }),
 
-		install({ registry, cond, bus, time, ui, fmt, save }) {
+		install({ registry, cond, effects, bus, time, ui, fmt, save }) {
 			registry.defineType("district", { required: ["name"] });
 			registry.defineType("location", {
 				required: ["name"],
@@ -98,6 +98,15 @@
 				describe: (spec) => (spec === true ? "It's open" : `${registry.tryGet("location", spec)?.name ?? spec} is open`),
 			});
 
+			// { moveTo: "loc_id" } — put the PC somewhere (e.g. after an interrupted journey).
+			effects.register("moveTo", {
+				apply(spec, ctx, result) {
+					world.moveTo(spec);
+					result.changes.push({ kind: "move", text: `You're now at ${registry.get("location", spec).name}.` });
+				},
+				describe: (spec) => `Go to ${registry.tryGet("location", spec)?.name ?? spec}`,
+			});
+
 			save.addMetadata(() => ({ where: world.here()?.name ?? "" }));
 
 			/* ---- UI --------------------------------------------------------- */
@@ -123,7 +132,8 @@
 
 			world.addHereSection("status", 0, (box, here) => {
 				const t = time.now();
-				box.append(ui.el("p", { class: "status-line", text: `${fmt.date(t)} · ${fmt.time(t)} · ${here.name}` }));
+				const cash = setup.modules.has("money") && setup.money.enabled() ? ` · ${fmt.money(setup.money.balance())}` : "";
+				box.append(ui.el("p", { class: "status-line", text: `${fmt.date(t)} · ${fmt.time(t)} · ${here.name}${cash}` }));
 			});
 
 			world.addHereSection("result", 5, (box) => {
