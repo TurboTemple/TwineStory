@@ -98,12 +98,14 @@ APIs relied on:
 ```
 /
 ├── CLAUDE.md
+├── EDITING.md                      # plain-English guide to editing the game content
 ├── .gitignore                      # dist/, tweego/, storyformats/, *.zip, node_modules/
 ├── .github/workflows/pages.yml     # validate → test → build → deploy (§12)
 ├── assets/                         # images/audio/fonts → copied to dist/assets/ at build
 ├── scripts/validate.mjs            # content validator (§11)
 ├── tests/                          # Node unit tests (§11)
 ├── src/
+│   ├── README.md                   # tour of how the code fits together
 │   ├── 00-story/                   # StoryData, StoryTitle, StoryInit, StoryInterface, boot passage
 │   ├── 01-engine/                  # engine core (§6) — no game content
 │   ├── 02-ui/                      # UI shell, widgets, tokens, layout (§8)
@@ -411,7 +413,16 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 
 ## 10. Authoring content (for when the user asks)
 
-Content is one `R.define(type, {...})` call per thing, in `src/content/<type>/`, plus optional passages in `src/story/`.
+Content is one `R.define(type, {...})` call per thing, in `src/content/mooresville/town-*.js`, plus passages in `src/story/`.
+
+**Keep content easy for a person to edit on a phone** (the user asked for this):
+- Every content file starts with a guide: what's in it, a copy-paste example for adding one more, and what each field means. Keep these guides up to date when adding fields.
+- Named fields, not positional arguments: `wear({ id, name, price, slots, warmth })`, not `wear("id", "Name", 800, …)`.
+- One definition per block; split long definitions over several lines, one field per line.
+- Use the shorthand in `town-kit.js`: `pounds(3.20)` for money, `DAYS.*` for days, `hours.*` for opening hours, `mod.*` for stat modifiers.
+- Comment what numbers mean when it isn't obvious (`cooldown: 1440, // once a day`).
+- `EDITING.md` is the user-facing guide (where things are, the condition and effect reference). Update it when adding a content type, condition or effect.
+- After a content refactor, prove nothing changed: dump every registry definition (sorted keys, plus definition order) before and after, and diff.
 
 Adding a location, item, NPC, job or event must never require engine or module code changes. If it does, the module is missing a hook: add the hook rather than special-casing.
 
@@ -528,6 +539,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Media framework, sidebar Profile tab, body bands, clothing effects, starting wardrobe trimmed | Asked for by the user. |
 | 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
 | 2026-10-23 | `skills`, `storylines` (progression), `jobs` (barista at The Daily Grind), `relationships` + Talk, `phone` + apps, `education` (timetable, homework), `journal` (daily summary + autosave), `weather`, ambient lines, stat consequences, inline travel buttons, multi-select dressing | Asked for by the user ("implement all of that except walking through every place"). |
+| 2026-10-23 | Readability pass: content rewritten with edit guides and named fields (definitions proven identical), `town-kit.js` shorthand, plain-English headers across the engine and modules, `EDITING.md`, `src/README.md` | Asked for by the user. No gameplay changes. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
