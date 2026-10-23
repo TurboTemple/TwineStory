@@ -84,7 +84,8 @@ export function loadStoryJs(srcDir, opts = {}) {
  * Load the Story JavaScript, swap SugarCube-dependent adapter calls for
  * Node-friendly fakes, boot the engine and start a new game.
  * @param {string} srcDir
- * @param {{ debug?: boolean, includeTest?: boolean, passages?: Iterable<string>, seed?: number, order?: (files: string[]) => string[] }} [opts]
+ * @param {{ debug?: boolean, includeTest?: boolean, passages?: Iterable<string>, seed?: number, order?: (files: string[]) => string[], before?: (setup: object) => void }} [opts]
+ *   `before` runs just before boot (e.g. to queue extra test content).
  * @returns {{ setup: object, vars: object, played: string[], config: object }}
  */
 export function bootGame(srcDir, opts = {}) {
@@ -104,6 +105,7 @@ export function bootGame(srcDir, opts = {}) {
 		on() {},
 	});
 	setup.vars = () => vars;
+	opts.before?.(setup);
 	setup.boot({ includeTest: opts.includeTest ?? true });
 	setup.newGame();
 	return { setup, vars, played, config };

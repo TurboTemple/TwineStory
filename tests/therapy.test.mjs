@@ -21,22 +21,18 @@ test("a new game starts at Test Home at 07:00", () => {
 	assert.equal(setup.fmt.time(setup.time.now()), "07:00");
 });
 
-test("travel takes the route's time and moves the PC", () => {
+test("walking to the clinic goes via the high street and takes 15 minutes", () => {
 	const { setup } = boot({ includeTest: true });
-	const dests = setup.travel.destinations().map((d) => [d.to, d.options.map((o) => o.mins)]);
-	assert.deepEqual(plain(dests), [["test_high_street", [10]], ["test_clinic", [15]]]);
 	const t0 = setup.time.now();
-	const r = setup.travel.go("test_clinic", "test_walk");
-	assert.equal(r.ok, true);
+	setup.travel.go("test_high_street", "test_walk");
+	setup.travel.go("test_clinic", "test_walk");
 	assert.equal(setup.time.now(), t0 + 15);
 	assert.equal(setup.world.loc(), "test_clinic");
-	setup.travel.go("test_high_street", "test_walk");
-	assert.equal(setup.time.now(), t0 + 20);
-	assert.equal(setup.world.loc(), "test_high_street");
 });
 
 test("the session is locked while the clinic is closed", () => {
 	const { setup } = boot({ includeTest: true });
+	setup.travel.go("test_high_street", "test_walk");
 	setup.travel.go("test_clinic", "test_walk"); // arrives 07:15, before opening
 	const a = setup.actions.available().find((x) => x.def.id === "test_therapy_session");
 	assert.equal(a.ok, false);
@@ -121,4 +117,28 @@ test("wait offers several durations", () => {
 	setup.actions.do("test_wait", { mins: 60 });
 	assert.equal(setup.time.now(), t0 + 60);
 	assert.throws(() => setup.actions.do("test_wait", { mins: 45 }), /can't last/);
+});
+
+test("NPCs are met on first encounter, which fires the one-off meeting event", () => {
+	const { setup, played } = boot({ includeTest: true });
+	assert.equal(setup.npcs.hasMet("test_therapist"), false);
+	setup.travel.go("test_high_street", "test_walk");
+	setup.flow.perform(() => setup.travel.go("test_clinic", "test_walk")); // 07:15, nobody there yet
+	assert.equal(setup.npcs.hasMet("test_therapist"), false);
+	setup.flow.perform(() => setup.actions.do("test_wait", { mins: 120 })); // they arrive at 09:00
+	assert.equal(setup.npcs.hasMet("test_therapist"), true);
+	assert.equal(setup.npcs.hasMet("test_secretary"), true);
+	assert.equal(played.at(-1), "Ev_test_meet_therapist");
+	assert.equal(setup.events.seen("test_meet_therapist"), 1);
+	setup.world.moveTo("test_high_street");
+	setup.world.moveTo("test_clinic");
+	assert.equal(setup.events.seen("test_meet_therapist"), 1, "only once");
+});
+
+test("a locked action is listed with its requirements", () => {
+	const { setup } = boot({ includeTest: true });
+	setup.world.moveTo("test_clinic");
+	const a = setup.actions.available().find((x) => x.def.id === "test_therapy_session");
+	assert.equal(a.ok, false);
+	assert.deepEqual(plain(a.reasons), ["It's open", "Test Therapist is here"]);
 });

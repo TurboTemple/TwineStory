@@ -20,6 +20,9 @@ Districts, locations, opening hours and the **`Here`** main-loop passage.
 - `{ at: "loc" }` / `{ at: ["a", "b"] }` — the PC is there
 - `{ open: true }` — the current location is open; `{ open: "loc" }` — that one is
 
+## Effects
+- `{ moveTo: "loc" }` — put the PC somewhere
+
 ## Events
 `world:leave { loc, to }`, `world:enter { loc, from }`
 

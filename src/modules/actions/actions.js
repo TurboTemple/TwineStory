@@ -23,7 +23,8 @@
 				defaults: {
 					desc: "", tags: [], mins: 0, durations: null, checkpoints: [], conditions: null,
 					costs: [], effects: [], perHour: [], interruptible: true, passage: null,
-					// DESIGN: user to decide — show locked actions (with reasons) or hide them by default.
+					// Decided by the user: a locked action shows its requirements but not
+					// what it is. `hidden: true` hides it completely instead.
 					hidden: false,
 				},
 				refs: { at: "location" },
@@ -160,13 +161,21 @@
 				const ul = ui.el("ul", { class: "m-actions" });
 				for (const { def, ok, reasons } of list) {
 					const li = ui.el("li");
+					if (!ok) {
+						// Locked: show what's needed, not what the action is.
+						li.append(
+							ui.button("Locked", () => {}, { disabled: true, class: "btn-locked" }),
+							ui.el("p", { class: "locked", text: `Needs: ${reasons.join("; ")}` }),
+						);
+						ul.append(li);
+						continue;
+					}
 					const options = def.durations ?? [def.mins];
 					for (const mins of options) {
 						const label = mins ? `${def.label} (${fmt.duration(mins)})` : def.label;
-						li.append(ui.action(label, () => actions.do(def.id, def.durations ? { mins } : {}), { disabled: !ok }));
+						li.append(ui.action(label, () => actions.do(def.id, def.durations ? { mins } : {})));
 					}
-					if (!ok) li.append(ui.el("p", { class: "locked", text: reasons.join("; ") }));
-					else if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
+					if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
 					ul.append(li);
 				}
 				box.append(ul);

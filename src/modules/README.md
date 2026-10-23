@@ -10,4 +10,4 @@ src/modules/<module>/
 └── README.md       # API, data types, state, events, hooks, open decisions
 ```
 
-Built so far: `character` (minimal), `world`, `npcs`, `actions`, `travel`, `events`.
+Built so far: `character` (minimal), `world`, `npcs`, `actions`, `travel`, `money`, `events`.

@@ -1,11 +1,20 @@
 :: Loc_test_home
 TEST CONTENT. A plain placeholder flat where the test storyline starts.
 
+:: Loc_test_neighbour
+TEST CONTENT. The house next door, a five-minute walk down the street.
+
 :: Loc_test_high_street
-TEST CONTENT. A placeholder high street between home and the clinic.
+TEST CONTENT. A placeholder high street with a bus stop and a taxi rank.
 
 :: Loc_test_clinic
 TEST CONTENT. A placeholder clinic with a small waiting room. A secretary sits at the front desk; the therapist's office is down the corridor.
+
+:: Loc_test_city_centre
+TEST CONTENT. A placeholder city centre: busy streets, a bus interchange and a taxi rank.
+
+:: Loc_test_park
+TEST CONTENT. A placeholder park at the end of the bus line.
 
 :: Ev_test_secretary_interrupts
 <h1>Interrupted</h1>
@@ -14,15 +23,35 @@ TEST CONTENT. Halfway through the session there's a knock at the door. The secre
 
 <<view "event-end">>
 
+:: Ev_test_meet_therapist
+<h1>Meeting the therapist</h1>
+
+TEST CONTENT. This is the first time you've met the therapist. She introduces herself. (A one-off "story" event, fired by the first encounter.)
+
+<<view "event-end">>
+
+:: Ev_test_bus_breakdown
+<h1>Breakdown</h1>
+
+TEST CONTENT. At the City Centre stop the bus shudders and stops for good. Everyone has to get off here.
+
+<<view "event-end">>
+
 :: Test_Therapy [nobr]
-<h1>Test: therapy storyline</h1>
-<p>Shortcuts for testing the therapy visit. They change the game state directly, so only use them in debug mode.</p>
+<h1>Test: storyline shortcuts</h1>
+<p>Shortcuts for testing. They change the game state directly, so only use them in debug mode.</p>
 <<if setup.config.debug>>
+<h2>Therapy</h2>
 <ul>
 <li><<button "Go to Test Clinic, next 10:00">><<run setup.testTools.toClinicAt("10:00")>><</button>></li>
 <li><<button "Next session: secretary WILL interrupt">><<run setup.events.force("test_secretary_interrupts", true)>><<run setup.flow.go("Here")>><</button>></li>
 <li><<button "Next session: secretary WON'T interrupt">><<run setup.events.force("test_secretary_interrupts", false)>><<run setup.flow.go("Here")>><</button>></li>
 <li><<button "Back to normal (50% chance)">><<run setup.events.force("test_secretary_interrupts", null)>><<run setup.flow.go("Here")>><</button>></li>
+</ul>
+<h2>Travel</h2>
+<ul>
+<li><<button "Bus trips: break down at City Centre">><<run setup.events.force("test_bus_breakdown", true)>><<run setup.flow.go("Here")>><</button>></li>
+<li><<button "Bus trips: normal">><<run setup.events.force("test_bus_breakdown", null)>><<run setup.flow.go("Here")>><</button>></li>
 </ul>
 <</if>>
 <p>[[Back to test index|Test_Index]]</p>
