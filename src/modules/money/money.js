@@ -1,8 +1,8 @@
 /*
  * money — accounts, paying and earning.
  *
- * All amounts are integer minor units (pence). Accounts are data (cash, bank
- * card, …); balances live in $money.
+ * All amounts are whole pounds (decided by the user: no pennies). Accounts
+ * are data (cash, bank card, …); balances live in $money.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-map.js → part 7 (accounts and starting money)
@@ -16,16 +16,25 @@
 
 	(setup.__modules ??= []).push({
 		id: "money",
-		version: 1,
+		version: 2,
 		deps: [],
 		state: "money",
 		defaultState: () => ({ balances: {}, log: [] }),
+		migrations: {
+			// Version 2: money changed from pence to whole pounds (decided by the user).
+			2: (slice) => {
+				const toPounds = (p) => Math.round(p / 100);
+				for (const id of Object.keys(slice.balances ?? {})) slice.balances[id] = toPounds(slice.balances[id]);
+				for (const e of slice.log ?? []) e.amount = toPounds(e.amount);
+				return slice;
+			},
+		},
 
 		install({ registry, cond, effects, time, fmt, bus, ui }) {
 			registry.defineType("account", {
 				required: ["label"],
 				defaults: { kind: "cash", start: 0, order: 0 },
-				check: (def) => (Number.isInteger(def.start) ? [] : ["start must be whole pence"]),
+				check: (def) => (Number.isInteger(def.start) ? [] : ["start must be whole pounds"]),
 			});
 
 			const M = () => setup.vars().money;
@@ -44,7 +53,7 @@
 				/**
 				 * Balance of one account, or the total of all accounts.
 				 * @param {string} [id]
-				 * @returns {number} pence
+				 * @returns {number} whole pounds
 				 */
 				balance(id) {
 					const b = M().balances;
@@ -57,7 +66,7 @@
 				 * (default: every account in display order) and uses the first
 				 * that can cover the whole amount.
 				 * DESIGN: user to decide — splitting payments, overdrafts, card limits.
-				 * @param {number} amount  pence > 0
+				 * @param {number} amount  whole pounds ≥ 0
 				 * @param {{from?: string[], reason?: string}} [opts]
 				 * @returns {{ok: true, account: string} | {ok: false, reason: string}}
 				 */
@@ -75,7 +84,7 @@
 
 				/**
 				 * Add money to an account (default: the first account).
-				 * @param {number} amount  pence > 0
+				 * @param {number} amount  whole pounds ≥ 0
 				 * @param {{to?: string, reason?: string}} [opts]
 				 */
 				earn(amount, opts = {}) {

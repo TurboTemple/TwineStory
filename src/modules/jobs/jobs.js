@@ -41,7 +41,7 @@
 				effects: ["perHour"],
 				check(def) {
 					const errs = [];
-					for (const [s, p] of Object.entries(def.pay)) if (!Number.isInteger(p) || p < 0) errs.push(`pay.${s} must be whole pence per hour`);
+					for (const [s, p] of Object.entries(def.pay)) if (!Number.isInteger(p) || p < 0) errs.push(`pay.${s} must be whole pounds per hour`);
 					for (const sh of def.shifts) {
 						if (!sh.from || !sh.to) errs.push("each shift needs from and to");
 						else if (time.parseHM(sh.to) <= time.parseHM(sh.from)) errs.push(`shift ${sh.from}–${sh.to} must end later the same day`);

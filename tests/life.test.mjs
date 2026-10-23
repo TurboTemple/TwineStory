@@ -28,13 +28,13 @@ test("weather is the same every time you ask, and changes day to day", () => {
 	assert.ok(differs);
 });
 
-test("too cold outside without a coat; wet without a waterproof", () => {
+test("too cold outside without anything warm; wet without a waterproof", () => {
 	const { setup } = bootTown();
 	dress(setup);
 	const W = setup.weather;
 	// Find a cold, wet day, and go there.
 	let day = 0;
-	while (!(W.onDay(day).wet && W.warmthNeeded(setup.time.at(day, "12:00")) > 5)) day++;
+	while (!(W.onDay(day).wet && W.isCold(setup.time.at(day, "12:00")))) day++;
 	setup.time.advance(setup.time.at(day, "12:00") - setup.time.now());
 	setup.world.moveTo("elm_road");
 	assert.ok(setup.status.has("cold"), `cold at ${W.onDay(day).temp}°C`);
@@ -42,6 +42,7 @@ test("too cold outside without a coat; wet without a waterproof", () => {
 	setup.inventory.add("puffer_jacket", 1, "wardrobe");
 	dress(setup, ["puffer_jacket"]);
 	assert.ok(!setup.status.has("wet"), "the puffer is waterproof");
+	assert.ok(!setup.status.has("cold"), "and warm: one warm thing is enough");
 	setup.world.moveTo("home_living_room");
 	assert.ok(!setup.status.has("cold"), "fine indoors");
 });
@@ -49,13 +50,13 @@ test("too cold outside without a coat; wet without a waterproof", () => {
 test("sleeping past midnight shows the day's summary", () => {
 	const { setup, played } = bootTown();
 	setup.time.advance(setup.time.at(0, "22:00") - setup.time.now());
-	setup.money.earn(1000, { reason: "test" });
+	setup.money.earn(10, { reason: "test" });
 	setup.world.moveTo("home_bedroom");
 	setup.stats.set("bladder", 0);
 	setup.flow.perform(() => setup.actions.do("sleep", { mins: "07:00" }));
 	assert.equal(played.at(-1), "Journal_Summary");
 	assert.equal(setup.journal.summaryDay, 0);
-	assert.match(setup.journal.summary(0).join(" "), /Money: \+£10\.00/);
+	assert.match(setup.journal.summary(0).join(" "), /Money: \+£10\./);
 	// A nap that doesn't cross midnight doesn't.
 	setup.flow.perform(() => setup.actions.do("sleep", { mins: 60 }));
 	assert.equal(played.at(-1), "Here");

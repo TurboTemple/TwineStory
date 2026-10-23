@@ -323,7 +323,7 @@ test("flow keeps the highest-priority request and defaults to Here", () => {
 
 test("fmt and text helpers", () => {
 	const { setup } = boot();
-	assert.equal(setup.fmt.money(1250), "£12.50");
+	assert.equal(setup.fmt.money(12), "£12", "whole pounds, no pennies");
 	assert.equal(setup.fmt.time(7 * 60 + 5), "07:05");
 	assert.equal(setup.fmt.duration(120), "2 hours");
 	assert.equal(setup.fmt.duration(90), "1 hour 30 minutes");

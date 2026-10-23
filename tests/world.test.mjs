@@ -18,7 +18,7 @@ function game() {
 				R.define("travelMode", { id: "t_walk", label: "Walk", network: "t_walk" });
 				R.define("route", { id: "t_walk_home", network: "t_walk", from: "t_home", to: "t_street", mins: 5 });
 				R.define("route", { id: "t_walk_pub", network: "t_walk", from: "t_street", to: "t_pub", mins: 3 });
-				R.define("action", { id: "t_pint", label: "Pint", at: "t_pub_bar", mins: 5, costs: [{ money: { amount: -500 } }] });
+				R.define("action", { id: "t_pint", label: "Pint", at: "t_pub_bar", mins: 5, costs: [{ money: { amount: -5 } }] });
 				R.define("action", { id: "t_wee", label: "Wee", atTag: "toilet", mins: 2 });
 				R.define("action", { id: "t_nap", label: "Nap", at: "t_home", durations: [30, "08:00"] });
 			});
@@ -96,14 +96,14 @@ test("actions: locked when closed, or when you can't afford them", () => {
 	assert.deepEqual(plain(setup.actions.available()[0].reasons), ["It's open"]);
 	noon(setup);
 	setup.world.moveTo("t_pub_bar");
-	vars.money.balances = { test_cash: 100, test_bank: 0 };
+	vars.money.balances = { test_cash: 1, test_bank: 0 };
 	const a = setup.actions.available()[0];
 	assert.equal(a.ok, false);
-	assert.deepEqual(plain(a.reasons), ["£5.00 to pay"]);
-	vars.money.balances.test_bank = 1000;
+	assert.deepEqual(plain(a.reasons), ["£5 to pay"]);
+	vars.money.balances.test_bank = 10;
 	const r = setup.actions.do("t_pint");
 	assert.equal(r.ok, true);
-	assert.equal(setup.money.balance(), 600);
+	assert.equal(setup.money.balance(), 6);
 });
 
 test("durations can be 'until a time'", () => {

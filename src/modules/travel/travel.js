@@ -104,7 +104,7 @@
 				registerTimeHook: (name, fn) => timeHooks.set(name, fn),
 
 				/**
-				 * Register a fare formula: (mins, legs, mode, ctx) => pence.
+				 * Register a fare formula: (mins, legs, mode, ctx) => whole pounds.
 				 * @param {string} name @param {Function} fn
 				 */
 				registerCostHook: (name, fn) => costHooks.set(name, fn),
@@ -239,7 +239,8 @@
 			// "none": free. "flat": fare.flat. "meter": fare.base + fare.perMin × minutes.
 			travel.registerCostHook("none", () => 0);
 			travel.registerCostHook("flat", (mins, legs, mode) => mode.fare.flat ?? 0);
-			travel.registerCostHook("meter", (mins, legs, mode) => (mode.fare.base ?? 0) + (mode.fare.perMin ?? 0) * mins);
+			// Rounded to whole pounds (money has no pennies).
+			travel.registerCostHook("meter", (mins, legs, mode) => Math.round((mode.fare.base ?? 0) + (mode.fare.perMin ?? 0) * mins));
 
 			// { travel: { mode?, to?, at? } } — for events during a journey (ctx from travel:checkpoint).
 			cond.register("travel", {

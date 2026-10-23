@@ -4,7 +4,16 @@
  * ============================================================================
  *
  * Every button under "Things to do" comes from an act({ … }) below.
- * Grouped by place. Stat changes and prices are first proposals to tune.
+ * Grouped by place. Stat changes are first proposals to tune.
+ *
+ * PRICES are whole pounds, and things that do the same cost the same
+ * (decided by the user):
+ *   £1   snacks, soft drinks, a game of pool
+ *   £2   an ice cream
+ *   £3   a hot drink or bubble tea; a light meal (food about +25)
+ *   £5   a pint or a glass of wine; a gym day pass
+ *   £8   a proper meal (food about +50 and "Well fed")
+ *   £10  a film; a trim or a buzz cut     £20  a proper haircut     £50  hair dye
  *
  * Other things you can do live elsewhere:
  *   - shopping                    → town-shops.js
@@ -31,7 +40,7 @@
  *   atTag       OR: every room with this tag (e.g. "toilet": every toilet in town)
  *   mins        how long it takes, in minutes
  *   durations   OR: let the player choose: [60, 120, "07:00"] ("07:00" = until then)
- *   price       pay this up front, e.g. pounds(3.20) (shown on the button)
+ *   price       pay this up front, in whole pounds (shown on the button)
  *   whileDoing  a hidden effect that is on only while it runs (town-needs.js,
  *               part 4: "relaxing", "asleep", "studying"…). This is how
  *               activities change your stats hour by hour.
@@ -56,10 +65,11 @@
  *   { statusRemove: "caffeinated" }         switch it off
  *   { body: { weight: -0.2 } }              change a body part
  *   { bodySet: { hair_colour: "pink" } }    set a body part
- *   { money: { amount: pounds(5) } }        earn (negative = pay)
+ *   { money: { amount: 5 } }                earn £5 (negative = pay)
  *   { item: { id: "apple", qty: 1 } }       get an item (negative = use up)
  *   { skill: { barista: 0.5 } }             improve a skill
  *   { homework: true }                      finish the homework due soonest
+ *   { habit: "coffee" }                     count today towards a habit (traits: town-traits.js)
  *   { note: "Text" }                        a line in the summary afterwards
  *
  *  CONDITIONS YOU CAN USE
@@ -73,8 +83,6 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { pounds } = setup.town;
-
 		/**
 		 * Define an action. Two shortcuts on top of the normal fields:
 		 *   price       → paid first, before anything else in `costs`
@@ -181,7 +189,7 @@
 			label: "Make a coffee",
 			atTag: "kitchen",
 			mins: 5,
-			effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }],
+			effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 
 		// ---- Living room ----
@@ -200,7 +208,7 @@
 			mins: 30,
 			whileDoing: "jogging",
 			conditions: { stat: { id: "energy", min: 20 } },
-			effects: [{ body: { weight: -0.2 } }],
+			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
 		});
 		act({ id: "walk_green", label: "Walk round the green", at: "elm_park_green", mins: 20, whileDoing: "walking" });
 		act({ id: "feed_ducks", label: "Feed the ducks", at: "elm_green_pond", mins: 15, effects: [{ stat: { mood: 4, stress: -3 } }] });
@@ -230,9 +238,9 @@
 			label: "Buy school lunch",
 			at: "academy_canteen",
 			mins: 20,
-			price: pounds(2.60),
+			price: 3,
 			conditions: { time: { from: "11:45", to: "13:45" } },
-			effects: [{ stat: { food: 40, drink: 10 } }],
+			effects: [{ stat: { food: 25, drink: 10 } }],
 		});
 		act({
 			id: "shoot_hoops",
@@ -240,7 +248,7 @@
 			at: "academy_sports_hall",
 			mins: 30,
 			whileDoing: "exercising",
-			effects: [{ body: { weight: -0.2 } }],
+			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
 		});
 		act({ id: "walk_field", label: "Walk laps of the field", at: "academy_field", mins: 20, whileDoing: "walking" });
 
@@ -253,15 +261,15 @@
 			label: "Order a flat white",
 			at: "grind_counter",
 			mins: 5,
-			price: pounds(3.20),
-			effects: [{ stat: { drink: 12, bladder: 10 } }, { status: "caffeinated" }],
+			price: 3,
+			effects: [{ stat: { drink: 12, bladder: 10 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 		act({
 			id: "cafe_tea",
 			label: "Order a pot of tea",
 			at: "grind_counter",
 			mins: 5,
-			price: pounds(2.40),
+			price: 3,
 			effects: [{ stat: { drink: 18, bladder: 10, mood: 2 } }],
 		});
 		act({
@@ -269,7 +277,7 @@
 			label: "Order a hot chocolate",
 			at: "grind_counter",
 			mins: 5,
-			price: pounds(3.00),
+			price: 3,
 			effects: [{ stat: { drink: 12, food: 5, mood: 4, bladder: 8 } }],
 		});
 		act({
@@ -277,16 +285,16 @@
 			label: "Order a croissant",
 			at: "grind_counter",
 			mins: 5,
-			price: pounds(2.60),
-			effects: [{ stat: { food: 15, mood: 1 } }],
+			price: 3,
+			effects: [{ stat: { food: 20, mood: 2 } }],
 		});
 		act({
 			id: "cafe_toastie",
 			label: "Order a cheese toastie",
 			at: "grind_counter",
 			mins: 12,
-			price: pounds(5.50),
-			effects: [{ stat: { food: 35, mood: 2 } }],
+			price: 3,
+			effects: [{ stat: { food: 25, mood: 2 } }],
 		});
 		act({
 			id: "cafe_people_watch",
@@ -307,7 +315,7 @@
 			label: "Order a pint",
 			at: "lion_bar",
 			mins: 10,
-			price: pounds(5.20),
+			price: 5,
 			conditions: adults,
 			effects: [{ stat: { drink: 12, bladder: 22, mood: 3 } }, { status: "tipsy" }],
 		});
@@ -316,7 +324,7 @@
 			label: "Order a glass of wine",
 			at: "lion_bar",
 			mins: 10,
-			price: pounds(6.10),
+			price: 5,
 			conditions: adults,
 			effects: [{ stat: { drink: 8, bladder: 12, mood: 3 } }, { status: "tipsy" }],
 		});
@@ -325,7 +333,7 @@
 			label: "Order a soft drink",
 			at: "lion_bar",
 			mins: 5,
-			price: pounds(2.80),
+			price: 1,
 			effects: [{ stat: { drink: 20, bladder: 12 } }],
 		});
 		act({
@@ -333,7 +341,7 @@
 			label: "Buy a packet of crisps",
 			at: "lion_bar",
 			mins: 2,
-			price: pounds(1.40),
+			price: 1,
 			effects: [{ stat: { food: 8 } }],
 		});
 		act({
@@ -341,9 +349,9 @@
 			label: "Order a pub meal",
 			at: "lion_lounge",
 			mins: 35,
-			price: pounds(12.50),
+			price: 8,
 			conditions: { time: { from: "12:00", to: "21:00" } },
-			effects: [{ stat: { food: 55, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
+			effects: [{ stat: { food: 50, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
 			desc: "The kitchen serves 12:00–21:00.",
 		});
 		act({
@@ -351,7 +359,7 @@
 			label: "Play a game of pool",
 			at: "lion_lounge",
 			mins: 20,
-			price: pounds(1.00),
+			price: 1,
 			effects: [{ stat: { mood: 5, stress: -3 } }],
 		});
 		act({
@@ -403,7 +411,7 @@
 			label: "Buy a day pass",
 			at: "pulsefit_reception",
 			mins: 3,
-			price: pounds(6.50),
+			price: 5,
 			conditions: { not: { status: "gym_pass" } },
 			effects: [{ status: "gym_pass" }],
 		});
@@ -414,7 +422,7 @@
 			mins: 60,
 			whileDoing: "exercising",
 			conditions: { status: "gym_pass", stat: { id: "energy", min: 20 } },
-			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }],
+			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }, { habit: "exercise" }],
 		});
 
 		/* ======================================================================
@@ -427,23 +435,23 @@
 			label: "Buy a burger meal",
 			at: "arcade_food_court",
 			mins: 20,
-			price: pounds(7.49),
-			effects: [{ stat: { food: 50, drink: 15, bladder: 8, mood: 3 } }, { body: { weight: 0.3 } }],
+			price: 8,
+			effects: [{ stat: { food: 50, drink: 15, bladder: 8, mood: 3 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
 		});
 		act({
 			id: "food_court_noodles",
 			label: "Buy a noodle box",
 			at: "arcade_food_court",
 			mins: 15,
-			price: pounds(6.80),
-			effects: [{ stat: { food: 45, mood: 2 } }],
+			price: 8,
+			effects: [{ stat: { food: 50, mood: 2 } }, { status: "well_fed" }],
 		});
 		act({
 			id: "food_court_bubble_tea",
 			label: "Buy a bubble tea",
 			at: "arcade_food_court",
 			mins: 5,
-			price: pounds(4.50),
+			price: 3,
 			effects: [{ stat: { drink: 20, bladder: 10, mood: 4 } }],
 		});
 		act({ id: "urban_thread_browse", label: "Browse the clothes", at: "arcade_urban_thread", mins: 20, whileDoing: "browsing" });
@@ -453,7 +461,7 @@
 			label: "Watch a film",
 			at: "arcade_cinema",
 			mins: 120,
-			price: pounds(9.20),
+			price: 10,
 			whileDoing: "watching_film",
 			effects: [{ status: "entertained" }],
 		});
@@ -462,7 +470,7 @@
 			label: "Buy popcorn",
 			at: "arcade_cinema",
 			mins: 3,
-			price: pounds(5.50),
+			price: 3,
 			effects: [{ stat: { food: 15, drink: -5 } }],
 		});
 
@@ -481,7 +489,7 @@
 			label: "Get a trim",
 			at: "snips",
 			mins: 30,
-			price: pounds(12),
+			price: 10,
 			conditions: hairAtLeast(4),
 			effects: [{ body: { hair_length: -2 } }, { stat: { mood: 2 } }],
 		});
@@ -490,7 +498,7 @@
 			label: "Get it cut short",
 			at: "snips",
 			mins: 40,
-			price: pounds(18),
+			price: 20,
 			conditions: hairAtLeast(8),
 			effects: [{ bodySet: { hair_length: 6 } }, { stat: { mood: 2 } }],
 		});
@@ -499,7 +507,7 @@
 			label: "Get a buzz cut",
 			at: "snips",
 			mins: 20,
-			price: pounds(10),
+			price: 10,
 			conditions: hairAtLeast(2),
 			effects: [{ bodySet: { hair_length: 1 } }],
 		});
@@ -515,10 +523,10 @@
 				conditions: { body: { id: "hair_length", min: 2 }, not: { body: { id: "hair_colour", is: colour } } },
 				effects: [{ bodySet: { hair_colour: colour } }, { stat: { mood: 3 } }],
 			});
-		dye({ colour: "blonde", price: pounds(65) });
-		dye({ colour: "black", price: pounds(45) });
-		dye({ colour: "pink", price: pounds(70) });
-		dye({ colour: "blue", price: pounds(70) });
+		dye({ colour: "blonde", price: 50 });
+		dye({ colour: "black", price: 50 });
+		dye({ colour: "pink", price: 50 });
+		dye({ colour: "blue", price: 50 });
 
 		/* ======================================================================
 		 *  Riverside Park
@@ -530,7 +538,7 @@
 			label: "Buy an ice cream",
 			at: "riverside_kiosk",
 			mins: 5,
-			price: pounds(2.80),
+			price: 2,
 			effects: [{ stat: { food: 8, mood: 5 } }],
 		});
 		act({
@@ -538,7 +546,7 @@
 			label: "Buy a takeaway tea",
 			at: "riverside_kiosk",
 			mins: 3,
-			price: pounds(2.00),
+			price: 3,
 			effects: [{ stat: { drink: 15, bladder: 8 } }],
 		});
 

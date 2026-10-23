@@ -6,9 +6,13 @@
  * temperature range. The "seasonal" generation hook picks one kind and a
  * temperature per day with rng.seeded("weather:<day>").
  *
- * Being outdoors (a location with `outdoor: true`) in the cold or rain is up
- * to conditions: `weather`, `outdoors`, `tooCold` (your outfit's warmth
- * against the temperature). Content uses them for statuses like Cold and Wet.
+ * Warmth is simple (decided by the user): a day is "cold" when it's below
+ * the climate's `coldBelow` temperature, and an item of clothing is either
+ * warm (tagged "warm") or not. Outdoors on a cold day without anything warm
+ * on, you're too cold.
+ *
+ * Content uses the conditions `weather`, `outdoors` and `tooCold` for
+ * effects like Cold and Getting wet.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-weather.js (weather kinds and the climate)
@@ -29,7 +33,7 @@
 			});
 			registry.defineType("climate", {
 				required: ["months"],
-				defaults: { generate: "seasonal", comfortTemp: 18, warmthPerDegree: 0.5 },
+				defaults: { generate: "seasonal", coldBelow: 10, warmTag: "warm" },
 				check(def) {
 					const errs = [];
 					for (let m = 1; m <= 12; m++) {
@@ -66,11 +70,16 @@
 				/** @returns {object|null} The weather at time t. */
 				at: (t = time.now()) => weather.onDay(time.day(t)),
 
-				/** @returns {number} How much outfit warmth the temperature calls for. */
-				warmthNeeded(t = time.now()) {
+				/** @returns {boolean} Is it a cold day (below the climate's `coldBelow` °C)? */
+				isCold(t = time.now()) {
 					const w = weather.at(t);
-					const c = climate();
-					return w ? Math.max(0, Math.round((c.comfortTemp - w.temp) * c.warmthPerDegree)) : 0;
+					return Boolean(w) && w.temp < climate().coldBelow;
+				},
+
+				/** @returns {boolean} Is the PC wearing anything warm (tagged "warm")? */
+				dressedWarm() {
+					if (!setup.modules.has("clothing")) return true;
+					return setup.clothing.wornItems().some((x) => x.item.tags.includes(climate()?.warmTag ?? "warm"));
 				},
 
 				/** @returns {boolean} Whether the PC is outside right now. */
@@ -123,11 +132,10 @@
 				describe: (spec) => (spec === false ? "Indoors" : "Outdoors"),
 			});
 
-			// { tooCold: true } — outside, and your outfit isn't warm enough for the temperature.
+			// { tooCold: true } — outside on a cold day, wearing nothing warm.
 			cond.register("tooCold", {
 				test(spec) {
-					if (!weather.outdoors() || !setup.modules.has("clothing")) return spec === false;
-					const cold = (setup.clothing.outfitStats().warmth ?? 0) < weather.warmthNeeded();
+					const cold = weather.outdoors() && weather.isCold() && !weather.dressedWarm();
 					return cold === (spec !== false);
 				},
 				describe: () => "Not dressed warmly enough",
@@ -138,11 +146,7 @@
 				const w = setup.vars().time ? weather.at() : null;
 				if (!w) return;
 				box.append(ui.el("p", { class: "clock-weather", text: `${w.icon ? `${w.icon} ` : ""}${w.label}, ${w.temp}°C` }));
-				const need = weather.warmthNeeded();
-				if (need > 0 && setup.modules.has("clothing")) {
-					const have = setup.clothing.outfitStats().warmth ?? 0;
-					box.append(ui.el("p", { class: "note", text: have >= need ? "Dressed warmly enough to go out." : `Too cold for what you're wearing (warmth ${have} of ${need}).` }));
-				}
+				if (weather.isCold()) box.append(ui.el("p", { class: "note", text: weather.dressedWarm() ? "Cold out, but you're dressed for it." : "Cold out: wear something warm to go outside." }));
 			});
 		},
 

@@ -18,14 +18,24 @@
 	"use strict";
 
 	const KEEP_DAYS = 7;
-	const fresh = () => ({ earned: 0, spent: 0, lessons: 0, skipped: 0, shifts: 0, workMins: 0, missedShifts: 0, met: [], levels: [], tiers: [], stages: [], messages: 0 });
+	const fresh = () => ({ earned: 0, spent: 0, lessons: 0, skipped: 0, shifts: 0, workMins: 0, missedShifts: 0, met: [], levels: [], tiers: [], stages: [], traits: [], messages: 0 });
 
 	(setup.__modules ??= []).push({
 		id: "journal",
-		version: 1,
+		version: 2,
 		deps: [],
 		state: "journal",
 		defaultState: () => ({ days: {} }),
+		migrations: {
+			// Version 2: money changed from pence to whole pounds.
+			2: (slice) => {
+				for (const e of Object.values(slice.days ?? {})) {
+					e.earned = Math.round((e.earned ?? 0) / 100);
+					e.spent = Math.round((e.spent ?? 0) / 100);
+				}
+				return slice;
+			},
+		},
 
 		install({ registry, time, bus, ui, flow, fmt, config }) {
 			const J = () => setup.vars().journal;
@@ -68,7 +78,7 @@
 				journal.entry()[key] += n;
 			};
 			const push = (key, v) => {
-				const list = journal.entry()[key];
+				const list = (journal.entry()[key] ??= []);
 				if (!list.includes(v)) list.push(v);
 			};
 
@@ -95,6 +105,8 @@
 				if (d && !d.hidden && st) push("stages", `${d.label}: ${st.label}`);
 			});
 			bus.on("phone:message", () => add("messages"));
+			bus.on("trait:gained", ({ id }) => push("traits", `New trait: ${registry.get("trait", id).label}`));
+			bus.on("trait:lost", ({ id }) => push("traits", `Lost the trait: ${registry.get("trait", id).label}`));
 
 			// Waking up on a new day: show the summary of the day you slept on.
 			bus.on("action:end", ({ action, ctx }) => {
@@ -117,6 +129,7 @@
 				for (const t of e.tiers) lines.push(t);
 				for (const l of e.levels) lines.push(`Skill up: ${l}.`);
 				for (const s of e.stages) lines.push(s);
+				for (const t of e.traits ?? []) lines.push(`${t}.`);
 				if (e.messages) lines.push(`${e.messages} new message${e.messages === 1 ? "" : "s"}.`);
 				if (!lines.length) lines.push("A quiet day.");
 				return lines;

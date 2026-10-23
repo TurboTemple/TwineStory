@@ -1,12 +1,14 @@
 # money
 
-Accounts, paying and earning. All amounts are **whole pence**.
+Accounts, paying and earning. All amounts are **whole pounds** (decided by the user: no pennies). `fmt.money(20)` shows "£20".
 
 ## Data
 `account` — `{ id, label, kind ("cash" | "bank"), start, order }`. `start` is the balance at a new game.
 
 ## State
-`$money = { balances: { [accountId]: pence }, log: [{ t, amount, account, reason }] }`. The log keeps the last 50 entries.
+`$money = { balances: { [accountId]: pounds }, log: [{ t, amount, account, reason }] }`. The log keeps the last 50 entries.
+
+Version 2 (this change) turns old saves' pence into whole pounds, rounding to the nearest pound.
 
 ## API (`setup.money`)
 - `balance(id?)`: one account, or the total

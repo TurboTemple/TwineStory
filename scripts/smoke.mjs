@@ -77,7 +77,7 @@ async function playTown(page, label) {
 	await begin(page, "Sam");
 	await expectPassage(page, "Here", /Your Bedroom[\s\S]*Around here[\s\S]*Sleep \(1 hour\)/, `${label}: bedroom`);
 	const side = await sidebar(page);
-	for (const bit of ["Sam", "18 · she/her", "07:00", "£35.00", "£180.00", "Energy", "Bladder", "Saves", "Settings"]) {
+	for (const bit of ["Sam", "18 · she/her", "07:00", "£35", "£180", "Energy", "Bladder", "Saves", "Settings"]) {
 		if (!side.includes(bit)) failures.push(`${label}: sidebar is missing "${bit}"`);
 	}
 	await click(page, "Bathroom");
@@ -103,7 +103,7 @@ async function playTown(page, label) {
 	// The sidebar's Profile tab: detailed stats and what effects do.
 	await page.evaluate(() => window.SugarCube.setup.shell.setTab("profile"));
 	const prof = await sidebar(page);
-	for (const bit of ["Stats in detail", "Underlying", "Refreshed", "What it does", "White T-shirt", "Total"]) {
+	for (const bit of ["Stats in detail", "Underlying", "Refreshed", "What it does", "White T-shirt", "Total", "Traits"]) {
 		if (!prof.includes(bit)) failures.push(`${label}: Profile tab is missing "${bit}"`);
 	}
 	await page.evaluate(() => window.SugarCube.setup.shell.setTab("overview"));
@@ -113,7 +113,7 @@ async function playTown(page, label) {
 	await click(page, "Patel's Corner Shop (3 minutes)");
 	await click(page, "Browse Patel's Corner Shop");
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Buy" }).click();
-	await expectPassage(page, "Shops_Shop", /Bought Chocolate bar for £0\.95/, `${label}: buy`);
+	await expectPassage(page, "Shops_Shop", /Bought Chocolate bar for £1\./, `${label}: buy`);
 	await click(page, "Done");
 	await page.evaluate(() => window.SugarCube.Engine.play("Inventory_Bag"));
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Eat" }).click();
@@ -121,9 +121,9 @@ async function playTown(page, label) {
 	await click(page, "Elm Road (3 minutes)");
 	// Keep the run predictable: no random bus delay.
 	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
-	await click(page, "Mooresville High Street (13 minutes, £1.80)");
-	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£1\.80\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
-	if (!(await sidebar(page)).includes("£32.25")) failures.push(`${label}: cash should be £32.25 after the chocolate and the fare`);
+	await click(page, "Mooresville High Street (13 minutes, £2)");
+	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£2\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
+	if (!(await sidebar(page)).includes("£32")) failures.push(`${label}: cash should be £32 after the chocolate and the fare`);
 }
 
 /** Use the Debug tools page: pick `value` in the row whose button is `button`. */
@@ -176,7 +176,7 @@ async function playJob(page) {
 	await click(page, "Start your shift (until 14:00)");
 	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");
 	await click(page, "Continue");
-	await expectPassage(page, "Here", /You worked your shift: 6 hours[\s\S]*Paid £60\.00/, "after the first shift");
+	await expectPassage(page, "Here", /You worked your shift: 6 hours[\s\S]*Paid £60\./, "after the first shift");
 	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
 	await click(page, "Messages");
 	await expectPassage(page, "Phone_Home", /Jess Marlow \(1 new\)/, "messages");

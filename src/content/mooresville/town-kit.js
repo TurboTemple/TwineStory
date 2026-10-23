@@ -6,13 +6,14 @@
  * Small helpers that the other town-*.js files use, so they read more like
  * plain English. Nothing in here is game content by itself.
  *
- *   const { pounds, DAYS, hours, mod } = setup.town;
+ *   const { DAYS, hours, mod } = setup.town;
  *
- *   pounds(3.20)                    → 320   (the game stores money in pence)
  *   mod.add("mood", -6)             → a stat modifier (see `mod` below)
  *   DAYS.WEEKDAYS                   → [1, 2, 3, 4, 5]   (0 = Sunday … 6 = Saturday)
  *   hours.daily("07:00", "22:00")   → open every day 07:00–22:00
  *   hours.on(DAYS.SAT, "09:00", "17:00")  → open on Saturdays only
+ *
+ * Money is always whole pounds: price: 20 means £20 (decided by the user).
  *
  * Times are always 24-hour "HH:MM" text. A closing time of "24:00" means
  * midnight, and a range like "22:00"–"02:00" runs past midnight.
@@ -35,13 +36,6 @@
 	});
 
 	setup.town = Object.freeze({
-		/**
-		 * Write money in pounds; the game keeps it in pence.
-		 * @param {number} amount e.g. 3.20
-		 * @returns {number} e.g. 320
-		 */
-		pounds: (amount) => Math.round(amount * 100),
-
 		DAYS,
 
 		/**

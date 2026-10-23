@@ -138,7 +138,7 @@ APIs relied on:
 3. **State is plain data only:**
    - Allowed: objects, arrays, strings, finite numbers, booleans, `null`.
    - Not allowed: functions, DOM nodes, `Map`/`Set`/`Date`, class instances. If a class is ever unavoidable, it needs `clone()` and a `toJSON()` that returns `Serial.createReviver(...)`.
-   - Time is stored as integer minutes. Money is stored as integer minor units (pence).
+   - Time is stored as integer minutes. Money is stored as whole pounds (decided by the user: no pennies; `locale.minorPerMajor` is 1).
 4. **Startup order:**
    1. Story JavaScript runs.
    2. `init`-tagged passages run (engine boot, §5.2).
@@ -212,7 +212,7 @@ Boot runs from `:: Sys_Boot [init nobr]` → `<<run setup.boot()>>`:
   | `App_` | phone apps |
   | `Test_` | debug tests |
 
-- **Units:** time in integer minutes, money in integer minor units. Other units are decided per stat by the user.
+- **Units:** time in integer minutes, money in whole pounds (decided by the user). Other units are decided per stat by the user.
 - **State access:** go through `setup.vars()`, which returns `State.variables`. This lets Node tests stub it.
 - **Pure functions first.** Calculations are pure and unit-tested. Side effects only happen through effects and module APIs.
 - **Navigation:** modules never call `Engine.play()`. They call `setup.flow.request(passage, priority)`, and the flow controller navigates once the current operation finishes (§6.12).
@@ -343,9 +343,9 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 | **stats** | `stat` (id, label, kind, min, max, start, hud, order, `change: hookName`) | `$pc.stats` (base values only) | Get/set/add with clamping. **Modifier pipeline:** effective = base adjusted by data modifiers `{stat, op, value}` collected from status, traits, clothing and furniture, never stored. Threshold events from data-defined thresholds. Calls a per-stat change hook on `time:advanced`. Derived stats are computed by a registered function. | Which stats exist; how and whether they change over time; derived formulas such as mood; thresholds and their consequences |
 | **skills** | `skill` (id, label, maxLevel, `curve: hookName`) | `$pc.skills` (xp) | `addXp`, `level`, `progress`. Level comes from a registered curve function. Emits `skill:levelup`. | Skills list, XP curves, learning modifiers |
 | **status** | `statusEffect` (id, label, durationMins, stacking, modifiers, onExpire, tags) | `$pc.status` | Add, remove, expiry on time advance, stacking modes, modifiers fed into the stats pipeline | Which statuses exist and what they do |
-| **traits** | `trait` (id, label, desc, conflicts, modifiers, tags) | `$pc.traits` | Assign with conflict checks; modifiers fed into the stats pipeline | Trait list, costs, how they're gained |
+| **traits** | `trait` (id, label, desc, conflicts, modifiers, earn, needs, lose) | `$traits` | Kept apart from status effects (decided by the user). Habits recorded by effects; traits earned from habit streaks, daily needs, fading; conflict checks; modifiers fed into the stats pipeline | Trait list, how they're gained and lost |
 | **inventory** | `item` (id, name, category, tags, price, stackable, size, `use: {conditions, effects, mins}`, unique) | `$inv` | Storage places defined as data (e.g. bag, home); stacks vs unique instances with UIDs; add, remove, move, count, use; capacity per place from data. Ops: `has` condition, `item` effect. | Item list, places, capacity rules, perishability |
-| **clothing** | item `clothing` block (slot, plus open attribute map such as warmth or formality) | `$wear` | Data-defined slots, equip/unequip, outfits, `outfitStats()` aggregating attributes. `wearing` condition. Per-hour change hook. | Slot list, attributes and what they affect, "dressed" rule, dirt/laundry |
+| **clothing** | item `clothing` block (slots, modifiers); what clothes are is yes/no item tags (warm, smart, waterproof…) | `$wear` | Data-defined slots, equip/unequip, outfits, `outfitStats()` aggregating attributes. `wearing` condition. Per-hour change hook. | Slot list, attributes and what they affect, "dressed" rule, dirt/laundry |
 | **housing** | `residence` (id, location, rooms/slots, places), furniture block on items (slot, attributes, unlocks) | `$home` | Place furniture in slots; furniture unlocks actions and provides modifiers | Residences, rent, furniture effects |
 | **sleep** | uses `actions` | — | `sleep` action framework: variable duration, wake conditions (alarm, hook), recovery via a hook called per segment | Recovery rules, sleep debt, wake rules |
 | **food** | `recipe` (ingredients, tools, conditions, mins, output, effects) | — | Cooking: check ingredients, tools and conditions, consume, produce output, outcome via a hook | Recipes, failure rules, nutrition |
@@ -356,7 +356,7 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 | **weather** | `climate` data (open schema) | `$world.weather` | Daily generation via a hook using `rng.seeded`; `at(t)` query; `weather` condition | Climate data, generation model, effects |
 | **npcs** | `npc` (id, name, **age**, pronouns, role, tags, home, schedule, portrait, passage), `scheduleTemplate` | `$npcs` (lazy) | `whereIs(npc, t)` computed from schedule data plus overrides; `peopleAt(loc, t)` with a cache; meeting/profile UI; `npc` condition | Cast, schedules |
 | **relationships** | `relTrack` (id, range, tiers, conditions), `interaction` (id, label, conditions, effects, mins, cooldown) | `$npcs[id].rel` | Track values, tiers, tier events, interactions menu for the NPC in context, plans/overrides. Romance-tagged content must require 18+ (§1). Change-over-time hook. | Tracks, interactions, decay, gain rules |
-| **money** | — | `$money` | Integer minor units; cash/bank (account types as data); `pay`/`earn` returning ok or a reason; capped transaction log; `money` condition and effect | Payment rules, overdraft, accounts |
+| **money** | — | `$money` | Whole pounds (decided by the user); cash/bank (account types as data); `pay`/`earn` returning ok or a reason; capped transaction log; `money` condition and effect | Payment rules, overdraft, accounts |
 | **bills** | `bill` (id, amount, schedule, autopay, activeIf, onMissed effects) | `$bills` | Recurring charges via the scheduler, pay attempts, missed-payment effects from data | Which bills exist, consequences |
 | **shops** | `shop` (id, location, stock list, price hook, payment methods, conditions) | `$world.stock` | Shop UI, basket, checkout through money, stock tracking; price via a hook (default = item price) | Shops, stock, pricing, sales |
 | **actions** | `action` (id, label, at, mins, conditions, costs, effects, perHour effects, interruptible, passage) | — | `available(ctx)` merges location, tag, item, furniture and NPC actions; `do(id, opts)`: conditions → costs → advance time with per-segment effects → effects → Result → events; duration picker UI | Every actual activity |
@@ -417,9 +417,9 @@ Content is one `R.define(type, {...})` call per thing, in `src/content/mooresvil
 
 **Keep content easy for a person to edit on a phone** (the user asked for this):
 - Every content file starts with a guide: what's in it, a copy-paste example for adding one more, and what each field means. Keep these guides up to date when adding fields.
-- Named fields, not positional arguments: `wear({ id, name, price, slots, warmth })`, not `wear("id", "Name", 800, …)`.
+- Named fields, not positional arguments: `wear({ id, name, tier, slots, tags })`, not `wear("id", "Name", 20, …)`.
 - One definition per block; split long definitions over several lines, one field per line.
-- Use the shorthand in `town-kit.js`: `pounds(3.20)` for money, `DAYS.*` for days, `hours.*` for opening hours, `mod.*` for stat modifiers.
+- Money is plain whole pounds (`price: 20`). Use the shorthand in `town-kit.js`: `DAYS.*` for days, `hours.*` for opening hours, `mod.*` for stat modifiers.
 - Comment what numbers mean when it isn't obvious (`cooldown: 1440, // once a day`).
 - `EDITING.md` is the user-facing guide (where things are, the condition and effect reference). Update it when adding a content type, condition or effect.
 - After a content refactor, prove nothing changed: dump every registry definition (sorted keys, plus definition order) before and after, and diff.
@@ -539,6 +539,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Media framework, sidebar Profile tab, body bands, clothing effects, starting wardrobe trimmed | Asked for by the user. |
 | 2026-10-23 | The town of Mooresville (real content), sidebar UI shell, `stats`, `status`, rooms (sub-locations), character name/pronouns/portrait, settings | The user asked Claude to design a realistic town, its actions and text, and "anything else good". All of it is open to adjustment. |
 | 2026-10-23 | `skills`, `storylines` (progression), `jobs` (barista at The Daily Grind), `relationships` + Talk, `phone` + apps, `education` (timetable, homework), `journal` (daily summary + autosave), `weather`, ambient lines, stat consequences, inline travel buttons, multi-select dressing | Asked for by the user ("implement all of that except walking through every place"). |
+| 2026-10-23 | Simplified: whole-pound money with prices by tier, warm/smart as yes-or-no tags; new `traits` module (habits → traits), kept apart from effects | Asked for by the user. `money` and `journal` are at version 2 (pence → pounds); SCHEMA_VERSION 5. |
 | 2026-10-23 | Readability pass: content rewritten with edit guides and named fields (definitions proven identical), `town-kit.js` shorthand, plain-English headers across the engine and modules, `EDITING.md`, `src/README.md` | Asked for by the user. No gameplay changes. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
@@ -568,3 +569,6 @@ User decisions so far:
 - Getting changed: tick everything, then one **Change** that takes time and returns you to where you were.
 - Stats stay as they are for now.
 - Autosave happens when you wake up to the daily summary.
+- Keep things simple where possible. Warmth is yes/no: an item is `warm` or not, and wearing one warm thing keeps the Cold effect off on a cold day. Smartness is the same (`smart`; two smart things = Smartly dressed).
+- Money is whole pounds, no pennies. Prices follow what something gives you, in tiers: clothing £10 basic / £20 cheap (small boost) / £50 good / £100 top; food and drink in steps of £1–£8. Claude set these at the user's request; they can be tuned.
+- Effects (temporary: Cold, Hungry, Tipsy) are kept apart from traits (lasting, earned through habits: e.g. coffee every day for 5 days → Caffeine addicted, which needs a coffee each day or you get a small stat hit).
