@@ -4,7 +4,7 @@
  * ============================================================================
  *
  * setup.fmt formats what the game stores for people to read:
- *   fmt.money(320)       → "£3.20"        (money is stored in pence)
+ *   fmt.money(20)        → "£20"          (money is whole pounds)
  *   fmt.time(t)          → "14:05"        (or "2:05 pm" with the 12-hour setting)
  *   fmt.date(t)          → "Tue, 1 Sept"
  *   fmt.duration(95)     → "1 hour 35 minutes"
@@ -34,12 +34,15 @@
 
 		return {
 			/**
-			 * @param {number} minor  Integer minor units (pence).
-			 * @returns {string} e.g. "£12.50"
+			 * @param {number} amount  Whole units of money as the game stores it
+			 *   (whole pounds: locale.minorPerMajor is 1, decided by the user).
+			 * @returns {string} e.g. "£12"
 			 */
-			money(minor) {
+			money(amount) {
 				const l = L();
-				return new Intl.NumberFormat(l.lang, { style: "currency", currency: l.currency }).format(minor / l.minorPerMajor);
+				// minorPerMajor 1 → no pence shown; 100 would show "£12.50".
+				const digits = Math.round(Math.log10(l.minorPerMajor));
+				return new Intl.NumberFormat(l.lang, { style: "currency", currency: l.currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount / l.minorPerMajor);
 			},
 
 			/** @returns {string} Clock time, e.g. "07:05" or "7:05 am". */

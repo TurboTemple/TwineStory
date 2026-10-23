@@ -56,7 +56,7 @@
 
 			const ctxFor = (def) => ({ action: def.id, loc: setup.world.loc(), t: time.now(), reason: `action:${def.id}` });
 
-			/** Total pence an action's costs take (negative `money` effects). */
+			/** Total pounds an action's costs take (negative `money` effects). */
 			const priceOf = (def) => def.costs.reduce((sum, c) => sum + (c.money && c.money.amount < 0 ? -c.money.amount : 0), 0);
 			const moneyOn = () => setup.modules.has("money") && setup.money.enabled();
 

@@ -12,7 +12,13 @@
  * Clothes are items too, but they live in town-clothing.js. What each shop
  * sells, and for how much, is in town-shops.js.
  *
- * Prices are placeholders: the user will set them by hand.
+ * Prices are whole pounds, and things that do the same cost the same
+ * (decided by the user):
+ *   snack £1          small food boost (about +8)
+ *   soft drink £1     drink +20 or so
+ *   juice or energy drink £2
+ *   light meal £3     food about +25
+ *   groceries £3      one home-cooked meal
  *
  * ---------------------------------------------------------------------------
  *  HOW TO ADD A SNACK
@@ -20,7 +26,7 @@
  *   food({
  *       id: "doughnut",
  *       name: "Doughnut",
- *       price: pounds(1.20),
+ *       price: 1,                      // whole pounds
  *       use: { label: "Eat", mins: 3, effects: [{ stat: { food: 10, mood: 3 } }] },
  *   });
  *   Then add "doughnut" to a shop's stock in town-shops.js.
@@ -29,7 +35,7 @@
  *  ITEM FIELDS
  * ---------------------------------------------------------------------------
  *   id, name, desc    the item and its description
- *   price             what shops charge (unless the shop sets its own price)
+ *   price             what it costs, in whole pounds
  *   category          "food", "drink", "groceries", "clothes"… (storage can
  *                     accept only some categories, e.g. the cupboards)
  *   use               the button on the item in your bag:
@@ -52,8 +58,6 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { pounds } = setup.town;
-
 		/* ======================================================================
 		 *  1. Storage
 		 * ====================================================================== */
@@ -99,76 +103,76 @@
 		const food = (def) => R.define("item", { ...def, category: "food" });
 		const drink = (def) => R.define("item", { ...def, category: "drink" });
 
-		// ---- Food ----
+		// ---- Food: snacks £1, light meals £3 ----
 
 		food({
 			id: "chocolate_bar",
 			name: "Chocolate bar",
-			price: pounds(0.95),
+			price: 1,
 			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8, mood: 2 } }] },
 		});
 		food({
 			id: "crisps",
 			name: "Packet of crisps",
-			price: pounds(0.85),
+			price: 1,
 			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8 } }] },
 		});
 		food({
 			id: "apple",
 			name: "Apple",
-			price: pounds(0.45),
+			price: 1,
 			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 6, drink: 2 } }] },
 		});
 		food({
 			id: "banana",
 			name: "Banana",
-			price: pounds(0.30),
+			price: 1,
 			use: { label: "Eat", mins: 2, effects: [{ stat: { food: 8 } }] },
 		});
 		food({
 			id: "sandwich",
 			name: "Sandwich",
 			desc: "A shop-bought sandwich.",
-			price: pounds(2.85),
+			price: 3,
 			use: { label: "Eat", mins: 5, effects: [{ stat: { food: 25 } }] },
 		});
 		food({
 			id: "sausage_roll",
 			name: "Sausage roll",
-			price: pounds(1.40),
-			use: { label: "Eat", mins: 3, effects: [{ stat: { food: 18 } }] },
+			price: 3,
+			use: { label: "Eat", mins: 3, effects: [{ stat: { food: 25 } }] },
 		});
 		food({
 			id: "cereal_bar",
 			name: "Cereal bar",
-			price: pounds(0.70),
+			price: 1,
 			use: { label: "Eat", mins: 1, effects: [{ stat: { food: 7, energy: 2 } }] },
 		});
 
-		// ---- Drinks ----
+		// ---- Drinks: soft drinks £1, juice and energy drinks £2 ----
 
 		drink({
 			id: "water_bottle",
 			name: "Bottle of water",
-			price: pounds(0.85),
+			price: 1,
 			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 25, bladder: 5 } }] },
 		});
 		drink({
 			id: "cola",
 			name: "Can of cola",
-			price: pounds(1.10),
+			price: 1,
 			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 18, bladder: 6, energy: 3 } }] },
 		});
 		drink({
 			id: "energy_drink",
 			name: "Energy drink",
-			price: pounds(1.75),
+			price: 2,
 			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 15, bladder: 8 } }, { status: "caffeinated" }] },
 		});
 		drink({
 			id: "orange_juice",
 			name: "Orange juice",
-			price: pounds(1.50),
+			price: 2,
 			use: { label: "Drink", mins: 2, effects: [{ stat: { drink: 22, food: 3, bladder: 6 } }] },
 		});
 
@@ -184,7 +188,7 @@
 			id: "groceries",
 			name: "Groceries",
 			desc: "Enough food for one home-cooked meal. Keep them in the kitchen cupboards.",
-			price: pounds(3.00),
+			price: 3,
 			category: "groceries",
 			size: 2,
 		});

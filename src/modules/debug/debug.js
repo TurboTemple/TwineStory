@@ -64,7 +64,7 @@
 
 				if (has("money") && setup.money.enabled()) {
 					box.append(ui.el("h2", { text: "Money" }));
-					box.append(ui.el("div", {}, ...[500, 2000, 10000].map((p) => ui.button(`+${fmt.money(p)}`, () => flow.perform(() => setup.money.earn(p, { reason: "debug" }))))));
+					box.append(ui.el("div", {}, ...[5, 20, 100].map((p) => ui.button(`+${fmt.money(p)}`, () => flow.perform(() => setup.money.earn(p, { reason: "debug" }))))));
 				}
 
 				if (has("stats")) {
@@ -110,7 +110,7 @@
 						const x = setup.weather.onDay(d);
 						return `${fmt.date(time.at(d, "12:00"))}: ${x.label}, ${x.temp}°C`;
 					});
-					box.append(ui.el("p", { class: "note", text: `Today: ${w.label}, ${w.temp}°C. Outfit warmth needed: ${setup.weather.warmthNeeded()}.` }));
+					box.append(ui.el("p", { class: "note", text: `Today: ${w.label}, ${w.temp}°C. ${setup.weather.isCold() ? "A cold day: wear something warm outside." : "Not cold."}` }));
 					box.append(ui.el("ul", {}, ...ahead.map((l) => ui.el("li", { text: l }))));
 				}
 

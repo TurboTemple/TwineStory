@@ -21,10 +21,10 @@
  *                        weights: here rain is 3 times as likely as sun.
  *                        They don't need to add up to anything.
  *
- *   How warmly you need to dress outdoors:
- *     warmth needed = (comfortTemp − temperature) × warmthPerDegree, rounded
- *   e.g. at 8°C: (18 − 8) × 0.5 = 5. Everyday clothes are about 5 warmth;
- *   a warm coat adds 5 (see town-clothing.js). Indoors it doesn't matter.
+ *   Cold days (decided by the user: kept simple): below `coldBelow` °C it's
+ *   a cold day. Outdoors on a cold day you get "Cold" unless you're wearing
+ *   at least one warm thing (a hoodie, jumper, warm coat, beanie or scarf:
+ *   items tagged "warm" in town-clothing.js). Indoors it doesn't matter.
  *
  *  Numbers are first proposals.
  */
@@ -59,8 +59,7 @@
 
 		R.define("climate", {
 			id: "mooresville",
-			comfortTemp: 18,      // °C at which you need no warm clothes at all
-			warmthPerDegree: 0.5, // extra warmth needed per degree colder
+			coldBelow: 10, // °C: colder than this is a cold day
 			months: {
 				1: { temp: [0, 7], kinds: { cloudy: 4, rain: 3, drizzle: 2, fog: 1, snow: 1, sunny: 1 } },             // January
 				2: { temp: [1, 8], kinds: { cloudy: 4, rain: 3, drizzle: 2, windy: 1, snow: 1, sunny: 1 } },           // February
@@ -85,8 +84,8 @@
 			id: "cold",
 			label: "Cold",
 			good: false,
-			desc: "You're not dressed warmly enough for the weather. Put on something warmer, or go inside.",
-			whileCond: { tooCold: true }, // outdoors, and outfit warmth below what's needed
+			desc: "It's cold out and you've nothing warm on. A hoodie, jumper, warm coat, beanie or scarf would do.",
+			whileCond: { tooCold: true }, // outdoors on a cold day, wearing nothing warm
 			modifiers: [mod.add("mood", -6), mod.perHour("energy", -3)],
 		});
 

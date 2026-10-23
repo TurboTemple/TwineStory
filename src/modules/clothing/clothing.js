@@ -78,7 +78,9 @@
 				},
 
 				/**
-				 * Sum a clothing attribute (e.g. warmth) over what you're wearing.
+				 * Sum any number attributes in the items' `clothing` blocks over what
+				 * you're wearing (none are used at the moment: warmth and smartness
+				 * are tags, decided by the user).
 				 * @returns {Object<string, number>}
 				 */
 				outfitStats() {
@@ -208,13 +210,21 @@
 			};
 			setup.clothing = clothing;
 
-			// { wearing: "item_id" } or { wearing: { tag } } — you have it on.
+			// { wearing: "item_id" } — you have it on.
+			// { wearing: { tag: "smart", min: 2 } } — at least `min` (default 1)
+			// things you're wearing have that tag.
 			cond.register("wearing", {
-				test: (spec) => clothing.wornItems().some((w) => (typeof spec === "string" ? w.item.id === spec : w.item.tags.includes(spec.tag))),
-				describe: (spec) => (typeof spec === "string" ? `Wearing ${registry.tryGet("item", spec)?.name ?? spec}` : `Wearing something ${spec.tag}`),
+				test(spec) {
+					const worn = clothing.wornItems();
+					if (typeof spec === "string") return worn.some((w) => w.item.id === spec);
+					return worn.filter((w) => w.item.tags.includes(spec.tag)).length >= (spec.min ?? 1);
+				},
+				describe: (spec) => (typeof spec === "string"
+					? `Wearing ${registry.tryGet("item", spec)?.name ?? spec}`
+					: `Wearing ${spec.min > 1 ? `${spec.min} things` : "something"} ${spec.tag}`),
 			});
 
-			// { outfit: { warmth: { min, max }, formality: { min } } } — outfit totals in range.
+			// { outfit: { <attribute>: { min, max } } } — totals of number attributes in range.
 			cond.register("outfit", {
 				test(spec) {
 					const totals = clothing.outfitStats();
@@ -323,8 +333,9 @@
 						ui.el("span", { class: "inv-slot", text: `${slots}: ` }), ui.el("span", { text: w.item.name })));
 				}
 				if (items.length) box.append(ul);
-				const totals = clothing.outfitStats();
-				if (Object.keys(totals).length) box.append(ui.el("p", { class: "note", text: Object.entries(totals).map(([k, v]) => `${k.charAt(0).toUpperCase() + k.slice(1)} ${v}`).join(" · ") }));
+				// What your outfit adds up to: its tags (warm, smart, waterproof…).
+				const tags = [...new Set(items.flatMap((w) => w.item.tags))];
+				if (tags.length) box.append(ui.el("p", { class: "note", text: `Your outfit: ${tags.join(", ")}.` }));
 				if (!clothing.dressed()) box.append(ui.el("p", { class: "locked", text: "You're not dressed to go out." }));
 				if (clothing.canChangeHere()) box.append(ui.button("Get changed", () => flow.go("Clothing_Wardrobe")));
 			});

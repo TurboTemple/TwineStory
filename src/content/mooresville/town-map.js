@@ -57,7 +57,7 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { pounds, DAYS, hours } = setup.town;
+		const { DAYS, hours } = setup.town;
 
 		/* ======================================================================
 		 *  1. Districts
@@ -348,8 +348,10 @@
 		 *   destTag      only goes to places with this tag (taxis: "hub")
 		 *   minDistance  only offered when walking would take longer than this
 		 *   timeFactor   × the walking time (taxi: 0.3 = much faster)
-		 *   cost + fare  "flat": one price (fare.flat)
-		 *                "meter": fare.base + fare.perMin for each minute of the ride
+		 *   cost + fare  in whole pounds:
+		 *                "flat": one price (fare.flat)
+		 *                "meter": fare.base + fare.perMin for each minute of the
+		 *                         ride, rounded to the nearest pound
 		 */
 
 		// Decided by the user: you need to be dressed to go out (see setup.config.clothing).
@@ -365,7 +367,7 @@
 			network: "bus7",
 			multiHop: true,
 			cost: "flat",
-			fare: { flat: pounds(1.80) },
+			fare: { flat: 2 }, // £2 for any trip
 		});
 
 		R.define("travelMode", {
@@ -379,21 +381,21 @@
 			minDistance: 10,   // only for trips longer than a 10-minute walk
 			timeFactor: 0.3,
 			cost: "meter",
-			fare: { base: pounds(3.20), perMin: pounds(0.35) },
+			fare: { base: 3, perMin: 0.5 }, // £3 + 50p a minute, rounded to whole pounds
 		});
 
 		/* ======================================================================
 		 *  7. Money accounts
 		 * ======================================================================
 		 *
-		 * `start`  how much is in each account on a new game.
+		 * `start`  how much is in each account on a new game, in whole pounds.
 		 * `order`  paying tries accounts lowest order first (cash, then card),
 		 *          using the first one that can cover the whole amount. Money
 		 *          you earn goes to the first account unless something says
 		 *          otherwise (wages go to the bank: see town-work.js).
 		 */
 
-		R.define("account", { id: "cash", label: "Cash", kind: "cash", start: pounds(35), order: 0 });
-		R.define("account", { id: "bank", label: "Bank card", kind: "bank", start: pounds(180), order: 1 });
+		R.define("account", { id: "cash", label: "Cash", kind: "cash", start: 35, order: 0 });
+		R.define("account", { id: "bank", label: "Bank card", kind: "bank", start: 180, order: 1 });
 	});
 })();

@@ -6,7 +6,7 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 
 | File | What's in it |
 |---|---|
-| `town-kit.js` | Shorthand the other files use: `pounds(3.20)`, day lists (`DAYS.WEEKDAYS`), opening hours, stat modifiers (`mod.add("mood", 2)`) |
+| `town-kit.js` | Shorthand the other files use: day lists (`DAYS.WEEKDAYS`), opening hours, stat modifiers (`mod.add("mood", 2)`) |
 | `town-map.js` | Districts, places and their rooms, atmosphere lines, opening hours, walking routes, the Route 7 bus, taxis, money accounts |
 | `town-needs.js` | Stats (Health, Energy, Food, Drink, Bladder, Hygiene, Mood, Stress) and effects (Hungry, Tipsy, Caffeinated…) |
 | `town-people.js` | Every person's character sheet, looks and weekly schedule |

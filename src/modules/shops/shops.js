@@ -29,7 +29,7 @@
 
 			const shops = {
 				/**
-				 * Register a pricing rule: (shop, stockEntry, item) => pence.
+				 * Register a pricing rule: (shop, stockEntry, item) => whole pounds.
 				 * @param {string} name @param {Function} fn
 				 */
 				registerPriceHook: (name, fn) => priceHooks.set(name, fn),

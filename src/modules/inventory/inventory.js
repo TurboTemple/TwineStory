@@ -28,7 +28,7 @@
 				effects: ["use.effects"],
 				check(def) {
 					const errs = [];
-					if (!Number.isInteger(def.price) || def.price < 0) errs.push("price must be whole pence ≥ 0");
+					if (!Number.isInteger(def.price) || def.price < 0) errs.push("price must be whole pounds ≥ 0");
 					if (!(def.size >= 0)) errs.push("size must be ≥ 0");
 					return errs;
 				},

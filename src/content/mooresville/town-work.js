@@ -49,7 +49,7 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { pounds, DAYS, mod } = setup.town;
+		const { DAYS, mod } = setup.town;
 
 		/* ======================================================================
 		 *  1. Skills
@@ -165,12 +165,12 @@
 			workStages: ["hired", "trainee", "barista", "supervisor"], // stages where you work shifts
 			skill: "barista",
 			xpPerHour: 1, // Barista skill gained per hour worked (before the "slowing" rule)
-			// Pay per hour at each stage. Placeholder: the user will set this.
+			// Pay per hour at each stage, in whole pounds.
 			pay: {
-				hired: pounds(10),
-				trainee: pounds(10),
-				barista: pounds(11),
-				supervisor: pounds(12.50),
+				hired: 10,
+				trainee: 10,
+				barista: 11,
+				supervisor: 12,
 			},
 			payTo: "bank",
 			shifts: [
@@ -227,7 +227,7 @@
 		// Each stage has its own list. Write an entry as  name: [effects].
 		// Its id becomes "grind_<stage>_<name>", its passage "Ev_grind_<stage>_<name>".
 
-		/** Tips go in your pocket (placeholder amounts). */
+		/** Tips go in your pocket (whole pounds). */
 		const tips = (amount) => ({ money: { amount, account: "cash", reason: "Tips" } });
 
 		const shiftEvents = (stage, list) => {
@@ -244,17 +244,17 @@
 		};
 
 		shiftEvents("trainee", {
-			rush: [{ stat: { stress: 6 } }, { skill: { barista: 0.5 } }, tips(pounds(1.50))],
+			rush: [{ stat: { stress: 6 } }, { skill: { barista: 0.5 } }, tips(1)],
 			spill: [{ stat: { mood: -3, hygiene: -10 } }],
-			regular: [{ stat: { mood: 4 } }, tips(pounds(1.00))],
+			regular: [{ stat: { mood: 4 } }, tips(1)],
 			milk: [{ skill: { barista: 1 } }, { stat: { stress: 2 } }],
 		});
 
 		shiftEvents("barista", {
-			art: [{ stat: { mood: 5 } }, tips(pounds(3.00))],
+			art: [{ stat: { mood: 5 } }, tips(3)],
 			rude: [{ stat: { stress: 8, mood: -5 } }],
 			newbie: [{ skill: { barista: 0.5 } }, { stat: { mood: 2 } }],
-			quiet: [{ stat: { stress: -4 } }, tips(pounds(1.50))],
+			quiet: [{ stat: { stress: -4 } }, tips(1)],
 		});
 
 		shiftEvents("supervisor", {

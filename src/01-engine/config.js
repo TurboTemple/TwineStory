@@ -35,7 +35,7 @@
 	 * (A brand-new module doesn't need a bump: save.js adds its slice.)
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 4;
+	setup.SCHEMA_VERSION = 5;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -48,7 +48,9 @@
 			lang: "en-GB",
 			currency: "GBP",
 			currencySymbol: "£",
-			minorPerMajor: 100,
+			// Decided by the user: money is whole pounds, no pennies. The game
+			// stores whole pounds, so 1 unit = £1.
+			minorPerMajor: 1,
 			clock: "24h",
 		},
 		// Decided by the user: calendar day 0 (UTC). $time.t counts minutes from here.

@@ -22,10 +22,20 @@
 
 	(setup.__modules ??= []).push({
 		id: "journal",
-		version: 1,
+		version: 2,
 		deps: [],
 		state: "journal",
 		defaultState: () => ({ days: {} }),
+		migrations: {
+			// Version 2: money changed from pence to whole pounds.
+			2: (slice) => {
+				for (const e of Object.values(slice.days ?? {})) {
+					e.earned = Math.round((e.earned ?? 0) / 100);
+					e.spent = Math.round((e.spent ?? 0) / 100);
+				}
+				return slice;
+			},
+		},
 
 		install({ registry, time, bus, ui, flow, fmt, config }) {
 			const J = () => setup.vars().journal;
