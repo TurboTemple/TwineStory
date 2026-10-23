@@ -8,6 +8,7 @@
  *   fmt.time(t)          → "14:05"        (or "2:05 pm" with the 12-hour setting)
  *   fmt.date(t)          → "Tue, 1 Sept"
  *   fmt.duration(95)     → "1 hour 35 minutes"
+ *   fmt.short(95)        → "1 hr 35"          (for buttons)
  * Currency, language and clock style come from setup.config.locale.
  *
  * setup.text has helpers for writing: pronouns for the player or an NPC
@@ -57,6 +58,14 @@
 			/** @returns {string} Calendar date, e.g. "Tue 1 Sept". */
 			date(t) {
 				return new Intl.DateTimeFormat(L().lang, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(at(t));
+			},
+
+			/** @returns {string} A short form for buttons: "5 min", "2 hr", "1 hr 30". */
+			short(mins) {
+				const h = Math.floor(mins / 60);
+				const m = mins % 60;
+				if (!h) return `${m} min`;
+				return m ? `${h} hr ${m}` : `${h} hr`;
 			},
 
 			/** @returns {string} e.g. "2 hours", "1 hour 30 minutes", "1 day 2 hours". */

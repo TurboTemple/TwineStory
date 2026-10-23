@@ -1,5 +1,5 @@
 :: Loc_home
-The narrow hallway of 14 Elm Road: coats on hooks, a pile of shoes nobody claims, and the post on the mat. Stairs lead up to your bedroom and the bathroom; the kitchen and living room are through the doors ahead.
+The narrow hallway of 14 Elm Road: coats on hooks, a pile of shoes nobody claims, and the post on the mat. The living room is through the door ahead, with the kitchen off to the side; your bedroom and the bathroom are past the living room.
 <<if setup.text.period() is "night">>The house is dark apart from the streetlight through the glass in the front door.<</if>>
 
 :: Loc_home_bedroom

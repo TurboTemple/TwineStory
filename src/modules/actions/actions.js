@@ -208,26 +208,30 @@
 				if (!list.length) return;
 				box.append(ui.el("h2", { text: "Things to do" }));
 				const ul = ui.el("ul", { class: "m-actions" });
+				// The page already says when the place is closed, so don't repeat
+				// "It's open" under every button.
+				const closed = !setup.world.isOpen(setup.world.loc());
 				for (const { def, ok, reasons } of list) {
 					const li = ui.el("li");
 					if (!ok) {
 						// Locked: greyed out, with what's needed (decided by the user).
-						li.append(
-							ui.button(def.label, () => {}, { disabled: true, class: "btn-locked" }),
-							ui.el("p", { class: "locked", text: `Needs: ${reasons.join("; ")}` }),
-						);
+						const needs = closed ? reasons.filter((r) => r !== "It's open") : reasons;
+						li.append(ui.button(def.label, () => {}, { disabled: true, class: "btn-locked" }));
+						if (needs.length) li.append(ui.el("p", { class: "locked", text: `Needs: ${needs.join("; ")}` }));
 						ul.append(li);
 						continue;
 					}
-					const options = def.durations ?? [def.mins];
 					const price = priceOf(def);
-					for (const d of options) {
-						const parts = [];
-						if (typeof d === "string") parts.push(`until ${d}`);
-						else if (d) parts.push(fmt.duration(d));
-						if (price) parts.push(fmt.money(price));
-						const label = parts.length ? `${def.label} (${parts.join(", ")})` : def.label;
-						li.append(ui.action(label, () => actions.do(def.id, def.durations ? { mins: d } : {})));
+					const len = (d) => (typeof d === "string" ? `until ${d}` : d ? fmt.short(d) : null);
+					if (def.durations) {
+						// A choice of how long (sleep, waiting): the name once, then short chips.
+						li.classList.add("choose-length");
+						li.append(ui.el("span", { class: "action-name", text: `${def.label}${price ? ` (${fmt.money(price)})` : ""}:` }));
+						for (const d of def.durations) li.append(ui.action(len(d), () => actions.do(def.id, { mins: d }), { class: "btn-chip" }));
+					}
+					else {
+						const meta = [len(def.mins), price ? fmt.money(price) : null].filter(Boolean).join(", ");
+						li.append(ui.action(meta ? `${def.label} · ${meta}` : def.label, () => actions.do(def.id)));
 					}
 					if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
 					ul.append(li);

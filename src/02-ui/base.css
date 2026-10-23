@@ -98,6 +98,7 @@
 .view ul {
 	list-style: none;
 	padding: 0;
+	margin-left: 0;
 }
 
 .view li {
@@ -335,6 +336,37 @@
 
 .inv-slot {
 	margin-right: 0.3em;
+}
+
+/* ---- Compact rows of buttons (rooms, destinations, lengths) ----------- */
+
+/* Short buttons that sit side by side and wrap, instead of one per line. */
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin: 0.3rem 0 0.6rem;
+	padding: 0;
+}
+
+.chips > li {
+	margin: 0;
+}
+
+.chips button,
+#passages .chips button,
+#passages .btn-chip {
+	margin: 0;
+	padding: 0.35em 0.75em;
+}
+
+/* "Sleep: 1 hr · 2 hr · until 07:00" */
+.m-actions li.choose-length {
+	gap: 0.35rem;
+}
+
+.action-name {
+	margin-right: 0.2rem;
 }
 
 /* ---- "Go to" travel buttons ------------------------------------------ */

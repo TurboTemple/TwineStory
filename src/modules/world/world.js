@@ -25,8 +25,8 @@
 			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, dressCode: null, crowd: [], outdoor: false, ambient: [] },
-				refs: { district: "district", parent: "location" },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, dressCode: null, crowd: [], links: null, outdoor: false, ambient: [] },
+				refs: { district: "district", parent: "location", links: "location" },
 				passages: ["passage"],
 				conditions: ["entry", "dressCode.when", "crowd[].when", "ambient[].when"],
 				check(def) {
@@ -166,8 +166,22 @@
 				},
 
 				/**
-				 * Places you can walk to inside this site from here: the parent,
-				 * sub-locations and sibling areas, each with why it's locked (if it is).
+				 * The rooms (and entrance) you can walk to straight from a location.
+				 * A location with `links` connects to exactly those (and to any
+				 * location whose `links` name it: links work both ways). Without
+				 * `links`, it connects to its parent and the rooms inside it.
+				 * @returns {string[]}
+				 */
+				neighbours(id) {
+					const def = L(id);
+					const out = def.links ? [...def.links] : [...(def.parent ? [def.parent] : []), ...world.children(id).map((c) => c.id)];
+					for (const other of registry.all("location")) if (other.links?.includes(id)) out.push(other.id);
+					return [...new Set(out)].filter((x) => x !== id);
+				},
+
+				/**
+				 * Places you can walk to inside this site from here (see
+				 * neighbours()), each with why it's locked (if it is).
 				 * @returns {{def: object, kind: "out"|"in"|"side", mins: number, ok: boolean, reasons: string[]}[]}
 				 */
 				nearby() {
@@ -185,9 +199,9 @@
 						const mins = kind === "out" ? here.innerMins : def.innerMins;
 						out.push({ def, kind, mins, ok: !reasons.length, reasons });
 					};
-					if (here.parent) add(L(here.parent), "out");
-					for (const c of world.children(here.id)) add(c, "in");
-					if (here.parent) for (const s of world.children(here.parent)) if (s.id !== here.id) add(s, "side");
+					for (const id of world.neighbours(here.id)) {
+						add(L(id), id === here.parent ? "out" : L(id).parent === here.id ? "in" : "side");
+					}
 					return out;
 				},
 
@@ -350,11 +364,14 @@
 				const list = world.nearby();
 				if (!list.length) return;
 				box.append(ui.el("h2", { text: "Around here" }));
-				const ul = ui.el("ul", { class: "areas" });
+				const ul = ui.el("ul", { class: "areas chips" });
+				// Already said at the top of the page when the whole place is shut.
+				const closed = !world.isOpen(world.loc());
 				for (const n of list) {
 					const label = n.kind === "out" ? `Back to ${n.def.name}` : n.def.name;
 					const li = ui.el("li", {}, ui.action(label, () => world.walkTo(n.def.id), { disabled: !n.ok }));
-					if (!n.ok) li.append(ui.el("p", { class: "locked", text: n.reasons.join("; ") }));
+					const why = closed ? n.reasons.filter((r) => r !== "It's closed") : n.reasons;
+					if (!n.ok && why.length) li.append(ui.el("p", { class: "locked", text: why.join("; ") }));
 					ul.append(li);
 				}
 				box.append(ul);
