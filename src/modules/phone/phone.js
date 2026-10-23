@@ -56,30 +56,46 @@
 				},
 
 				/**
-				 * Receive a message (or send one: `mine: true`).
-				 * @param {string} from NPC id @param {string} text @param {{mine?: boolean}} [opts]
+				 * Receive a message (or send one: `mine: true`). A text adds the
+				 * sender to your contacts; an email (`via: "email"`) goes to the
+				 * Email app's inbox instead.
+				 * @param {string} from NPC id @param {string} text
+				 * @param {{mine?: boolean, via?: "text"|"email", subject?: string}} [opts]
 				 */
 				message(from, text, opts = {}) {
-					phone.addContact(from);
+					const email = opts.via === "email";
+					setup.npcs.get(from);
+					if (!email) phone.addContact(from);
 					const list = P().messages;
-					list.push({ from, text, t: time.now(), read: Boolean(opts.mine), mine: Boolean(opts.mine) });
+					const m = { from, text, t: time.now(), read: Boolean(opts.mine), mine: Boolean(opts.mine) };
+					if (email) {
+						m.via = "email";
+						if (opts.subject) m.subject = opts.subject;
+					}
+					list.push(m);
 					if (list.length > MESSAGE_CAP) list.splice(0, list.length - MESSAGE_CAP);
 					if (!opts.mine) {
-						ui.notify(`New message from ${setup.npcs.get(from).name}.`);
-						bus.emit("phone:message", { from, text });
+						ui.notify(`New ${email ? "email" : "message"} from ${setup.npcs.get(from).name}.`);
+						bus.emit(email ? "phone:email" : "phone:message", { from, text });
 					}
 				},
 
-				/** @returns {object[]} Messages with one contact, oldest first. */
-				thread: (npc) => P().messages.filter((m) => m.from === npc),
+				/** @returns {object[]} Texts with one contact, oldest first. */
+				thread: (npc) => P().messages.filter((m) => m.from === npc && m.via !== "email"),
 
-				/** @returns {number} Unread messages (from one contact, or all). */
-				unread: (npc) => P().messages.filter((m) => !m.read && (!npc || m.from === npc)).length,
+				/** @returns {number} Unread texts (from one contact, or all). */
+				unread: (npc) => P().messages.filter((m) => m.via !== "email" && !m.read && (!npc || m.from === npc)).length,
 
-				/** Mark a contact's messages read. */
+				/** Mark a contact's texts read. */
 				markRead(npc) {
-					for (const m of P().messages) if (m.from === npc) m.read = true;
+					for (const m of P().messages) if (m.from === npc && m.via !== "email") m.read = true;
 				},
+
+				/** @returns {object[]} Emails, newest first. */
+				emails: () => P().messages.filter((m) => m.via === "email").reverse(),
+
+				/** @returns {number} Unread emails. */
+				unreadEmail: () => P().messages.filter((m) => m.via === "email" && !m.read).length,
 
 				/** @returns {number} Total badge count across apps (for the menu button). */
 				badgeTotal: () => phone.apps().reduce((n, a) => n + phone.badge(a), 0),
@@ -129,6 +145,7 @@
 			});
 
 			phone.registerBadge("unread", () => phone.unread());
+			phone.registerBadge("unread_email", () => phone.unreadEmail());
 
 			// { hasContact: "id" } — the NPC is in your contacts (default: the one in context).
 			cond.register("hasContact", {
@@ -147,9 +164,10 @@
 			});
 
 			// { message: { from, text } } — a text arrives.
+			// { message: { from, text } } — a text; add via: "email" (and subject) for an email.
 			effects.register("message", {
 				apply(spec) {
-					phone.message(spec.from, spec.text);
+					phone.message(spec.from, spec.text, { via: spec.via, subject: spec.subject });
 				},
 				describe: (spec) => `A message from ${setup.npcs.get(spec.from)?.name ?? spec.from}`,
 			});
@@ -223,6 +241,24 @@
 							phone.open(phone.app);
 						}),
 						last ? ui.el("p", { class: "note", text: last.text.length > 60 ? `${last.text.slice(0, 57)}…` : last.text }) : null));
+				}
+				box.append(ul);
+			});
+
+			// Email: every email you've had, newest first. Opening the app reads them.
+			ui.view("app-email", (box) => {
+				const list = phone.emails();
+				if (!list.length) {
+					box.append(ui.el("p", { class: "note", text: "Your inbox is empty." }));
+					return;
+				}
+				const ul = ui.el("ul", { class: "thread" });
+				for (const m of list) {
+					ul.append(ui.el("li", { class: m.read ? "msg" : "msg msg-new" },
+						ui.el("p", {}, ui.el("strong", { text: setup.npcs.get(m.from).name }), m.subject ? ui.el("span", { text: `: ${m.subject}` }) : null),
+						ui.el("p", { text: m.text }),
+						ui.el("p", { class: "note", text: `${fmt.date(m.t)} ${fmt.time(m.t)}` })));
+					m.read = true;
 				}
 				box.append(ul);
 			});

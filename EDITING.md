@@ -202,7 +202,7 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ body: { weight: -0.2 } }` / `{ bodySet: { hair_colour: "pink" } }` | change / set a body part |
 | `{ rel: { friendship: 3 } }` | change how the person you're talking to feels |
 | `{ contact: "jess_marlow" }` | add someone's number to your phone |
-| `{ message: { from: "jess_marlow", text: "Hi!" } }` | a text arrives |
+| `{ message: { from: "jess_marlow", text: "Hi!" } }` | a text arrives (add `via: "email", subject: "…"` for an email) |
 | `{ storyline: { id: "barista_job", to: "barista" } }` | move a storyline to a stage |
 | `{ homework: true }` | finish the homework due soonest |
 | `{ moveTo: "home_bedroom" }` | put the player somewhere |
@@ -305,10 +305,19 @@ See `Ev_grind_barista_rude` in `work.twee` for a real example.
 
 Each key character has a storyline in `src/content/mooresville/stories/story-<name>.js`, which holds the character, the storyline and the task you repeat. Each also has a passage file in `src/story/mooresville/stories/`. The README in the stories folder lists who, where and when.
 
-- **How each starts:** the first time you meet the character (`begin: { on: ["npc:met"], when: { withNpc: "dennis" } }`). The two online stories start the first time you play online or go live from the computer in your bedroom.
+- **How each starts** (decided by the user):
+  - Dennis: your first hypnotherapy session.
+  - The cosplay club: you go to the club after one of them invites you at school (a random event).
+  - Mark: you sign up for his volleyball class.
+  - Lenny: you get the job at The Daily Grind.
+  - The MMO clan: you first play online.
+  - The mystery donator: a random email while you stream.
+
+  The stories folder's README has the details. A story can also start by itself with `begin: { on: ["npc:met"], when: { withNpc: "…" } }`.
 - **The start screen:** `Ev_<story>_start` in the passage file. It contains only `[<story title> edit here]` and the Continue button, so you can find it and replace the line with your text.
 - **Progression:** each session, meeting or stream adds 1 (`{ progression: "hypnotherapist" }`). Gates, events, choices and `<<when>>` can test it: `{ progression: { id: "hypnotherapist", min: 5 } }`.
-- **The task** shows once the story has started (`showIf`). It's greyed out while its character isn't there.
+- **The task** shows once it's unlocked (`showIf`). It's greyed out while its character isn't there.
+- **Emails:** `{ message: { from: "mystery_donator", via: "email", subject: "…", text: "…" } }` goes to the phone's Email app, not Messages.
 
 ## Writing a storyline from scratch
 

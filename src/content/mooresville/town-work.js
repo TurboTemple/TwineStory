@@ -195,8 +195,10 @@
 				supervisor: 12,
 			},
 			payTo: "bank",
+			// (Every full shift also counts towards Lenny's story: see `effects`.)
 			// How the shift went. Most are ordinary; some help, some set you back.
 			effects: [
+				{ progression: "coffee_shop" }, // Lenny's story (stories/story-coffee-shop.js)
 				{
 					random: [
 						// An ordinary shift.

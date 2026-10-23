@@ -24,64 +24,111 @@ function skipTo(setup, weekday, hm) {
 	time.advance(t - time.now());
 }
 
-/** Meet a character where they are, then do their story's task once. */
-function meetAndDo(setup, played, { weekday, hm, at, story, task }) {
-	skipTo(setup, weekday, hm);
-	assert.ok(!setup.storylines.started(story), `${story} not started yet`);
-	setup.flow.perform(() => setup.world.moveTo(at));
-	assert.equal(setup.storylines.stage(story), "start", `${story} starts on meeting`);
-	assert.equal(played.at(-1), `Ev_${story}_start`, "the start screen shows");
-	assert.equal(setup.storylines.progression(story), 0);
-	const r = setup.actions.do(task);
-	assert.ok(r.ok, plain(r.changes).map((c) => c.text).join(" "));
-	assert.equal(setup.storylines.progression(story), 1);
-}
-
-test("Dennis: meeting him starts The Hypnotherapist; each session adds progression", () => {
+test("Dennis: the first session starts The Hypnotherapist and counts; meeting him doesn't", () => {
 	const { setup, played } = town();
-	meetAndDo(setup, played, { weekday: 1, hm: "11:00", at: "calm_waters_room", story: "hypnotherapist", task: "hypnotherapist_session" });
+	skipTo(setup, 1, "11:00");
+	setup.flow.perform(() => setup.world.moveTo("calm_waters_room"));
+	assert.ok(!setup.storylines.started("hypnotherapist"), "meeting Dennis doesn't start it");
+	setup.flow.perform(() => setup.actions.do("hypnotherapist_session"));
+	assert.equal(setup.storylines.stage("hypnotherapist"), "start");
+	assert.ok(played.includes("Ev_hypnotherapist_start"), "the start screen shows");
+	assert.equal(setup.storylines.progression("hypnotherapist"), 1, "the first session counts");
 	setup.actions.do("hypnotherapist_session");
 	assert.equal(setup.storylines.progression("hypnotherapist"), 2);
 	assert.ok(setup.cond.test({ progression: { id: "hypnotherapist", min: 2 } }, {}));
 });
 
-test("the cosplay club, Mark and Lenny start when you meet them", () => {
+test("the cosplay club: invited at school by a random event, starts when you go", () => {
 	const { setup, played } = town();
-	meetAndDo(setup, played, { weekday: 2, hm: "19:00", at: "community_hall", story: "cosplay_club", task: "cosplay_club_meeting" });
-	meetAndDo(setup, played, { weekday: 3, hm: "10:00", at: "academy_sports_hall", story: "gym_teacher", task: "gym_teacher_training" });
-	meetAndDo(setup, played, { weekday: 4, hm: "09:00", at: "lennys_counter", story: "coffee_shop", task: "coffee_shop_chat" });
+	const club = () => setup.actions.available().find((a) => a.def.id === "cosplay_club_meeting");
+	skipTo(setup, 2, "19:00");
+	setup.world.moveTo("community_hall");
+	assert.ok(!club(), "not offered before you're invited");
+	assert.ok(!setup.storylines.started("cosplay_club"), "meeting them doesn't start it");
+	// Force one invitation (it's random) and arrive at school.
+	setup.events.force("cosplay_invite_arvel", true);
+	skipTo(setup, 3, "09:00");
+	setup.flow.perform(() => setup.world.moveTo("academy"));
+	assert.equal(played.at(-1), "Ev_cosplay_invite_arvel");
+	assert.ok(setup.npcs.hasMet("arvel"));
+	setup.events.force("cosplay_invite_arvel", null);
+	skipTo(setup, 4, "19:00");
+	setup.world.moveTo("community_hall");
+	assert.ok(club().ok);
+	setup.flow.perform(() => setup.actions.do("cosplay_club_meeting"));
+	assert.equal(setup.storylines.stage("cosplay_club"), "start");
+	assert.ok(played.includes("Ev_cosplay_club_start"));
+	assert.equal(setup.storylines.progression("cosplay_club"), 1);
 });
 
-test("online stories start the first time you play or stream", () => {
+test("the invitation happens once, whichever member asks", () => {
+	const { setup } = town();
+	for (let i = 0; i < 60; i++) {
+		skipTo(setup, 1 + (i % 5), "09:00");
+		setup.flow.perform(() => setup.world.moveTo("academy"));
+	}
+	const seen = ["john", "arvel", "micheal"].reduce((n, w) => n + setup.events.seen(`cosplay_invite_${w}`), 0);
+	assert.equal(seen, 1);
+});
+
+test("Mark Grant: signing up for volleyball starts The Gym Teacher; classes count", () => {
+	const { setup, played } = town();
+	skipTo(setup, 2, "15:20");
+	setup.flow.perform(() => setup.world.moveTo("academy_sports_hall"));
+	assert.ok(!setup.storylines.started("gym_teacher"), "meeting him doesn't start it");
+	setup.flow.perform(() => setup.actions.do("volleyball_sign_up"));
+	assert.equal(setup.storylines.stage("gym_teacher"), "start");
+	assert.ok(played.includes("Ev_gym_teacher_start"));
+	assert.ok(!setup.actions.available().some((a) => a.def.id === "volleyball_sign_up"), "only once");
+	setup.actions.do("volleyball_class");
+	assert.equal(setup.storylines.progression("gym_teacher"), 1);
+	assert.equal(setup.npcs.get("mark").name, "Mark Grant");
+	assert.equal(setup.registry.get("subject", "pe").teacher, "Mr Grant");
+});
+
+test("Lenny owns The Daily Grind: getting the job starts his story; shifts count", () => {
+	const { setup } = town();
+	assert.ok(!setup.registry.has("location", "lennys"), "only one coffee shop");
+	assert.equal(setup.npcs.get("lenny").schedule[0].at, "grind_seating");
+	skipTo(setup, 6, "08:30");
+	setup.flow.perform(() => setup.world.moveTo("grind_counter"));
+	assert.ok(!setup.storylines.started("coffee_shop"));
+	setup.flow.perform(() => setup.actions.do("ask_about_work"));
+	assert.equal(setup.storylines.stage("coffee_shop"), "start");
+	assert.equal(setup.events.seen("coffee_shop_start"), 1);
+	setup.jobs.work("grind_barista");
+	assert.equal(setup.storylines.progression("coffee_shop"), 1);
+});
+
+test("the MMO clan starts the first time you play online", () => {
 	const { setup, played } = town();
 	setup.flow.perform(() => setup.world.moveTo("home_bedroom"));
 	setup.flow.perform(() => setup.actions.do("mmo_clan_play"));
 	assert.equal(setup.storylines.stage("mmo_clan"), "start");
 	assert.equal(played.at(-1), "Ev_mmo_clan_start");
 	assert.ok(setup.npcs.hasMet("wolfhowl"));
-	assert.equal(setup.storylines.progression("mmo_clan"), 0, "the first go starts it");
 	setup.actions.do("mmo_clan_play");
 	assert.equal(setup.storylines.progression("mmo_clan"), 1);
-
-	setup.flow.perform(() => setup.actions.do("mystery_donator_stream"));
-	assert.equal(setup.storylines.stage("mystery_donator"), "start");
-	setup.actions.do("mystery_donator_stream");
-	assert.equal(setup.storylines.progression("mystery_donator"), 1);
-	assert.equal(setup.npcs.get("mystery_donator").ageKnown, false);
+	assert.equal(setup.npcs.get("wolfhowl").pronouns, "he/him");
 });
 
-test("a story's task is hidden until it starts, then greyed out when its character is away", () => {
+test("the mystery donator: a random email while streaming starts it", () => {
 	const { setup } = town();
-	skipTo(setup, 1, "11:00");
-	setup.world.moveTo("calm_waters_waiting");
-	const find = () => setup.actions.available().find((a) => a.def.id === "hypnotherapist_session");
-	setup.world.moveTo("calm_waters_room");
-	assert.ok(find()?.ok, "Dennis is here");
-	skipTo(setup, 6, "11:00"); // Saturday: Dennis isn't in
-	setup.world.moveTo("calm_waters_room");
-	const a = find();
-	assert.ok(a && !a.ok, "listed but locked");
-	assert.match(a.reasons.join(" "), /Dennis is here/);
+	setup.world.moveTo("home_bedroom");
+	let n = 0;
+	while (!setup.storylines.started("mystery_donator") && n < 60) {
+		setup.stats.set("energy", 100);
+		setup.actions.do("go_live");
+		n++;
+	}
+	assert.ok(n > 0 && n < 60);
+	assert.equal(setup.storylines.stage("mystery_donator"), "start");
+	assert.equal(plain(setup.phone.emails())[0].from, "mystery_donator");
+	assert.equal(setup.phone.unreadEmail(), 1);
+	assert.equal(setup.phone.unread(), 0, "an email isn't a text");
+	assert.ok(!setup.phone.hasContact("mystery_donator"), "not in your contacts");
+	setup.actions.do("go_live");
+	assert.equal(setup.storylines.progression("mystery_donator"), 1);
 });
 
 test("storyline begin and progression on throwaway data", () => {

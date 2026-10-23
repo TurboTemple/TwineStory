@@ -193,11 +193,6 @@
 		place({ id: "elm_park_green", name: "Elm Park Green", district: "elm_park", outdoor: true, tags: ["park"] });
 		room({ id: "elm_green_pond", name: "The Duck Pond", parent: "elm_park_green", outdoor: true, tags: ["seating"], innerMins: 2 });
 
-		// Lenny's: an old-fashioned café on the corner of the green (story-coffee-shop.js).
-		place({ id: "lennys", name: "Lenny's Café", district: "elm_park", tags: ["cafe"], hours: [hours.on(DAYS.MON_SAT, "07:00", "15:00")] });
-		room({ id: "lennys_counter", name: "Counter", parent: "lennys", tags: ["cafe"] });
-		room({ id: "lennys_tables", name: "Tables", parent: "lennys", tags: ["cafe", "seating"] });
-
 		/* ---- Northfield (school) ---------------------------------------------- */
 
 		place({
@@ -396,7 +391,6 @@
 		walk({ from: "riverside_park", to: "riverside_court", mins: 4 });
 		walk({ from: "high_street", to: "keys_lettings", mins: 2 });
 		walk({ from: "high_street", to: "calm_waters", mins: 3 });
-		walk({ from: "elm_park_green", to: "lennys", mins: 2 });
 		walk({ from: "academy", to: "community_centre", mins: 5 });
 
 		/* ======================================================================

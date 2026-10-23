@@ -4,9 +4,11 @@
  * ============================================================================
  *
  * Central character: Dennis, 71, at Calm Waters Hypnotherapy (High Street).
- * Starts the first time you meet Dennis (walk into his therapy room while
- * he's there). Each session with him adds 1 to the progression:
- *   hypnotherapist progression 5 = five sessions.
+ * Starts with your first hypnotherapy session (decided by the user). What
+ * unlocks the sessions isn't decided yet: for now they're open whenever
+ * Dennis is in (DESIGN: put the unlock in the session's `showIf` or
+ * `conditions`). Every session, the first included, adds 1 to the
+ * progression: hypnotherapist progression 5 = five sessions.
  *
  * Text: src/story/mooresville/stories/story-hypnotherapist.twee
  *
@@ -38,7 +40,6 @@
 		R.define("storyline", {
 			id: "hypnotherapist",
 			label: "The Hypnotherapist",
-			begin: { on: ["npc:met"], when: { withNpc: "dennis" } }, // starts when you meet Dennis
 			stages: [
 				{
 					id: "start",
@@ -59,9 +60,13 @@
 			label: "Have a session with Dennis",
 			at: "calm_waters_room",
 			mins: 60,
-			showIf: { storyline: { id: "hypnotherapist" } }, // once the story has started
+			// DESIGN: what unlocks the sessions (e.g. showIf: { flag: "heard_about_dennis" }).
 			conditions: { npcHere: "dennis" },
-			effects: [{ progression: "hypnotherapist" }],
+			effects: [
+				// The first session starts the story (and shows its start screen).
+				{ if: { cond: { storyline: { id: "hypnotherapist", started: false } }, then: [{ storyline: { id: "hypnotherapist", to: "start" } }] } },
+				{ progression: "hypnotherapist" }, // every session counts, the first too
+			],
 		});
 	});
 })();

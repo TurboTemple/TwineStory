@@ -173,6 +173,9 @@ async function playJob(page) {
 	await click(page, "Ask Jess about the job");
 	await expectPassage(page, "Ev_grind_interview", /Staff wanted/, "job interview");
 	await click(page, "Continue");
+	// Getting the job also starts Lenny's story: its start screen comes next.
+	await expectPassage(page, "Ev_coffee_shop_start", /The Coffee Shop Owner edit here/, "Lenny's start screen");
+	await click(page, "Continue");
 	await click(page, "Work a shift (2 hours, £20)");
 	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");
 	await click(page, "Continue");
