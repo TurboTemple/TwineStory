@@ -5,5 +5,7 @@ This is a placeholder start passage. The game framework is being built phase by 
 
 <<if setup.config.debug>>
 <p class="sys-note">Debug mode is on. The on-screen console button should appear in the corner.</p>
+<<button "Start the test storyline">><<run setup.flow.go("Here")>><</button>>
+
 [[Open the test index|Test_Index]]
 <</if>>

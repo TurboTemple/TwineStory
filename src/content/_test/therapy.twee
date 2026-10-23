@@ -1,0 +1,28 @@
+:: Loc_test_home
+TEST CONTENT. A plain placeholder flat where the test storyline starts.
+
+:: Loc_test_high_street
+TEST CONTENT. A placeholder high street between home and the clinic.
+
+:: Loc_test_clinic
+TEST CONTENT. A placeholder clinic with a small waiting room. A secretary sits at the front desk; the therapist's office is down the corridor.
+
+:: Ev_test_secretary_interrupts
+<h1>Interrupted</h1>
+
+TEST CONTENT. Halfway through the session there's a knock at the door. The secretary leans in: something urgent needs the therapist's attention. The therapist apologises and ends the session early.
+
+<<view "event-end">>
+
+:: Test_Therapy [nobr]
+<h1>Test: therapy storyline</h1>
+<p>Shortcuts for testing the therapy visit. They change the game state directly, so only use them in debug mode.</p>
+<<if setup.config.debug>>
+<ul>
+<li><<button "Go to Test Clinic, next 10:00">><<run setup.testTools.toClinicAt("10:00")>><</button>></li>
+<li><<button "Next session: secretary WILL interrupt">><<run setup.events.force("test_secretary_interrupts", true)>><<run setup.flow.go("Here")>><</button>></li>
+<li><<button "Next session: secretary WON'T interrupt">><<run setup.events.force("test_secretary_interrupts", false)>><<run setup.flow.go("Here")>><</button>></li>
+<li><<button "Back to normal (50% chance)">><<run setup.events.force("test_secretary_interrupts", null)>><<run setup.flow.go("Here")>><</button>></li>
+</ul>
+<</if>>
+<p>[[Back to test index|Test_Index]]</p>
