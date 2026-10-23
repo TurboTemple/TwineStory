@@ -23,7 +23,7 @@ The storylet (event) framework and the rules for when events happen.
 
 ## Kinds
 - `story`: fires every time it's eligible, highest priority first.
-- `pool`: one picked by `weight` every time a trigger fires, with no game-wide limits. Used for a storyline stage's events (e.g. one event per shift).
+- `pool`: each pool storylet with a `chance` (0–1) rolls it; then one of those left is picked by `weight`, with no game-wide limits. Leave `chance` out to always be in the running. Used for a storyline stage's events (e.g. a 15% chance of each event during a shift).
 - `random`: goes through the selection hook and the game-wide limits below.
 - `manual`: no triggers; something fires it directly (a storyline stage's entry event).
 

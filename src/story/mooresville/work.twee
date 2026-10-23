@@ -1,14 +1,14 @@
 :: Ev_grind_interview
 <<view "event-media">>
-<h1>Weekend staff wanted</h1>
+<h1>Staff wanted</h1>
 
 You point at the card in the window and ask if the job's still going. Jess looks you up and down, then grins and wipes her hands on her apron.
 
-"It is if you want it. Saturdays eight till two, Sundays ten till four. Ever used a coffee machine? Doesn't matter. I'll teach you. Can you be on time?"
+"It is if you want it. Two-hour shifts, whenever we're open, as many as you can manage. Ever used a coffee machine? Doesn't matter. I'll teach you. Can you be on time?"
 
 You say you can. She asks a few more questions between customers: school, whether you mind early starts, whether you can carry four cups at once. Then she sticks out a hand.
 
-"Right. You're on the rota. Don't be late on your first day."
+"Right. You're on the books. Come in whenever you like for your first shift."
 
 <<view "event-end">>
 
@@ -20,7 +20,7 @@ Jess hands you an apron and a name badge with your name spelled slightly wrong. 
 
 The machine hisses and clanks like it has opinions. You learn where the cups live, how to tamp the coffee and how much milk is too much. You burn your thumb on the steam wand once, and only once.
 
-By the end of the shift your feet ache, but you've made a flat white that Jess drinks without pulling a face. "Not bad," she says. "See you next weekend."
+By the end of the shift your feet ache, but you've made a flat white that Jess drinks without pulling a face. "Not bad," she says. "See you next time."
 
 <<view "event-end">>
 
@@ -98,7 +98,7 @@ Jess appears at your shoulder after he's gone. "You handled that better than I w
 <<view "event-media">>
 <h1>The new starter</h1>
 
-There's a new weekend starter, and Jess asks you to show them the ropes. Explaining how to tamp, how to steam and where the cups live, you realise how much you've picked up.
+There's a new starter, and Jess asks you to show them the ropes. Explaining how to tamp, how to steam and where the cups live, you realise how much you've picked up.
 
 <<view "event-end">>
 
@@ -145,16 +145,6 @@ Two people want the same Sunday off and a third has exams. You juggle the rota o
 <h1>Complaint</h1>
 
 A customer wants to speak to the manager. Today, that's you. You listen, apologise, replace the drink and offer a free pastry. They leave happy, and you learn something about staying calm.
-
-<<view "event-end">>
-
-:: Ev_grind_fired
-<<view "event-media">>
-<h1>Let go</h1>
-
-Jess catches you as you come in, and she isn't smiling. "I can't keep holding shifts for you when you don't turn up. I'm sorry. I've had to give your hours to someone else."
-
-She doesn't say it unkindly. That almost makes it worse.
 
 <<view "event-end">>
 

@@ -97,7 +97,7 @@
 				apply(spec, ctx, result) {
 					for (const [id, amount] of Object.entries(spec)) {
 						const got = skills.add(id, amount);
-						if (got && !ctx.quiet) result.changes.push({ kind: "skill", text: `${registry.get("skill", id).label} skill +${Math.round(got * 10) / 10}` });
+						if (got && !ctx.quiet) result.changes.push({ kind: "skill", text: `${registry.get("skill", id).label} skill ${got > 0 ? "+" : "−"}${Math.abs(Math.round(got * 10) / 10)}` });
 					}
 				},
 				describe: (spec) => Object.keys(spec).map((id) => `Improves ${registry.tryGet("skill", id)?.label ?? id}`).join(", "),

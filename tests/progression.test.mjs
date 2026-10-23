@@ -84,49 +84,82 @@ test("the barista job: interview, first day, trainee, promotion, supervisor", ()
 	assert.ok(setup.jobs.employed("grind_barista"));
 	assert.ok(!setup.actions.available().some((a) => a.def.id === "ask_about_work"), "can't ask twice");
 
-	// First shift: the first-day event, then trainee.
-	const shift = setup.jobs.shiftNow("grind_barista");
-	assert.ok(shift, "Saturday's shift can start now (a little early)");
+	// First shift: the first-day event, then trainee. One tap = one 2-hour shift.
+	assert.ok(setup.jobs.canWork("grind_barista").ok);
+	assert.deepEqual(plain(L.progress("barista_job").map((p) => p.text)), ["Shifts worked 0 / 1"]);
 	const bank = setup.money.balance("bank");
+	const before = setup.time.now();
 	const r = setup.jobs.work("grind_barista");
-	assert.equal(setup.fmt.time(setup.time.now()), "14:00");
+	assert.equal(setup.time.now() - before, 120);
 	assert.equal(setup.events.seen("grind_first_day"), 1);
 	assert.equal(L.stage("barista_job"), "trainee");
-	assert.equal(setup.money.balance("bank") - bank, 60, "6 hours at £10");
-	assert.match(plain(r.changes).map((c) => c.text).join(" "), /worked your shift: 6 hours/);
-	assert.equal(setup.jobs.shiftNow("grind_barista"), null, "one shift a day");
+	assert.equal(setup.money.balance("bank") - bank, 20, "2 hours at £10");
+	assert.match(plain(r.changes).map((c) => c.text).join(" "), /worked a shift: 2 hours/);
+	assert.equal(L.count("barista_job", "shifts"), 1);
+	assert.match(L.progress("barista_job")[0].text, /^Barista skill \d+ \/ 20$/);
 
-	// Sunday: a trainee event fires (one per shift).
-	skipTo(setup, 0, "09:50");
-	setup.world.moveTo("grind_counter");
+	// No rota: work again straight away, as often as you like.
+	assert.ok(setup.jobs.canWork("grind_barista").ok, "another shift right away");
 	const seenTrainee = () => setup.registry.all("storylet").filter((s) => s.id.startsWith("grind_trainee_")).reduce((n, s) => n + setup.events.seen(s.id), 0);
-	setup.jobs.work("grind_barista");
-	assert.equal(seenTrainee(), 1);
+	let n = 0;
+	while (setup.jobs.canWork("grind_barista").ok) {
+		setup.jobs.work("grind_barista");
+		n++;
+	}
+	const closing = setup.time.at(setup.time.day(setup.time.now()), "18:00");
+	assert.ok(setup.time.now() <= closing && setup.time.now() + 120 > closing, "stops at the last shift that fits before 18:00 closing");
+	assert.match(setup.jobs.canWork("grind_barista").reason, /before closing/);
+	assert.ok(n >= 4);
+	// Shift events are occasional (a chance each); work until one shows up.
+	for (let i = 0; i < 40 && !seenTrainee(); i++) {
+		skipTo(setup, 6, "08:00");
+		setup.world.moveTo("grind_counter");
+		setup.jobs.work("grind_barista");
+	}
+	assert.ok(seenTrainee() >= 1, "a trainee event happens sometimes");
 
 	// Skill 20 → promotion; the barista events take over.
 	setup.skills.set("barista", 20);
 	assert.equal(L.stage("barista_job"), "barista");
 	assert.equal(setup.events.seen("grind_promotion"), 1);
 	assert.equal(setup.jobs.rate("grind_barista"), 11);
-	skipTo(setup, 6, "08:00");
-	setup.world.moveTo("grind_counter");
-	setup.jobs.work("grind_barista");
-	assert.equal(seenTrainee(), 1, "no more trainee events");
-	assert.equal(setup.registry.all("storylet").filter((s) => s.id.startsWith("grind_barista_")).reduce((n, s) => n + setup.events.seen(s.id), 0), 1);
+	const trainee = seenTrainee();
+	const seenBarista = () => setup.registry.all("storylet").filter((s) => s.id.startsWith("grind_barista_")).reduce((n, s) => n + setup.events.seen(s.id), 0);
+	for (let i = 0; i < 40 && !seenBarista(); i++) {
+		skipTo(setup, 6, "08:00");
+		setup.world.moveTo("grind_counter");
+		setup.jobs.work("grind_barista");
+	}
+	assert.equal(seenTrainee(), trainee, "no more trainee events");
+	assert.ok(seenBarista() >= 1);
 
 	setup.skills.set("barista", 50);
 	assert.equal(L.stage("barista_job"), "supervisor");
 });
 
-test("missing three shifts gets you let go; quitting works", () => {
+test("shifts: closed or not enough time, random outcomes move the skill both ways; quitting works", () => {
 	const { setup } = town();
 	setup.storylines.moveTo("barista_job", "trainee", { quiet: true });
-	// Sleep through three weekend shifts.
-	setup.time.advance(setup.time.MIN_PER_DAY * 12);
-	assert.equal(setup.storylines.count("barista_job", "missed"), 3);
-	assert.equal(setup.storylines.stage("barista_job"), "fired");
-	assert.equal(setup.events.seen("grind_fired"), 1);
-	assert.ok(!setup.jobs.employed("grind_barista"));
+	skipTo(setup, 0, "06:00"); // Sunday, before opening (09:00)
+	setup.world.moveTo("daily_grind");
+	assert.equal(setup.jobs.canWork("grind_barista").reason, "It's closed.");
+	skipTo(setup, 0, "14:30"); // closes 16:00: not enough time
+	setup.world.moveTo("daily_grind");
+	assert.match(setup.jobs.canWork("grind_barista").reason, /before closing/);
+	setup.world.moveTo("home_bedroom");
+	assert.equal(setup.jobs.canWork("grind_barista").reason, "You need to be at work.");
+
+	// Over many shifts, some end better than usual and some worse.
+	const notes = new Set();
+	for (let i = 0; i < 40; i++) {
+		skipTo(setup, 1, "09:00");
+		setup.world.moveTo("grind_counter");
+		setup.skills.set("barista", 5);
+		const r = setup.jobs.work("grind_barista");
+		for (const c of plain(r.changes)) if (c.kind === "note") notes.add(c.text);
+	}
+	assert.ok([...notes].some((t) => /good shift/.test(t)));
+	assert.ok([...notes].some((t) => /rough shift/.test(t)));
 
 	const g = town();
 	g.setup.storylines.moveTo("barista_job", "barista", { quiet: true });
@@ -175,4 +208,39 @@ test("school: term days, skipping lessons, late homework, your tutor's word", ()
 	setup.actions.do("homework");
 	assert.equal(E.homework().length, 0);
 	assert.equal(E.totals().homeworkDone, 1);
+});
+
+test("old saves drop the shift rota record (jobs migration 1 → 2)", () => {
+	const { setup } = town();
+	const old = { meta: { schemaVersion: 5, schema: { core: 1, jobs: 1 } }, time: { t: 0 }, sched: { jobs: [], seq: 0 }, job: { worked: { grind_barista: [3, 4] } } };
+	setup.save.migrate(old);
+	assert.deepEqual(plain(old.job), {});
+	assert.equal(old.meta.schema.jobs, 2);
+});
+
+test("makeup: needs a kit, done in a bathroom, raises Beauty until a shower", () => {
+	const { setup } = town();
+	setup.world.moveTo("home_bathroom");
+	const makeup = () => setup.actions.available().find((a) => a.def.id === "do_makeup");
+	assert.ok(!makeup().ok, "no kit yet");
+	setup.inventory.add("makeup_kit");
+	assert.ok(makeup().ok);
+	const before = setup.stats.get("beauty");
+	setup.actions.do("do_makeup");
+	assert.equal(setup.stats.get("beauty"), before + 20);
+	assert.equal(setup.inventory.count("makeup_kit"), 1, "the kit isn't used up");
+	setup.actions.do("shower");
+	assert.equal(setup.stats.get("beauty"), before, "a shower takes it off");
+});
+
+test("only things you wear can carry stats", () => {
+	const { setup } = boot({
+		before(s) {
+			(s.__testContent ??= []).push((R) => {
+				R.define("item", { id: "t_lucky_coin", name: "Lucky coin", stats: [{ stat: "mood", op: "add", value: 5 }] });
+			});
+		},
+		includeTest: true,
+	});
+	assert.ok(setup.registry.validate().some((e) => /t_lucky_coin.*only things you wear/.test(e)));
 });

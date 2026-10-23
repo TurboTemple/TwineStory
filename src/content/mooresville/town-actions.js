@@ -117,7 +117,16 @@
 			label: "Have a shower",
 			atTag: "shower",
 			mins: 12,
-			effects: [{ statSet: { hygiene: 100 } }, { status: "refreshed" }],
+			effects: [{ statSet: { hygiene: 100 } }, { status: "refreshed" }, { statusRemove: "made_up" }],
+		});
+		act({
+			id: "do_makeup",
+			label: "Do your makeup",
+			atTag: "sink", // any bathroom
+			mins: 15,
+			conditions: { has: "makeup_kit" }, // the kit isn't used up
+			effects: [{ status: "made_up" }],
+			desc: "Needs a makeup kit (FreshWay sells them).",
 		});
 		act({ id: "sit_relax", label: "Sit and relax", atTag: "seating", mins: 30, whileDoing: "relaxing" });
 

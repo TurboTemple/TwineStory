@@ -8,6 +8,7 @@
  *      is in them on a new game
  *   2. Food and drink you can buy and carry
  *   3. Groceries (for cooking at home)
+ *   4. Things you keep and use (a makeup kit)
  *
  * Every item is one self-contained definition, in labelled sections: what
  * it is (kind), where it's sold (shops), what it's like (attributes) and
@@ -32,7 +33,6 @@
  *       kind: "food",                              // WHAT IT IS
  *       shops: ["patels", "freshway"],             // WHERE IT'S SOLD
  *       attributes: [],                            // WHAT IT'S LIKE (optional)
- *       stats: [],                                 // STAT BOOSTS while in use (optional)
  *
  *       use: { label: "Eat", mins: 3, effects: [{ stat: { food: 10, mood: 3 } }] },
  *   });
@@ -50,7 +50,8 @@
  *                     (the shops are in town-shops.js)
  *   attributes        what it's like, as simple yes/no words ("warm",
  *                     "waterproof", "smart"…), which other systems check
- *   stats             stat changes while it's in use (worn, for clothing)
+ *   stats             stat changes while it's worn: only for clothing (things
+ *                     with slots). Carried items never change stats.
  *   use               the button on the item in your bag:
  *                       label    the button text ("Eat", "Drink")
  *                       mins     how long it takes
@@ -226,6 +227,25 @@
 			kind: "groceries",
 			shops: ["patels", "freshway"],
 			size: 2,
+		});
+
+		/* ======================================================================
+		 *  4. Things you keep and use
+		 * ======================================================================
+		 *
+		 * The makeup kit does nothing in your bag. Owning one lets you "Do your
+		 * makeup" in any bathroom (town-actions.js), which gives the "Made up"
+		 * effect (+Beauty for 8 hours, or until you shower: town-needs.js).
+		 */
+
+		item({
+			id: "makeup_kit",
+			name: "Makeup kit",
+			desc: "Foundation, mascara, a lipstick and a little mirror. Lets you do your makeup in any bathroom.",
+			price: 10,
+			kind: "toiletries",
+			shops: ["freshway"],
+			stackable: false,
 		});
 	});
 })();

@@ -54,8 +54,10 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | How cold a "cold day" is | `town-weather.js`: `coldAt` (5°C or below) |
 | How a trait is earned, what it needs, when it fades | `town-traits.js` |
 | Bus and taxi fares | `town-map.js`, part 6: `fare` |
-| Barista pay, shift times | `town-work.js`, part 3b |
-| Promotion points (Barista 20 / 50), shifts missed before being let go (3) | `town-work.js`, part 3a: `gates` |
+| Barista pay, shift length, skill per shift, random shift outcomes | `town-work.js`, part 3b |
+| Promotion points (Barista 20 / 50) | `town-work.js`, part 3a: `gates` |
+| How often shift events happen (15% each) | `town-work.js`, part 3d: `EVENT_CHANCE` |
+| What makeup does, and for how long | `town-needs.js`, part 3: `made_up` |
 | How fast hunger, thirst and the rest change | `town-needs.js`, part 1: `perHour` |
 | When a place opens | `town-map.js`: `hours` |
 | Where a person is | `town-people.js`: `schedule` |
@@ -106,6 +108,8 @@ item({
 });
 ```
 
+Only things you wear can have `stats` (decided by the user); a carried item never changes your stats. Something like the makeup kit works by unlocking an action instead (`conditions: { has: "makeup_kit" }`).
+
 Food and drink use `use: { label: "Eat", mins: 2, effects: [ … ] }` for what eating it does. To sell an item somewhere new, add the shop to its `shops`; to stop selling it, take the shop out.
 
 ## Conditions: when something is allowed
@@ -145,7 +149,7 @@ Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: �
 | `{ hasContact: true }` | you have their number |
 | `{ ageAtLeast: 18 }` | you and the person involved are 18+ (**required on anything romantic**) |
 | `{ storyline: { id: "barista_job", stage: "trainee" } }` | a storyline is at that stage (`started: false` = not begun) |
-| `{ storylineCount: { id: "barista_job", key: "missed", min: 3 } }` | a storyline counter is in range |
+| `{ storylineCount: { id: "barista_job", key: "shifts", min: 3 } }` | a storyline counter is in range (add `label: "Shifts worked"` to show progress as "Shifts worked 1 / 3") |
 | `{ employed: "grind_barista" }` | you have that job |
 | `{ schoolDay: true }`, `{ homeworkDue: true }`, `{ schoolTrouble: { min: 1 } }` | school checks |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", min: 3 } }` | your own story flags and counters |
@@ -182,6 +186,16 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ if: { cond: { … }, then: [ … ], else: [ … ] } }` | do one thing or another |
 | `{ random: [{ weight: 2, then: [ … ] }, { weight: 1, then: [ … ] }] }` | pick one at random (by weight) |
 
+## The story loop
+
+The game's core loop (decided by the user): **a story event → a task you repeat while a counter goes up → at a set point, the next story event → a new task.** Storylines (`town-work.js` is the example) are built for exactly this:
+
+1. **A stage** has an `enter` event (the story moment) and `gates` that say when it moves on.
+2. **The repeatable task** is an action or a job shift. Its effects raise a counter: a skill (`{ skill: { barista: 1 } }`) or a storyline counter (`{ storylineCount: { key: "sessions" } }`).
+3. **The gate** moves to the next stage at a set point: `gates: [{ to: "next", when: { skill: { id: "barista", min: 20 } } }]`. The game shows "Next: Barista skill 12 / 20" so you can see how far you are.
+4. **Random outcomes** make each go different: `{ random: [{ weight: 6, then: [] }, { weight: 1, then: [{ note: "A rough shift." }, { skill: { barista: -0.5 } }] }] }`. Negative amounts take away from the counter.
+5. **Occasional events** during the task: list them in the stage's `events`, with `kind: "pool"` and a `chance` (0.15 = 15% each time).
+
 ## Writing text (`.twee` files)
 
 Each passage starts with `:: Name` on its own line, and everything below it (up to the next `::`) is its text.
@@ -208,6 +222,7 @@ The build fails (red cross, nothing is published) if:
 - an id is used twice, or something points at an id that doesn't exist (a typo like `at: "hgih_street"`);
 - a passage is missing (e.g. an event without its `Ev_` passage);
 - a condition or effect name is misspelt;
+- an item that isn't worn (no `slots`) has `stats`;
 - **a person has no `age`; a classmate or student isn't exactly 18; or anything tagged `romance` lacks `{ ageAtLeast: 18 }`.**
 
 ## Testing a change

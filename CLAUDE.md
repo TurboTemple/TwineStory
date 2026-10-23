@@ -360,7 +360,7 @@ The behaviour listed below is **mechanism only**. Wherever it says *hook* or *DE
 | **bills** | `bill` (id, amount, schedule, autopay, activeIf, onMissed effects) | `$bills` | Recurring charges via the scheduler, pay attempts, missed-payment effects from data | Which bills exist, consequences |
 | **shops** | `shop` (id, location, `sells` kinds, price hook, payment methods, conditions); stock comes from items that list the shop in `shops` | — | Shop UI, checkout through money; price via a hook (default = item price) | Shops, stock, pricing, sales |
 | **actions** | `action` (id, label, at, mins, conditions, costs, effects, perHour effects, interruptible, passage) | — | `available(ctx)` merges location, tag, item, furniture and NPC actions; `do(id, opts)`: conditions → costs → advance time with per-segment effects → effects → Result → events; duration picker UI | Every actual activity |
-| **jobs** | `job` (id, employer, location, pay, requirements, application flow hook, shift pattern hook) | `$job` | Apply/hire/quit lifecycle, shift generation through a hook, shift attendance through actions, pay via the scheduler, job events | Jobs, hiring, performance, promotion, firing |
+| **jobs** | `job` (id, location, storyline, pay, shift length, per-shift skill and effects) | `$job` | Built on a storyline (hire/quit = stages); one tap works one shift while the place is open, as often as you like; pay, skill and random outcomes per shift; job events | Jobs, hiring, performance, promotion, firing |
 | **education** | `school` (id, location, terms, day structure, key dates), `subject` | `$school` | Calendar of terms and key dates from data, timetable generated deterministically from data plus seed, attendance tracking hook, tasks/assignments framework, grade records | Subjects, attendance consequences, grading, exams, post-school paths |
 | **city-events** | `cityEvent` (id, location, schedule, conditions, actions, ticket) | `$world` | Scheduled events attach actions to a location while active; listed in Calendar | Which events, when |
 | **events** | `storylet` (id, passage, triggers, conditions, tags, plus open fields) | `$story.storylets` | Generic **event framework**: triggers subscribe to bus events, eligible events are filtered by conditions, then a **selection hook** chooses (default: none, i.e. no random events fire until the user designs the rules). Display through the flow controller. `<<gchoice>>` widget and `<<eventEnd>>` record history. | Selection rules, frequency, cooldowns, all event content |
@@ -543,6 +543,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-23 | Modular items: self-contained definitions, shop stock from item tags, clothing by tag + slots; cold at 5°C or below | Asked for by the user. |
 | 2026-10-23 | Simplified: whole-pound money with prices by tier, warm/smart as yes-or-no tags; new `traits` module (habits → traits), kept apart from effects | Asked for by the user. `money` and `journal` are at version 2 (pence → pounds); SCHEMA_VERSION 5. |
 | 2026-10-23 | Readability pass: content rewritten with edit guides and named fields (definitions proven identical), `town-kit.js` shorthand, plain-English headers across the engine and modules, `EDITING.md`, `src/README.md` | Asked for by the user. No gameplay changes. |
+| 2026-10-23 | Shift-based jobs (one tap = one 2-hour shift, no rota), random shift outcomes, occasional shift events (`chance` on pool storylets), storyline progress ("Next: Barista skill 12 / 20"), Beauty stat and makeup kit, only worn items carry stats | Asked for by the user. `jobs` is at version 2; SCHEMA_VERSION 6. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -571,6 +572,9 @@ User decisions so far:
 - Getting changed: tick everything, then one **Change** that takes time and returns you to where you were.
 - Stats stay as they are for now.
 - Autosave happens when you wake up to the daily summary.
+- The core gameplay loop is storylines: a story event, then a repeatable task that raises a counter (skill, sessions…), with random outcomes that can add or take away, then at a set point the next event and a new task.
+- Jobs are shift-based: tapping "Work a shift" completes one shift (2 hours at the café). Work as many as you like while the place is open, as long as the shift ends before closing. No rota, no missed shifts.
+- Only worn items carry stats. Makeup: a Beauty stat, a makeup kit (not used up) lets you do your makeup in any bathroom for a timed Beauty boost, which a shower removes.
 - Keep things simple where possible, and build frameworks with examples rather than lots of content (the user felt the scope had crept).
 - Items are modular and self-contained, in labelled sections: `kind` (what it is), `shops` (where it's sold), `attributes` (what it's like: warm, smart…), `stats` (stat modifiers) and `use`. Clothing is an item of kind `clothing` with `slots`. Shops have no stock lists.
 - Warmth is yes/no: an item has the attribute `warm` or not, and wearing one warm thing keeps the Cold effect off on a cold day (5°C or below). Smartness is the same (`smart`; two smart things = Smartly dressed).

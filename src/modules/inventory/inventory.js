@@ -6,7 +6,8 @@
  *               (storage places accept items by kind; shops group by it)
  *   shops       where it's sold: shop ids, e.g. ["patels", "freshway"]
  *   attributes  its qualities, which other systems check: ["warm", "smart"]
- *   stats       stat modifiers it gives while in use (worn, for clothing)
+ *   stats       stat modifiers it gives while worn (only things with slots:
+ *               carried items never change stats, decided by the user)
  *   use         what using it does (eat, drink…)
  *   price, size, desc, and `tags` for anything else you want to label
  *
@@ -45,6 +46,8 @@
 					const errs = [];
 					if (!Number.isInteger(def.price) || def.price < 0) errs.push("price must be whole pounds ≥ 0");
 					if (!(def.size >= 0)) errs.push("size must be ≥ 0");
+					// Only worn things change stats (decided by the user).
+					if (def.stats.length && !def.slots?.length) errs.push("only things you wear (with slots) can have stats");
 					return errs;
 				},
 			});
