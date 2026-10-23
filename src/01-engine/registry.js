@@ -209,6 +209,11 @@
 								for (const op of setup.effects.ops(list)) {
 									if (!setup.effects.has(op)) errors.push(`${label}: ${path} uses unknown effect "${op}"`);
 								}
+								for (const c of setup.effects.conds(list)) {
+									for (const op of setup.cond.ops(c)) {
+										if (!setup.cond.has(op)) errors.push(`${label}: ${path} uses unknown condition "${op}"`);
+									}
+								}
 							}
 						}
 						if (s.check) errors.push(...s.check(def).map((e) => `${label}: ${e}`));

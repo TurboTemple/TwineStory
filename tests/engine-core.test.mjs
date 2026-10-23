@@ -184,6 +184,30 @@ test("effects: random picks weighted branches deterministically", () => {
 	assert.ok(a.includes("a") && a.includes("b"));
 });
 
+test("effects: random weightIf changes a branch's odds while its condition is true", () => {
+	const { setup } = boot({ seed: 3 });
+	const list = [{ random: [{ weight: 1, then: [{ toast: "a" }] }, { weight: 0, weightIf: [{ when: { flag: "lucky" }, add: 100 }, { when: { flag: "unlucky" }, add: -500 }], then: [{ toast: "b" }] }] }];
+	const roll = () => Array.from({ length: 20 }, () => setup.effects.apply(list).toasts[0]);
+	assert.ok(roll().every((t) => t === "a"), "weight 0: never");
+	setup.effects.apply([{ flag: "lucky" }]);
+	assert.ok(roll().filter((t) => t === "b").length > 15, "much likelier while the flag is set");
+	setup.effects.apply([{ flag: "unlucky" }]);
+	assert.ok(roll().every((t) => t === "a"), "a weight below 0 counts as 0");
+	assert.deepEqual(plain(setup.effects.conds([{ if: { cond: { flag: "x" }, then: list } }])), [{ flag: "x" }, { flag: "lucky" }, { flag: "unlucky" }]);
+});
+
+test("the checker finds misspelt conditions inside effects", () => {
+	const { setup } = boot({
+		before(s) {
+			(s.__testContent ??= []).push((R) => {
+				R.define("action", { id: "t_typo", label: "Typo", effects: [{ random: [{ weight: 1, weightIf: [{ when: { stta: {} }, add: 1 }], then: [] }] }] });
+			});
+		},
+		includeTest: true,
+	});
+	assert.ok(setup.registry.validate().some((e) => /t_typo.*unknown condition "stta"/.test(e)));
+});
+
 test("effects: check calls a registered resolver (the engine ships none)", () => {
 	const { setup } = boot();
 	assert.throws(() => setup.effects.apply([{ check: { resolver: "_test_always", then: [] } }]), /No check resolver/);

@@ -25,7 +25,7 @@ test("talking: interactions, cooldowns, tiers and requirements", () => {
 	const { setup } = atCafe();
 	const R = setup.rel;
 	const ids = () => R.interactions("jess_marlow").map((x) => `${x.def.id}:${x.ok}`);
-	assert.deepEqual(plain(ids()), ["chat:true", "ask_day:false", "compliment:true", "swap_numbers:false", "flirt:false"]);
+	assert.deepEqual(plain(ids()), ["chat:true", "ask_day:false", "compliment:true", "swap_numbers:false", "flirt:false", "talk_coffee:false"]);
 	const r = R.interact("jess_marlow", "chat");
 	assert.equal(R.get("jess_marlow", "friendship"), 3);
 	assert.match(plain(r.changes).map((c) => c.text).join(" "), /Jess Marlow: Friendship \+3/);

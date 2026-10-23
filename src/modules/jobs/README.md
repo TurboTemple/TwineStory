@@ -12,8 +12,6 @@ Paid work, built on a storyline: the storyline's stages are the career, and the 
 ## How a shift works (decided by the user)
 Be at the job's place while it's open and tap **Work a shift**. One tap works one whole shift. There's no rota: you can work as many shifts as you like, as long as each ends before the place closes. Halfway through, `job:shift` fires so the stage's events can happen. At the end you're paid for the time worked (to `payTo`), and, if the shift wasn't cut short, the skill improves, `effects` run and the storyline's `shifts` counter goes up.
 
-The Work section shows how far you are towards the career's next stage (`setup.storylines.progress`, e.g. "Next: Barista skill 12 / 20").
-
 ## State
 `$job = {}` (version 2 dropped the old rota record). Career counters live on the storyline.
 

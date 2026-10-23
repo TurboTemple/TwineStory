@@ -2,6 +2,9 @@
  * storylines — progression through stages (a job, a friendship, therapy…).
  *
  * A storyline is a list of stages. Each stage can have:
+ *   label, desc  shown in the phone's Diary app
+ *   hint     what to do to move on, shown in the Diary ("Keep working at
+ *            the café"). The gates themselves are never shown.
  *   enter    a storylet shown once when you reach the stage (the interview,
  *            the first day, a promotion)
  *   onEnter  effects applied when you reach it
@@ -10,7 +13,7 @@
  *   gates    [{ to, when }] — move to stage `to` as soon as `when` is true
  * Gates are checked after anything that might change them (actions, shifts,
  * skills, relationships, a new day…). Storylines also keep counters
- * (shifts done, shifts missed…) that gates and events can test.
+ * (shifts done, workouts…) that gates and events can test.
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-work.js → part 3a (the barista career)
@@ -52,8 +55,6 @@
 			let checking = false;
 			/** storylet id → [{ arc, stage }] for stage event pools. */
 			let poolIndex = new Map();
-			/** condition name → progress reader (see registerProgress). */
-			const progressReaders = new Map();
 
 			const storylines = {
 				/** @returns {string|null} Current stage, or null if not started. */
@@ -125,36 +126,6 @@
 					}
 				},
 
-				/**
-				 * How far the current stage is towards its gates, for display:
-				 * one row per gate condition that has a progress reader (e.g.
-				 * "Barista skill 12 / 20"). Conditions inside `any`/`not` are skipped.
-				 * @returns {{to: string, have: number, need: number, text: string}[]}
-				 */
-				progress(id) {
-					const st = storylines.stageDef(id);
-					if (!st) return [];
-					const ctx = { storyline: id, stage: st.id, t: time.now() };
-					const out = [];
-					const walk = (c, to) => {
-						if (!c || typeof c !== "object") return;
-						if (Array.isArray(c.all)) return c.all.forEach((x) => walk(x, to));
-						for (const [op, spec] of Object.entries(c)) {
-							const p = progressReaders.get(op)?.(spec, ctx);
-							if (p) out.push({ to, ...p, text: `${p.label} ${Math.min(p.have, p.need)} / ${p.need}` });
-						}
-					};
-					for (const g of st.gates ?? []) walk(g.when, g.to);
-					return out;
-				},
-
-				/**
-				 * Teach progress() to read a condition: (spec, ctx) =>
-				 * { label, have, need } or null.
-				 * @param {string} op Condition name @param {Function} fn
-				 */
-				registerProgress: (op, fn) => progressReaders.set(op, fn),
-
 				/** @returns {object[]} Storylines that have started, for display. */
 				active: () => registry.all("storyline").filter((d) => A()[d.id] && !d.hidden).sort((a, b) => a.order - b.order),
 			};
@@ -178,16 +149,6 @@
 			for (const ev of ["action:end", "job:shiftEnd", "skill:changed", "rel:changed", "time:day", "storyline:count", "school:lesson", "travel:arrived", "world:enter"]) {
 				bus.on(ev, () => storylines.checkAll(), { priority: -10 });
 			}
-
-			// Progress readers for the usual gate conditions. `label` on the
-			// condition names the counter on screen, e.g.
-			//   { storylineCount: { key: "sessions", min: 5, label: "Sessions" } }
-			storylines.registerProgress("storylineCount", (spec, ctx) => spec.min == null ? null : {
-				label: spec.label ?? spec.key, have: storylines.count(spec.id ?? ctx.storyline, spec.key), need: spec.min,
-			});
-			storylines.registerProgress("skill", (spec) => spec.min == null || !setup.skills ? null : {
-				label: spec.label ?? `${registry.tryGet("skill", spec.id)?.label ?? spec.id} skill`, have: setup.skills.level(spec.id), need: spec.min,
-			});
 
 			// { storyline: { id, stage?, started? } } — stage can be one id or a list.
 			cond.register("storyline", {
@@ -232,17 +193,23 @@
 				},
 			});
 
-			setup.character.addMeSection("storylines", 38, (box) => {
+			// The phone's Diary app (an `app` with view "app-diary"): every
+			// storyline you've started, where it's at, and what to do next (the
+			// stage's `hint`). Gates and counters are never shown: when the next
+			// stage comes is a surprise (decided by the user).
+			ui.view("app-diary", (box) => {
 				const list = storylines.active();
-				if (!list.length) return;
-				box.append(ui.el("h2", { text: "Going on in your life" }));
+				if (!list.length) {
+					box.append(ui.el("p", { class: "note", text: "Nothing written yet." }));
+					return;
+				}
 				const ul = ui.el("ul", { class: "effects" });
 				for (const d of list) {
 					const st = storylines.stageDef(d.id);
 					ul.append(ui.el("li", { class: "effect" },
 						ui.el("strong", { text: `${d.label}: ${st?.label ?? "—"}` }),
-						st?.desc ? ui.el("p", { class: "note", text: st.desc }) : null,
-						...storylines.progress(d.id).map((p) => ui.el("p", { class: "note", text: `Next: ${p.text}` }))));
+						st?.desc ? ui.el("p", { text: st.desc }) : null,
+						st?.hint ? ui.el("p", { class: "note", text: `Next: ${st.hint}` }) : null));
 				}
 				box.append(ul);
 			});

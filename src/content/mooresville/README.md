@@ -17,6 +17,7 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 | `town-shops.js` | The shops (what they sell comes from the items' tags) |
 | `town-body.js` | Body parts: height, weight, bust, skin tone, eye colour, hair colour and length |
 | `town-work.js` | Skills, and the barista job: its career stages, shifts, pay and events |
+| `town-fitness.js` | Getting fit: a second storyline, driven by working out at the gym |
 | `town-school.js` | Subjects, the timetable, term dates, and your tutor's word about skipping |
 | `town-social.js` | Friendship and Romance, and the Talk menu |
 | `town-events.js` | Events around town (therapy interruption, waking up bursting, bus traffic, closing time) |

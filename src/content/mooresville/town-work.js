@@ -9,7 +9,7 @@
  *   3. The barista job at The Daily Grind:
  *        a. its career, as a storyline (stages and what moves you on)
  *        b. the job itself (where, shift length, pay, what can happen)
- *        c. how you get it (asking Jess at the counter)
+ *        c. how you get it (asking Jess at the counter), and a staff perk
  *        d. its events (the story moments, and the events during shifts)
  *
  * The event text is in src/story/mooresville/work.twee (one passage per
@@ -37,7 +37,11 @@
  *
  *   A shift is one tap: 2 hours, worked whenever the café is open, as many
  *   as you like (decided by the user). Every shift ends with a random
- *   outcome (part 3b) that can add to or take from your Barista skill.
+ *   outcome (part 3b) that can add to or take from your Barista skill, and
+ *   how you are (tired, stressed, made up) changes the odds.
+ *   When the next stage comes is a surprise: the game never shows the
+ *   numbers. The phone's Diary shows each stage's `hint` instead.
+ *   Reaching "barista" unlocks a staff perk (part 3c).
  *
  * ---------------------------------------------------------------------------
  *  HOW TO ADD A SHIFT EVENT
@@ -94,16 +98,16 @@
 		 * ======================================================================
 		 *
 		 * Stage fields:
-		 *   label, desc  shown on the Me page ("Going on in your life")
+		 *   label, desc  shown in the phone's Diary app
+		 *   hint         what to do next, in the Diary ("Keep working shifts…").
+		 *                Don't give numbers away: the next stage is a surprise.
 		 *   enter        an event shown once when you reach the stage
 		 *   onEnter      effects when you reach it (a text from Jess…)
 		 *   events       events that can only happen in this stage
 		 *   gates        [{ to, when }]: move to stage `to` as soon as `when` is true.
 		 *                Useful conditions here:
 		 *                  { skill: { id: "barista", min: 20 } }
-		 *                  { storylineCount: { key: "shifts", min: 1, label: "Shifts worked" } }
-		 *                The Work section and the Me page show how far you are
-		 *                ("Next: Barista skill 12 / 20"); `label` names the counter.
+		 *                  { storylineCount: { key: "shifts", min: 1 } }  (shifts worked)
 		 */
 
 		R.define("storyline", {
@@ -114,26 +118,29 @@
 				{
 					id: "hired",
 					label: "New starter",
-					desc: "Jess has taken you on. Go to The Daily Grind while it's open and work your first shift.",
+					desc: "Jess has taken you on at The Daily Grind.",
+					hint: "Go to the café while it's open and work your first shift.",
 					enter: "grind_interview",
 					onEnter: [
 						{ contact: "jess_marlow" },
 						{ message: { from: "jess_marlow", text: "Hi, it's Jess from the Grind! Come in for your first shift whenever we're open. Wear something comfy and closed-toe shoes 😊" } },
 					],
 					events: ["grind_first_day"],
-					gates: [{ to: "trainee", when: { storylineCount: { key: "shifts", min: 1, label: "Shifts worked" } } }],
+					gates: [{ to: "trainee", when: { storylineCount: { key: "shifts", min: 1 } } }],
 				},
 				{
 					id: "trainee",
 					label: "Trainee barista",
-					desc: "Still learning the machine. Barista skill 20 and Jess will let you loose on your own.",
+					desc: "Still learning the machine, with Jess watching over your shoulder.",
+					hint: "Keep working shifts at the café and get better at the job.",
 					events: ["grind_trainee_rush", "grind_trainee_spill", "grind_trainee_regular", "grind_trainee_milk"],
 					gates: [{ to: "barista", when: { skill: { id: "barista", min: 20 } } }],
 				},
 				{
 					id: "barista",
 					label: "Barista",
-					desc: "A proper barista now. Barista skill 50 and there might be more on offer.",
+					desc: "A proper barista now, trusted to work on your own.",
+					hint: "Keep working shifts. Jess might have more for you one day.",
 					enter: "grind_promotion",
 					events: ["grind_barista_art", "grind_barista_rude", "grind_barista_newbie", "grind_barista_quiet"],
 					gates: [{ to: "supervisor", when: { skill: { id: "barista", min: 50 } } }],
@@ -142,6 +149,7 @@
 					id: "supervisor",
 					label: "Shift supervisor",
 					desc: "You run the shift: the till, the rota and the keys.",
+					hint: "Work shifts whenever you like.",
 					enter: "grind_supervisor",
 					events: ["grind_supervisor_keys", "grind_supervisor_rota", "grind_supervisor_complaint"],
 				},
@@ -164,6 +172,9 @@
 		 *                   it's a random outcome: { random: [{ weight, then }] }
 		 *                   picks one branch, `weight` = how likely it is.
 		 *                   { note: "…" } adds a line to the shift summary.
+		 *                   weightIf: [{ when: CONDITION, add: n }] makes a
+		 *                   branch likelier (or, with a minus, less likely)
+		 *                   while the condition is true.
 		 */
 
 		R.define("job", {
@@ -187,10 +198,29 @@
 			effects: [
 				{
 					random: [
-						{ weight: 6, then: [] }, // an ordinary shift
-						{ weight: 2, then: [{ note: "A good shift: everything clicked." }, { skill: { barista: 1 } }, { stat: { mood: 3 } }] },
-						{ weight: 1, then: [{ note: "A rough shift: you muddled orders all afternoon." }, { skill: { barista: -0.5 } }, { stat: { stress: 5 } }] },
-						{ weight: 1, then: [{ note: "Someone left a big tip in the jar for you." }, { money: { amount: 3, account: "cash", reason: "Tips" } }] },
+						// An ordinary shift.
+						{ weight: 6, then: [] },
+						// A good shift.
+						{
+							weight: 2,
+							weightIf: [{ when: { stat: { id: "energy", max: 30 } }, add: -1 }], // less likely when tired
+							then: [{ note: "A good shift: everything clicked." }, { skill: { barista: 1 } }, { stat: { mood: 3 } }],
+						},
+						// A rough shift.
+						{
+							weight: 1,
+							weightIf: [
+								{ when: { stat: { id: "energy", max: 30 } }, add: 2 }, // tired
+								{ when: { stat: { id: "stress", min: 70 } }, add: 2 }, // stressed
+							],
+							then: [{ note: "A rough shift: you muddled orders all afternoon." }, { skill: { barista: -0.5 } }, { stat: { stress: 5 } }],
+						},
+						// A big tip.
+						{
+							weight: 1,
+							weightIf: [{ when: { stat: { id: "beauty", min: 50 } }, add: 2 }], // looking good (makeup)
+							then: [{ note: "Someone left a big tip in the jar for you." }, { money: { amount: 3, account: "cash", reason: "Tips" } }],
+						},
 					],
 				},
 			],
@@ -215,6 +245,19 @@
 			conditions: { npcHere: "jess_marlow", storyline: { id: "barista_job", started: false } },
 			effects: [{ storyline: { id: "barista_job", to: "hired" } }],
 			desc: "There's a card in the window: staff wanted.",
+		});
+
+		// A reward for getting on (an example of a stage unlocking something):
+		// once you're a barista, you can make yourself a free coffee. Hidden
+		// until then. Any action, shop or interaction can be unlocked this way.
+		R.define("action", {
+			id: "grind_staff_coffee",
+			label: "Make yourself a coffee (staff perk)",
+			at: "grind_counter",
+			mins: 5,
+			hidden: true,
+			conditions: { storyline: { id: "barista_job", stage: ["barista", "supervisor"] } },
+			effects: [{ stat: { drink: 15, bladder: 6 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 
 		/* ======================================================================

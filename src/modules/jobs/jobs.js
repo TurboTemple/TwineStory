@@ -186,9 +186,6 @@
 
 			/* ---- UI --------------------------------------------------------- */
 
-			/** "Next: Barista skill 12 / 20" rows for the job's storyline. */
-			const progressNotes = (j) => setup.storylines.progress(j.storyline).map((p) => ui.el("p", { class: "note", text: `Next: ${p.text}` }));
-
 			setup.world.addHereSection("work", 28, (box, here) => {
 				const mine = jobs.current().filter((j) => setup.world.within(here.id, j.at));
 				for (const j of mine) {
@@ -197,7 +194,6 @@
 					const pay = jobs.shiftPay(j.id);
 					box.append(ui.action(`Work a shift (${fmt.duration(j.shiftMins)}${pay ? `, ${fmt.money(pay)}` : ""})`, () => jobs.work(j.id), { class: "btn-primary", disabled: !can.ok }));
 					if (!can.ok) box.append(ui.el("p", { class: "note", text: can.reason }));
-					box.append(...progressNotes(j));
 				}
 			});
 

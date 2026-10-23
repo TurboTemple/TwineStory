@@ -12,6 +12,8 @@
  *                 "app-bank"      balances and recent spending
  *                 "app-map"       every place, and whether it's open now
  *                 "app-alarm"     set a daily alarm that wakes you up
+ *                 "app-diary"     every storyline you've started and its
+ *                                 `hint` (what to do next)
  *   icon        an emoji (or any short text)
  *   badge       "unread" shows the number of unread messages on the icon
  *   conditions  only show the app when this is true
@@ -29,5 +31,6 @@
 		app({ id: "bank", label: "Bank", icon: "🏦", order: 2, view: "app-bank" });
 		app({ id: "map", label: "Map", icon: "🗺️", order: 3, view: "app-map" });
 		app({ id: "alarm", label: "Alarm", icon: "⏰", order: 4, view: "app-alarm" });
+		app({ id: "diary", label: "Diary", icon: "📔", order: 5, view: "app-diary" });
 	});
 })();

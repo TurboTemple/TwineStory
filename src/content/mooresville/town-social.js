@@ -139,5 +139,37 @@
 			conditions: { all: [adults, { rel: { track: "friendship", min: 10 } }] },
 			effects: [{ rel: { romance: 4, friendship: 1 } }],
 		});
+
+		/* ======================================================================
+		 *  3. Crossovers: one storyline's progress opening things up elsewhere
+		 * ======================================================================
+		 *
+		 * Examples. Any condition works here: a skill from your job, a stat,
+		 * a storyline stage, a trait…
+		 */
+
+		// Your Barista skill gives you something to talk about.
+		talk({
+			id: "talk_coffee",
+			label: "Talk about coffee",
+			mins: 10,
+			cooldown: 1440, // once a day
+			order: 5,
+			conditions: { skill: { id: "barista", min: 10 } },
+			effects: [{ rel: { friendship: 4 } }],
+		});
+
+		// Looking good (Beauty, e.g. from makeup) and being friends gets you
+		// an invitation out with a classmate.
+		talk({
+			id: "hang_out",
+			label: "Suggest hanging out after school",
+			mins: 60,
+			cooldown: 2880, // every two days
+			order: 6,
+			npcTags: ["student"],
+			conditions: { stat: { id: "beauty", min: 40 }, rel: { track: "friendship", min: 20 } },
+			effects: [{ rel: { friendship: 6 } }, { stat: { mood: 6, stress: -4 } }],
+		});
 	});
 })();

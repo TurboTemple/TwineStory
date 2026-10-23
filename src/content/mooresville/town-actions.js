@@ -431,7 +431,28 @@
 			mins: 60,
 			whileDoing: "exercising",
 			conditions: { status: "gym_pass", stat: { id: "energy", min: 20 } },
-			effects: [{ status: "post_workout" }, { body: { weight: -0.4 } }, { habit: "exercise" }],
+			effects: [
+				{ status: "post_workout" },
+				{ body: { weight: -0.4 } },
+				{ habit: "exercise" },
+				// Counts towards the "Getting fit" storyline (town-fitness.js).
+				{ storylineCount: { id: "fitness", key: "workouts" } },
+				// How it went. Tired workouts go wrong more often.
+				{
+					random: [
+						{ weight: 6, then: [] },
+						{
+							weight: 2,
+							then: [{ note: "A great session: you pushed harder than last time." }, { storylineCount: { id: "fitness", key: "workouts" } }],
+						},
+						{
+							weight: 1,
+							weightIf: [{ when: { stat: { id: "energy", max: 30 } }, add: 2 }],
+							then: [{ note: "You pulled something and had to stop early. That one barely counted." }, { storylineCount: { id: "fitness", key: "workouts", add: -1 } }, { stat: { mood: -3 } }],
+						},
+					],
+				},
+			],
 		});
 
 		/* ======================================================================
