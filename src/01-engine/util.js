@@ -1,5 +1,13 @@
 /*
- * util.js — small pure helpers shared by the engine (setup.util).
+ * ============================================================================
+ *  util.js — small helpers shared by the engine (setup.util)
+ * ============================================================================
+ *
+ *   deepFreeze(obj)        make an object (and everything inside) read-only
+ *   clone(value)           a deep copy of plain data
+ *   valuesAt(obj, path)    every value at a field path, walking lists marked
+ *                          with []: valuesAt(npc, "schedule[].at") → each place
+ *   toArray(v)             a list from a single value or a list (null → [])
  */
 (function () {
 	"use strict";

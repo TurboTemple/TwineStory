@@ -1,9 +1,23 @@
 /*
- * rng.js — seeded randomness (setup.rng, §6.7). Never use Math.random().
+ * ============================================================================
+ *  rng.js — dice rolls (setup.rng, §6.7)
+ * ============================================================================
  *
- * The main generator wraps SugarCube's seeded State.random(). seeded(key)
- * gives a deterministic sub-generator from $meta.seed + key, for values that
- * must not change when a passage re-renders (e.g. a daily roll).
+ * All randomness in the game goes through here, never Math.random(). Two kinds:
+ *
+ *   setup.rng.chance(0.5), .pick(list), .weighted(list)…
+ *       The main roll, for things that happen once (does the receptionist
+ *       interrupt?). It uses SugarCube's seeded generator, which is saved,
+ *       so loading a save and doing the same thing gives the same result.
+ *
+ *   setup.rng.seeded("weather:12").float()
+ *       A separate generator made from the game's seed plus a name. It
+ *       always gives the same answer for the same name, so a value can be
+ *       worked out again whenever it's needed instead of being saved
+ *       (the weather on day 12, the atmosphere line this hour).
+ *
+ * weighted(list) picks one item, where each item's `weight` says how likely
+ * it is relative to the others (2 is twice as likely as 1).
  */
 (function () {
 	"use strict";

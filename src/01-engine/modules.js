@@ -1,11 +1,28 @@
 /*
- * modules.js — module descriptors and install order (setup.modules, §6.2).
+ * ============================================================================
+ *  modules.js — game systems and the order they start in (§6.2)
+ * ============================================================================
  *
- * Descriptor: { id, version, deps[], state?, defaultState?(), migrations?{},
- *               install(api), ready?(api), newGame?(api), validate?() }
- *  - install:  define types, register operators/hooks/listeners.
- *  - ready:    after content is loaded and the registry is frozen.
- *  - newGame:  after every module's state slice exists (StoryInit).
+ * A "module" is one game system (clothing, jobs, weather…), in its own
+ * folder under src/modules/. Each module file adds a descriptor object to
+ * setup.__modules:
+ *
+ *   {
+ *     id: "jobs",                 unique name
+ *     version: 1,                 bump when its saved data changes shape
+ *     deps: ["storylines", …],    modules that must be installed first
+ *     state: "job",               its slice of saved data ($job)
+ *     defaultState: () => ({…}),  that slice on a new game
+ *     migrations: { 2: fn },      how to upgrade old saves to version 2, 3…
+ *     install(api),               define data types, conditions, effects,
+ *                                 screens and event listeners
+ *     ready(api),                 after all content is defined (build indexes)
+ *     newGame(api),               after every slice exists on a new game
+ *     validate(),                 extra checks; return a list of problems
+ *   }
+ *
+ * This file sorts the descriptors so every module installs after its deps,
+ * and keeps the installed list (setup.modules.has("phone") etc.).
  */
 (function () {
 	"use strict";
@@ -20,6 +37,9 @@
 	 * @returns {object[]}
 	 */
 	function sortModules(list) {
+		// A depth-first walk: before adding a module, add everything it
+		// depends on. "visiting" marks modules on the current path, so
+		// meeting one again means the dependencies go round in a circle.
 		const byId = new Map();
 		for (const m of list) {
 			if (byId.has(m.id)) throw new setup.GameError(`Duplicate module "${m.id}"`);

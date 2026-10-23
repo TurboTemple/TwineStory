@@ -1,9 +1,23 @@
 /*
- * save.js — save migrations and metadata (setup.save, §6.10).
+ * ============================================================================
+ *  save.js — keeping old saves working (setup.save, §6.10)
+ * ============================================================================
  *
- * $meta.schema holds each module's state version. migrate() brings any
- * story-variables object up to date: it adds slices for new modules and runs
- * each module's pending migrations in order. It is idempotent.
+ * A save file holds only what changes during play (the story variables:
+ * $pc, $stats, $inv…). When the game is updated, an old save might be
+ * missing a slice for a new module, or have data in an older shape.
+ *
+ * migrate() fixes that every time a save is loaded (and once per passage as
+ * a safety net, for a browser tab left open across an update):
+ *   - a module that didn't exist when the save was made gets its fresh
+ *     default slice;
+ *   - a module whose `version` went up runs its `migrations` (2, 3, …) in
+ *     order to reshape the old data.
+ * $meta.schema remembers which version each slice is at. Running migrate()
+ * twice changes nothing the second time.
+ *
+ * This file also writes readable details into each save (the in-game date
+ * and place) for the Saves screen, and holds the autosave rule hook.
  */
 (function () {
 	"use strict";
@@ -39,6 +53,8 @@
 						vars[m.state] = m.defaultState ? m.defaultState() : {};
 					}
 					else if (current != null) {
+						// Run each step from the save's version up to today's, e.g. a
+						// save at version 1 of a module now at 3 runs migrations 2 then 3.
 						for (let v = current + 1; v <= m.version; v++) {
 							const fn = m.migrations?.[v];
 							if (fn) {
@@ -83,8 +99,9 @@
 			},
 
 			/**
-			 * Hook: decide when autosaves happen. DESIGN: user to decide —
-			 * default null keeps SugarCube's behaviour.
+			 * Hook: decide when autosaves happen. SugarCube autosaves as each
+			 * passage finishes whenever this rule says yes. The journal module
+			 * sets it to "only on the wake-up summary" (decided by the user).
 			 * @param {null | ((saveType: number) => boolean)} fn
 			 */
 			setAutosaveRule(fn) {

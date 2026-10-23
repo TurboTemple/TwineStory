@@ -1,6 +1,18 @@
 /*
- * text.js — formatting and text helpers (setup.fmt, setup.text, §6.11).
- * Everything is driven by setup.config.locale.
+ * ============================================================================
+ *  text.js — turning numbers into words (setup.fmt, setup.text, §6.11)
+ * ============================================================================
+ *
+ * setup.fmt formats what the game stores for people to read:
+ *   fmt.money(320)       → "£3.20"        (money is stored in pence)
+ *   fmt.time(t)          → "14:05"        (or "2:05 pm" with the 12-hour setting)
+ *   fmt.date(t)          → "Tue, 1 Sept"
+ *   fmt.duration(95)     → "1 hour 35 minutes"
+ * Currency, language and clock style come from setup.config.locale.
+ *
+ * setup.text has helpers for writing: pronouns for the player or an NPC
+ * ("she"/"her"…), plurals, "a, b and c" lists, and vary(), which picks one of
+ * several wordings and keeps the same choice every time the page redraws.
  */
 (function () {
 	"use strict";

@@ -1,5 +1,12 @@
 /*
- * config.js — game configuration and SugarCube Config.* settings (§5.5).
+ * ============================================================================
+ *  config.js — game-wide settings (§5.5)
+ * ============================================================================
+ *
+ * The switches that apply to the whole game: title, town name, currency and
+ * clock, the date the game starts, random-event limits, the "dressed to go
+ * out" rule, save slots. Edit the values in `setup.config` below; each one
+ * says whether the user decided it or Claude proposed it.
  *
  * setup.config  : static configuration (not saved).
  * setup.balance : tunable numbers, filled in by the user over time. Modules
@@ -23,7 +30,9 @@
 	})();
 
 	/**
-	 * Save-schema version. Bump whenever any module's `version` bumps (§6.10).
+	 * Save-schema version. Bump whenever any module's `version` bumps (§6.10),
+	 * so SugarCube knows saves made before the change need upgrading.
+	 * (A brand-new module doesn't need a bump: save.js adds its slice.)
 	 * @type {number}
 	 */
 	setup.SCHEMA_VERSION = 4;
@@ -66,9 +75,10 @@
 			// At least this many minutes between two random events.
 			minGapMins: 60,
 		},
-		// Clothing (proposed by Claude): to go out you need something on top,
-		// something on the bottom (or a dress covering both) and shoes, and
-		// no sleepwear.
+		// Clothing (proposed by Claude, agreed by the user): to go out you need
+		// something on top, something on the bottom (or a dress covering both)
+		// and shoes, and no sleepwear. `cover` lists slot groups that must each
+		// be filled; `notOutside` lists clothing tags you can't go out in.
 		clothing: {
 			dressed: { cover: [["top"], ["bottom"], ["feet"]], notOutside: ["sleepwear"] },
 		},

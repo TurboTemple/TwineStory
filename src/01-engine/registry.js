@@ -1,8 +1,25 @@
 /*
- * registry.js — static game definitions (setup.registry, §6.3).
+ * ============================================================================
+ *  registry.js — the game's data catalogue (setup.registry, §6.3)
+ * ============================================================================
  *
- * Types are declared by modules with defineType(); content adds definitions
- * with define(). After boot everything is deep-frozen.
+ * Every "thing" in the game that doesn't change during play (a place, an
+ * item, a person, a stat, an event…) is a *definition* stored here, filed
+ * under its *type* ("location", "item", "npc"…).
+ *
+ *   Modules declare types:   registry.defineType("item", { required, defaults, … })
+ *   Content adds things:     R.define("item", { id: "apple", name: "Apple", … })
+ *   Everything reads them:   registry.get("item", "apple")
+ *
+ * Definitions are NOT saved with the game; they are rebuilt from the code
+ * every time the page loads. Only what changes (where you are, what you
+ * own…) goes in the save. That's why editing content takes effect even on
+ * old saves.
+ *
+ * A type's schema also tells the validator what to check: which fields
+ * point at other definitions (`refs`), which hold passage names, conditions
+ * or effects. That's how a typo like at: "hgih_street" is caught before the
+ * game is published.
  */
 (function () {
 	"use strict";
@@ -76,12 +93,15 @@
 			 * @returns {object} The stored definition (with defaults applied).
 			 */
 			define(type, def) {
+				// Content can only be added during boot, before freeze().
 				if (frozen) throw new setup.GameError(`Registry is frozen; cannot define ${type} "${def?.id}"`);
 				const t = entry(type);
 				if (!def || typeof def.id !== "string" || !ID_RE.test(def.id)) {
 					throw new setup.GameError(`${type} id "${def?.id}" must match ${ID_RE}`);
 				}
 				if (t.defs.has(def.id)) throw new setup.GameError(`Duplicate ${type} id "${def.id}"`);
+				// Fill in any field the definition left out from the type's defaults.
+				// (Defaults are copied, so two definitions never share one array.)
 				const stored = { ...clone(t.schema.defaults), ...def };
 				const missing = t.schema.required.filter((k) => stored[k] === undefined);
 				if (missing.length) throw new setup.GameError(`${type} "${def.id}" is missing ${missing.join(", ")}`);
@@ -156,6 +176,10 @@
 			 * @returns {string[]} Error messages (empty when valid).
 			 */
 			validate(opts = {}) {
+				// Walk every definition of every type and check each field the
+				// type's schema says is a reference, a passage, a condition or a
+				// list of effects. Field paths can reach into lists, e.g.
+				// "stages[].gates[].when" (see util.valuesAt).
 				const errors = [];
 				const hasPassage = opts.hasPassage ?? (() => true);
 				for (const [type, t] of types) {

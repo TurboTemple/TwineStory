@@ -1,12 +1,28 @@
 /*
- * effects.js — outcomes written as data (setup.effects, §6.6).
+ * ============================================================================
+ *  effects.js — effects: outcomes written as data (setup.effects, §6.6)
+ * ============================================================================
  *
- * An effect list is an ordered array of single-key objects: [{ op: spec }, …].
- * apply() returns a Result the UI can render:
- *   { changes: [{text}], toasts: [string], goto: string|null,
- *     interrupted: false|string, mins: number }
+ * Whenever something *happens* (an action finishes, an event fires, you eat
+ * a snack) the content says what it does as a list of effects:
  *
- * `time` effects are queued and the clock advances once, after the list.
+ *   effects: [{ stat: { food: 25 } }, { status: "well_fed" }, { note: "Yum." }]
+ *
+ * The list runs in order. Each entry has one key, the effect's name, which a
+ * module registered ("stat" by stats, "status" by status, "money" by
+ * money…). The full list is in EDITING.md.
+ *
+ * Running a list fills in a Result, which the screen then shows as the
+ * summary box ("Food +25", "Now: Well fed"):
+ *   {
+ *     changes:     [{ kind, text }]   lines for the summary
+ *     toasts:      [text]              extra short notices
+ *     goto:        passage | null      a passage to show afterwards
+ *     interrupted: false | reason      stop the rest (and whatever's running)
+ *     mins:        number              extra minutes queued by { time: n }
+ *   }
+ * `time` effects don't move the clock straight away: they add up, and the
+ * clock advances once after the whole list.
  */
 (function () {
 	"use strict";
@@ -67,6 +83,7 @@
 			 */
 			run(list, ctx, result) {
 				for (const item of setup.util.toArray(list)) {
+					// Once something has interrupted, the rest of the list is skipped.
 					if (result.interrupted) return;
 					for (const [name, spec] of Object.entries(item)) {
 						const op = ops.get(name);

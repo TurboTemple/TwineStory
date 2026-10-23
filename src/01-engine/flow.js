@@ -1,9 +1,25 @@
 /*
- * flow.js — the flow controller (setup.flow, §6.12).
+ * ============================================================================
+ *  flow.js — deciding which screen comes next (setup.flow, §6.12)
+ * ============================================================================
  *
- * Modules never navigate. They call request(passage, priority); the highest
- * priority request wins and is shown once the current operation finishes.
- * All in-game links run through perform().
+ * Tapping a button often sets off a chain of things: an action runs, time
+ * passes, an event fires, a skill levels up, a promotion happens. Several of
+ * them may want to show a passage. If each one changed the screen itself,
+ * the player would see a flicker and land in the wrong place.
+ *
+ * So nothing changes the screen directly. Instead:
+ *   1. A button runs its work inside flow.perform(fn).
+ *   2. Anything that wants a passage calls flow.request(passage, priority).
+ *   3. When the work is done, perform() shows the most important request,
+ *      or "Here" (the main screen for where you are) if there was none.
+ *
+ * Priorities: normal 0 < result 10 < event 50 < urgent 100. If two events
+ * ask at once (a shift event, then a promotion), the second waits in a
+ * queue and appears when the player taps Continue.
+ *
+ * $meta.returnTo remembers where to go back to after an event, so
+ * "Continue" returns to the right place.
  */
 (function () {
 	"use strict";

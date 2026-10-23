@@ -1,7 +1,19 @@
 /*
- * sc-adapter.js — the only place (besides config.js) that calls SugarCube
- * APIs directly (§2, §6.13). If a SugarCube API name or signature turns out
- * to be wrong, it should be a one-file fix here.
+ * ============================================================================
+ *  sc-adapter.js — the one door to SugarCube (§2, §6.13)
+ * ============================================================================
+ *
+ * SugarCube is the story format that runs the game in the browser: it shows
+ * passages, keeps the story variables, saves and loads. Everything the game
+ * needs from it goes through this file (and config.js), as setup.sc.*:
+ *   setup.sc.vars()        the saved story variables
+ *   setup.sc.play(name)    show a passage (only flow.js calls this)
+ *   setup.sc.uiUpdate()    redraw the sidebar and top bar
+ *   …and saves, dialogs, settings, macros, page events.
+ *
+ * Two reasons: if SugarCube changes an API name, it's a one-file fix here;
+ * and the unit tests (which run in Node, without a browser) replace this
+ * object with a stand-in, so the whole game can be tested without SugarCube.
  *
  * API names below were checked against the SugarCube 2.37.3 release source.
  * Anything not yet exercised in a real build is marked `// VERIFY:`.

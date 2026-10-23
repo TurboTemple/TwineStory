@@ -1,5 +1,17 @@
 /*
- * sched.js — scheduler (setup.sched, §6.9).
+ * ============================================================================
+ *  sched.js — the scheduler: "do this at that time" (setup.sched, §6.9)
+ * ============================================================================
+ *
+ * For things that must happen at an exact moment, whatever the player is
+ * doing: the phone alarm, a bill coming out of your account, a timed event.
+ * Each job is saved with the game, so it survives saving and loading:
+ *
+ *   sched.add({ id: "phone_alarm", at: <time>, type: "phone:alarm", repeat: 1440 })
+ *
+ * The clock (time.js) stops at every job's time and runs it. `type` names a
+ * handler a module registered at install with sched.handle("phone:alarm", fn);
+ * functions can't be saved, so the job only stores the name.
  *
  * Jobs are plain data in $sched.jobs: { id, at, type, data, repeat? }.
  * Handlers are registered by type at install time with handle(). Jobs run
@@ -14,6 +26,7 @@
 		const handlers = new Map();
 		const S = () => setup.vars().sched;
 
+		/** Keep the job list sorted by time, so the next job is always first. */
 		const insert = (job) => {
 			const jobs = S().jobs;
 			let i = jobs.length;

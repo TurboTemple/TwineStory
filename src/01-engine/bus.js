@@ -1,8 +1,23 @@
 /*
- * bus.js — synchronous event bus (setup.bus, §6.4).
+ * ============================================================================
+ *  bus.js — the event bus: "something happened" messages (setup.bus, §6.4)
+ * ============================================================================
  *
- * Handlers are registered at install time only, never stored in state, and
- * never navigate (use setup.flow.request instead).
+ * Modules don't call each other directly for everything. Instead, one module
+ * announces that something happened, and any module that cares listens:
+ *
+ *   bus.emit("job:shiftEnd", { job: "grind_barista", mins: 360 });   // jobs
+ *   bus.on("job:shiftEnd", (p) => { … });                              // journal, storylines…
+ *
+ * Names are "area:what-happened". The clock sends time:advanced, time:hour,
+ * time:day and time:week; each module's README lists the ones it sends.
+ *
+ * Rules:
+ *   - listeners are added once, while modules install (never saved);
+ *   - everything runs immediately, in priority order (higher first);
+ *   - one listener crashing doesn't stop the others (the error is reported);
+ *   - listeners never change the screen themselves: they ask the flow
+ *     controller (flow.js) to show a passage when the current action ends.
  */
 (function () {
 	"use strict";

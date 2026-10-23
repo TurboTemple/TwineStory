@@ -1,8 +1,14 @@
 /*
- * errors.js — setup.GameError and setup.reportError (§9).
+ * ============================================================================
+ *  errors.js — what happens when something goes wrong (§9)
+ * ============================================================================
  *
- * Errors are loud in debug mode (console + on-screen banner) and graceful in
- * release mode (console warning only, the game carries on where it can).
+ * setup.GameError is thrown for mistakes the game can describe ("Unknown item
+ * 'aple'"). setup.reportError() shows them:
+ *   - with ?debug in the address: a red banner on screen (screenshot it!)
+ *     and the full details in the Eruda console;
+ *   - normally: a quiet note in the browser console, and the game carries on
+ *     where it can, so players aren't interrupted.
  */
 (function () {
 	"use strict";
