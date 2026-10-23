@@ -1,8 +1,12 @@
 /*
- * money — accounts, paying and earning. See README.md.
+ * money — accounts, paying and earning.
  *
  * All amounts are integer minor units (pence). Accounts are data (cash, bank
  * card, …); balances live in $money.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-map.js → part 7 (accounts and starting money)
+ * Every field, condition, effect and event is listed in src/modules/money/README.md.
  */
 (function () {
 	"use strict";

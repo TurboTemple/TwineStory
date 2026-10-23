@@ -1,6 +1,5 @@
 /*
  * relationships — how the PC gets on with each NPC, and the Talk menu.
- * See README.md.
  *
  * A relationship track (friendship, romance…) is a number per NPC with named
  * tiers. Interactions (chat, compliment…) are offered on an NPC's sheet when
@@ -12,6 +11,10 @@
  *
  * Events: rel:changed { npc, track, from, to }, rel:tier { npc, track, tier, up },
  *         rel:interact { npc, interaction }
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-social.js (Friendship, Romance, the Talk menu)
+ * Every field, condition, effect and event is listed in src/modules/relationships/README.md.
  */
 (function () {
 	"use strict";

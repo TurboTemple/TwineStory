@@ -1,10 +1,15 @@
 /*
  * world — districts, locations (with sub-locations), opening hours and the
- * `Here` main loop. See README.md.
+ * `Here` main loop.
  *
  * A location with a `parent` is a sub-location (a bar's toilets, a shop's
  * fitting rooms). The top-level ancestor is the "site": travel goes between
  * sites, and moving around inside a site takes `innerMins`.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-map.js (districts, places, rooms, atmosphere)
+ *   src/story/mooresville/locations.twee (each place's text)
+ * Every field, condition, effect and event is listed in src/modules/world/README.md.
  */
 (function () {
 	"use strict";
@@ -181,6 +186,19 @@
 
 				/**
 				 * Add a section to the Here screen. Lower order renders first.
+				 *
+				 * The Here screen (the main screen for wherever you are) is built
+				 * from sections that different modules add, top to bottom:
+				 *     5  result       what just happened, and notices    (world)
+				 *    10  description  picture, name, text, atmosphere     (world)
+				 *    20  people       who's here                          (npcs)
+				 *    25  areas        rooms you can walk to               (world)
+				 *    27  lessons      "Go to English"                     (education)
+				 *    28  work         "Start your shift"                  (jobs)
+				 *    28  shops        "Browse …"                          (shops)
+				 *    30  actions      "Things to do"                      (actions)
+				 *    32  wardrobe     "Get changed"                       (clothing)
+				 *    40  travel       "Go to" buttons                     (travel)
 				 * @param {string} name
 				 * @param {number} order
 				 * @param {(box: HTMLElement, here: object) => void} fn
@@ -192,7 +210,9 @@
 			};
 			setup.world = world;
 
-			// Closing time: anyone inside a closed area is shown out to the site.
+			// Closing time: whenever the clock moves, if you're in a room of a place
+			// that has just closed, you're shown out to the street-level place,
+			// and "world:closed" lets an event explain what happened.
 			bus.on("time:advanced", () => {
 				const loc = world.loc();
 				if (!loc || !L(loc).parent || world.isOpen(loc)) return;

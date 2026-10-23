@@ -1,10 +1,11 @@
-// validate.mjs — content and source validator (§11). Exits non-zero on any error.
+// validate.mjs — the content checker (§11). Exits non-zero on any error,
+// which stops GitHub Actions from publishing a broken game.
 //
 //   node scripts/validate.mjs
 //
 // 1. Parses every src/**/*.twee file; checks passages, links and banned APIs.
 // 2. Loads every src/**/*.js into a sandbox with stubbed SugarCube globals
-//    and boots the real engine, including _test content.
+//    and boots the real engine with the real town content.
 // 3. Runs registry validation (refs, passages, condition/effect operators,
 //    per-type checks, module checks) and the age rules.
 
@@ -34,7 +35,7 @@ export function validate() {
 	errors.push(...checkSources(sources));
 	errors.push(...checkFileNames([...jsFiles, ...listFiles(src, ".css")].map(rel)));
 
-	// Boot the real engine (with _test content) and check every definition.
+	// Boot the real engine with the town content and check every definition.
 	try {
 		const names = new Set(passages.map((p) => p.name));
 		const { setup } = bootGame(src, { includeTest: true, passages: names });

@@ -1,6 +1,5 @@
 /*
  * journal — a log of each day, and the summary you see when you wake up.
- * See README.md.
  *
  * Bus listeners add up each day (money in and out, lessons, shifts, people
  * met, level-ups, …) in $journal.days (the last week only). When a sleep
@@ -10,6 +9,10 @@
  *
  * Hooks: what the summary says is a named function in config.journal.summary
  * (default "default"): (entry, day) => string[].
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   nothing yet: what the summary says is the "default" hook below
+ * Every field, condition, effect and event is listed in src/modules/journal/README.md.
  */
 (function () {
 	"use strict";

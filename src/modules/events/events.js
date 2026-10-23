@@ -1,5 +1,5 @@
 /*
- * events — the storylet (event) framework. See README.md.
+ * events — the storylet (event) framework.
  *
  * A storylet subscribes to bus events (`triggers`). When one fires:
  *   1. Eligibility: conditions pass, and it isn't blocked by `once`, its
@@ -14,6 +14,12 @@
  * (e.g. a storyline stage's entry event).
  * At most one storylet fires per trigger. A storylet applies its effects
  * and its passage is shown through the flow controller.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-events.js, town-work.js, town-school.js (the events)
+ *   src/story/mooresville/*.twee (the text, one "Ev_<id>" passage each)
+ *   src/01-engine/config.js → events (random-event limits)
+ * Every field, condition, effect and event is listed in src/modules/events/README.md.
  */
 (function () {
 	"use strict";

@@ -1,11 +1,16 @@
 /*
- * clothing — what you wear, the wardrobe and outfits. See README.md.
+ * clothing — what you wear, the wardrobe and outfits.
  *
  * Clothes are items with a `clothing` block. Worn clothes live in the hidden
  * "worn" storage place; $wear maps each body slot to the item worn there.
  * You can change only where it makes sense (rooms tagged "changing").
  * Clothes can carry stat modifiers (`clothing.modifiers`), which apply while
  * they're worn; statuses can switch on from what you wear (`whileCond`).
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-clothing.js (slots, clothes, outfit effects)
+ *   src/01-engine/config.js → clothing (the "dressed to go out" rule)
+ * Every field, condition, effect and event is listed in src/modules/clothing/README.md.
  */
 (function () {
 	"use strict";
@@ -136,6 +141,8 @@
 						return result;
 					}
 					const name = (uid) => itemOf(uid)?.name ?? "?";
+					// takeOff/wear are called with force: true so they don't each
+					// spend a minute; the total time is charged once, below.
 					const off = [];
 					const on = [];
 					for (const uid of sel.remove ?? []) {

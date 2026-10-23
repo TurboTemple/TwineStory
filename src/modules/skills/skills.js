@@ -1,9 +1,12 @@
 /*
  * skills — things the PC gets better at (Barista, Cooking, Fitness…).
- * See README.md.
  *
  * A skill is a number from 0 to its `max`; the whole number is its level.
  * Gains go through a named hook, so learning can slow down as you improve.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-work.js → part 1 (skills)
+ * Every field, condition, effect and event is listed in src/modules/skills/README.md.
  */
 (function () {
 	"use strict";

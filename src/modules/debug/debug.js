@@ -5,6 +5,10 @@
  * Teleport anywhere, skip time, add money, set stats, and force or block
  * events. These change the game directly, so they're only offered with
  * ?debug in the URL.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   nothing: these are tools, not content
+ * Every field, condition, effect and event is listed in src/modules/debug/README.md.
  */
 (function () {
 	"use strict";

@@ -36,7 +36,7 @@
  *                       label    the button text ("Eat", "Drink")
  *                       mins     how long it takes
  *                       effects  what it does (stat changes, effects…)
- *                     Using it uses one up.
+ *                       consume  false = keep it after using (default: used up)
  *   size              how much room it takes in a storage place (default 1)
  *   stackable         false for things that are each unique (clothes)
  *

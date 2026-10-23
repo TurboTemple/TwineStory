@@ -9,9 +9,10 @@ export const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".
 export const plain = (x) => JSON.parse(JSON.stringify(x));
 
 /**
- * Boot a fresh engine and new game on the _test fixture only (no real game
- * content), so framework tests don't change when the town does. With test
- * content on, it also gets two test accounts: £20 cash and £100 on a card.
+ * Boot a fresh engine and new game WITHOUT the town (no real game content),
+ * so framework tests don't change when the town does. Tests add their own
+ * throwaway data through `before` (setup.__testContent). With
+ * includeTest on, it also gets two test accounts: £20 cash and £100 on a card.
  * @param {object} [opts] See bootGame.
  */
 export function boot(opts = {}) {

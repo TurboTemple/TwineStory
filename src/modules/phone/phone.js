@@ -1,6 +1,5 @@
 /*
  * phone — the PC's phone: contacts, messages, an alarm, and apps.
- * See README.md.
  *
  * Apps are data (`app`: label, icon, view, order, conditions, badge). An app
  * shows a named view; modules register the views (messages, bank, map,
@@ -11,6 +10,10 @@
  * fn(fromT, toT) returns [{ t, end?, text }].
  *
  * Events: phone:message { from, text }, phone:alarm { t }
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-phone.js (which apps are on the phone)
+ * Every field, condition, effect and event is listed in src/modules/phone/README.md.
  */
 (function () {
 	"use strict";
