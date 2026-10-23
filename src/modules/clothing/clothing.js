@@ -255,11 +255,12 @@
 					if (uid && shown.has(uid)) continue;
 					if (uid) shown.add(uid);
 					const label = item ? slotsOf(item) : slot.label;
-					worn.append(ui.el("li", { class: "inv-row" },
-						item ? tick("remove", uid, `Take off ${item.name}`) : ui.el("span", { class: "thumb-none", attrs: { style: "width:24px" } }),
+					// The whole row is a <label>, so tapping anywhere on it ticks the box.
+					worn.append(ui.el("li", {}, ui.el(item && canChange ? "label" : "div", { class: "inv-row" },
+						item ? tick("remove", uid, `Take off ${item.name}`) : ui.el("span", { class: "tick-none" }),
 						item ? setup.media.thumb("item", item.id, item.name) : ui.el("span", { class: "thumb thumb-none" }),
 						ui.el("span", { class: "inv-slot", text: `${label}: ` }),
-						ui.el("span", { class: "inv-name", text: item ? item.name : "—" })));
+						ui.el("span", { class: "inv-name", text: item ? item.name : "—" }))));
 				}
 				box.append(worn);
 
@@ -271,11 +272,11 @@
 						const list = ui.el("ul", { class: "inv change-list" });
 						for (const e of clothes) {
 							const def = registry.get("item", e.item);
-							list.append(ui.el("li", { class: "inv-row" },
+							list.append(ui.el("li", {}, ui.el("label", { class: "inv-row" },
 								tick("wear", e.uid, `Put on ${def.name}`),
 								setup.media.thumb("item", def.id, def.name),
 								ui.el("span", { class: "inv-name", text: def.name }),
-								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)})` })));
+								ui.el("span", { class: "inv-slot", text: ` (${slotsOf(def)})` }))));
 						}
 						box.append(list);
 					}

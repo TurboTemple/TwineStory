@@ -35,9 +35,10 @@
 			});
 			registry.defineType("interaction", {
 				required: ["label"],
-				defaults: { desc: "", mins: 5, cooldown: 0, once: false, conditions: null, effects: [], npcs: null, npcTags: null, tags: [], hidden: false, order: 0 },
+				// showIf: when false, the interaction isn't listed at all (vs `conditions`, shown locked).
+				defaults: { desc: "", mins: 5, cooldown: 0, once: false, conditions: null, showIf: null, effects: [], npcs: null, npcTags: null, tags: [], hidden: false, order: 0 },
 				refs: { npcs: "npc" },
-				conditions: ["conditions"],
+				conditions: ["conditions", "showIf"],
 				effects: ["effects"],
 				check(def) {
 					return Number.isInteger(def.cooldown) && def.cooldown >= 0 ? [] : ["cooldown must be whole minutes ≥ 0"];
@@ -94,7 +95,7 @@
 					const n = setup.npcs.get(npc);
 					if (i.npcs && !i.npcs.includes(npc)) return false;
 					if (i.npcTags && !i.npcTags.some((tag) => n.tags.includes(tag) || n.role === tag)) return false;
-					return true;
+					return cond.test(i.showIf, { npc, t: time.now() });
 				},
 
 				/** @returns {number|null} Minutes until an interaction can be used again with this NPC. */
@@ -161,11 +162,11 @@
 					const v = rel.get(spec.npc ?? ctx.npc, spec.track);
 					return (spec.min == null || v >= spec.min) && (spec.max == null || v <= spec.max);
 				},
-				describe(spec, ctx) {
-					const who = setup.npcs.get(spec.npc ?? ctx.npc)?.name ?? "They";
+				describe(spec) {
+					const who = spec.npc ? `${setup.npcs.get(spec.npc)?.name ?? spec.npc}: ` : "";
 					const t = registry.tryGet("relTrack", spec.track);
 					const tier = t?.tiers.find((x) => x.at === spec.min);
-					return spec.min != null ? `${who}: ${t?.label ?? spec.track} ${tier ? tier.label : `${spec.min}+`}` : `${who}: ${t?.label ?? spec.track} up to ${spec.max}`;
+					return spec.min != null ? `${who}${t?.label ?? spec.track} at ${tier ? `"${tier.label}"` : spec.min} or better` : `${who}${t?.label ?? spec.track} up to ${spec.max}`;
 				},
 			});
 

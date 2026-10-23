@@ -27,6 +27,7 @@
 		talk({
 			id: "swap_numbers", label: "Swap numbers", mins: 2, once: true, order: 3,
 			conditions: { rel: { track: "friendship", min: 30 } },
+			showIf: { not: { hasContact: true } },
 			effects: [{ contact: true }],
 			desc: "Then you can message each other.",
 		});

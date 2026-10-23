@@ -31,6 +31,9 @@ Journeys start from the site: if you're in a room, you walk out first (shown as 
 - Time: `registerTimeHook(name, (legs, mode, ctx) => minutesPerLeg[])`. Default `"path"`: each leg's minutes × `timeFactor`, rounded up.
 - Fare: `registerCostHook(name, (mins, legs, mode, ctx) => pence)`. Built in: `"none"`, `"flat"`, `"meter"`.
 
+## Inline buttons
+The Here screen ends with **Go to**: one button per destination, grouped by Walk / Bus / Taxi, each with its time and fare. One tap travels. The walking rule (one neighbouring place at a time) is unchanged.
+
 ## API (`setup.travel`)
 `options()`, `go(to, modeId)`, `isTravelling()`
 

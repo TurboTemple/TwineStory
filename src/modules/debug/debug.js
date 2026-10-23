@@ -71,6 +71,45 @@
 					}
 				}
 
+				if (has("skills") && registry.all("skill").length) {
+					box.append(ui.el("h2", { text: "Skills" }));
+					const skills = setup.skills.defs().map((d) => [d.id, d.label]);
+					for (const v of [0, 20, 50]) box.append(picker(`Set to ${v}`, skills, "Set", (id) => flow.perform(() => setup.skills.set(id, v))));
+				}
+
+				if (has("storylines") && registry.all("storyline").length) {
+					box.append(ui.el("h2", { text: "Storylines" }));
+					box.append(ui.el("p", { class: "note", text: "Jump a storyline to a stage. Its entry event plays, as if you got there normally." }));
+					const stages = registry.all("storyline").flatMap((d) => d.stages.map((st) => [`${d.id}|${st.id}`, `${d.label}: ${st.label}${setup.storylines.stage(d.id) === st.id ? " (now)" : ""}`]));
+					box.append(picker("Stage", stages, "Go", (v) => {
+						const [id, stage] = v.split("|");
+						flow.perform(() => setup.storylines.moveTo(id, stage));
+					}));
+				}
+
+				if (has("relationships") && registry.all("relTrack").length) {
+					box.append(ui.el("h2", { text: "Relationships" }));
+					const npcs = registry.all("npc").map((n) => [n.id, n.name]);
+					for (const t of setup.rel.tracks()) {
+						for (const v of [0, 30, 60]) box.append(picker(`${t.label} ${v}`, npcs, "Set", (id) => flow.perform(() => {
+							setup.npcs.meet(id);
+							setup.rel.set(id, t.id, v);
+						})));
+					}
+				}
+
+				if (has("weather") && setup.weather.at()) {
+					const w = setup.weather.at();
+					box.append(ui.el("h2", { text: "Weather" }));
+					const ahead = Array.from({ length: 7 }, (_, i) => {
+						const d = time.day(time.now()) + i;
+						const x = setup.weather.onDay(d);
+						return `${fmt.date(time.at(d, "12:00"))}: ${x.label}, ${x.temp}°C`;
+					});
+					box.append(ui.el("p", { class: "note", text: `Today: ${w.label}, ${w.temp}°C. Outfit warmth needed: ${setup.weather.warmthNeeded()}.` }));
+					box.append(ui.el("ul", {}, ...ahead.map((l) => ui.el("li", { text: l }))));
+				}
+
 				if (has("events")) {
 					box.append(ui.el("h2", { text: "Events" }));
 					box.append(ui.el("p", { class: "note", text: "Force: fires whenever its conditions are met, ignoring chance and limits. Block: never fires." }));

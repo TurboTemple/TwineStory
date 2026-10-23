@@ -25,6 +25,8 @@ NPC character sheets, schedules and who is where.
 ## Meeting
 Decided by the user: **the first encounter counts as meeting.** An NPC is met when the PC arrives where they are, or when they're there as time passes. This emits `npc:met`, which storylets can use for first-meeting scenes.
 
+Other modules add to the character sheet with `setup.npcs.addSheetSection(name, order, (box, npcId) => …)` (relationships adds "You and them" and Talk).
+
 ## Events
 `npc:met { npc }`
 

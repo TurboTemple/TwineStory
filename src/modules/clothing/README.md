@@ -14,6 +14,9 @@ What you wear, the wardrobe and outfits.
 - **Dressed to go out** (`setup.config.clothing.dressed`): something on top, on the bottom and on your feet, and no `sleepwear`. Walking, the bus and taxis all need it.
 - Worn clothes are kept in a hidden `worn` storage place. What you take off goes back where the new item came from, or to the wardrobe if you're at home, otherwise your bag.
 
+## Getting changed
+The wardrobe lists what you're wearing and what you could put on, each with a tick box (the whole row is tappable). Tick everything, tap **Change**, and you go back to where you were with the new clothes on. `setup.clothing.change({ wear: [uids], remove: [uids] })` takes off, then puts on, 1 minute per item.
+
 ## State
 `$wear = { slots: { [slotId]: uid }, outfits: [{ name, uids[] }] }`
 

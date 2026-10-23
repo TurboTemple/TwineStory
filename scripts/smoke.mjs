@@ -85,20 +85,17 @@ async function playTown(page, label) {
 	await click(page, "Have a shower");
 	await expectPassage(page, "Here", /Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Bathroom/, `${label}: shower`);
 	if (!(await sidebar(page)).includes("Refreshed")) failures.push(`${label}: Refreshed effect not in sidebar`);
-	// In pyjamas you can't go out.
-	await click(page, "Go somewhere else");
-	await expectPassage(page, "Travel_Pick", /You need to get dressed/, `${label}: not dressed`);
-	await click(page, "Stay here");
+	// In pyjamas you can't go out: the travel buttons say why.
+	await expectPassage(page, "Here", /Go to[\s\S]*You need to get dressed/, `${label}: not dressed`);
 	await click(page, "Your Bedroom");
 	await click(page, "Get changed");
-	await expectPassage(page, "Clothing_Wardrobe", /not dressed to go out[\s\S]*In your wardrobe/, `${label}: wardrobe`);
+	await expectPassage(page, "Clothing_Wardrobe", /not dressed to go out[\s\S]*tick to put on/, `${label}: wardrobe`);
+	// Tick everything to put on (tapping the row), then one Change.
 	for (const item of ["White T-shirt", "Blue jeans", "Pair of socks", "White trainers"]) {
-		await page.locator("#passages li", { hasText: item }).locator("button", { hasText: "Wear" }).first().click();
-		await page.waitForSelector('[data-passage="Here"], [data-passage="Clothing_Wardrobe"]');
-		await page.evaluate(() => window.SugarCube.Engine.play("Clothing_Wardrobe"));
+		await page.locator("#passages label", { hasText: item }).first().click();
 	}
-	await expectPassage(page, "Clothing_Wardrobe", /You're dressed to go out/, `${label}: dressed`);
-	await click(page, "Back");
+	await click(page, "Change");
+	await expectPassage(page, "Here", /Put on: [\s\S]*Took off: Pyjamas[\s\S]*Getting changed took 5 minutes[\s\S]*Your Bedroom/, `${label}: changed`);
 	// The Me page shows your body and clothes.
 	await page.evaluate(() => window.SugarCube.Engine.play("Character_Me"));
 	await expectPassage(page, "Character_Me", /Height:\s*average[\s\S]*Hair:\s*shoulder-length[\s\S]*Wearing[\s\S]*White T-shirt/, `${label}: me page`);
@@ -110,11 +107,9 @@ async function playTown(page, label) {
 		if (!prof.includes(bit)) failures.push(`${label}: Profile tab is missing "${bit}"`);
 	}
 	await page.evaluate(() => window.SugarCube.setup.shell.setTab("overview"));
-	await click(page, "Go somewhere else");
-	await expectPassage(page, "Travel_Pick", /Leaving Your House \(1 minute to get outside\)/, `${label}: travel from a room`);
+	await expectPassage(page, "Here", /Go to[\s\S]*Includes 1 minute to get outside/, `${label}: travel from a room`);
 	await click(page, "Elm Road (1 minute)");
 	// Shopping and eating from your bag.
-	await click(page, "Go somewhere else");
 	await click(page, "Patel's Corner Shop (3 minutes)");
 	await click(page, "Browse Patel's Corner Shop");
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Buy" }).click();
@@ -123,11 +118,9 @@ async function playTown(page, label) {
 	await page.evaluate(() => window.SugarCube.Engine.play("Inventory_Bag"));
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Eat" }).click();
 	await expectPassage(page, "Here", /Eat: Chocolate bar/, `${label}: eat`);
-	await click(page, "Go somewhere else");
 	await click(page, "Elm Road (3 minutes)");
 	// Keep the run predictable: no random bus delay.
 	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
-	await click(page, "Go somewhere else");
 	await click(page, "Mooresville High Street (13 minutes, £1.80)");
 	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£1\.80\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
 	if (!(await sidebar(page)).includes("£32.25")) failures.push(`${label}: cash should be £32.25 after the chocolate and the fare`);
@@ -168,6 +161,41 @@ async function playTherapy(page) {
 	if (!(await sidebar(page)).includes("Bursting")) failures.push("debug: Bursting effect not shown after bladder set to 100");
 }
 
+/** Debug mode: get the café job, work the first shift, read Jess's text, sleep. */
+async function playJob(page) {
+	const skipTo = (day, hm) => page.evaluate(([d, h]) => {
+		const s = window.SugarCube.setup;
+		s.debugTools.skip(s.time.at(d, h) - s.time.now());
+	}, [day, hm]);
+	await debugRow(page, "Go", "home_bedroom");
+	await skipTo(4, "07:40");
+	await debugRow(page, "Go", "grind_counter");
+	await click(page, "Ask Jess about the job");
+	await expectPassage(page, "Ev_grind_interview", /Weekend staff wanted/, "job interview");
+	await click(page, "Continue");
+	await click(page, "Start your shift (until 14:00)");
+	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");
+	await click(page, "Continue");
+	await expectPassage(page, "Here", /You worked your shift: 6 hours[\s\S]*Paid £60\.00/, "after the first shift");
+	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
+	await click(page, "Messages");
+	await expectPassage(page, "Phone_Home", /Jess Marlow \(1 new\)/, "messages");
+	await click(page, "Jess Marlow");
+	await expectPassage(page, "Phone_Home", /Saturday 8am/, "Jess's text");
+	await click(page, "Home screen");
+	await click(page, "Put the phone away");
+	await debugRow(page, "Go", "home_bedroom");
+	await skipTo(4, "22:00");
+	// An empty bladder, so nothing wakes you before the morning.
+	await page.evaluate(() => window.SugarCube.setup.stats.set("bladder", 0));
+	await click(page, "Sleep (until 07:00)");
+	await expectPassage(page, "Journal_Summary", /Your day[\s\S]*Work: 1 shift/, "daily summary");
+	await click(page, "Get up");
+	await expectPassage(page, "Here", /Your Bedroom/, "after waking");
+	const me = await page.evaluate(() => window.SugarCube.setup.storylines.stage("barista_job"));
+	if (me !== "trainee") failures.push(`job: expected the trainee stage, got ${me}`);
+}
+
 // Release mode.
 {
 	const { page, errors } = await openPage(base);
@@ -196,6 +224,7 @@ async function playTherapy(page) {
 		}
 	}
 	await playTherapy(page);
+	await playJob(page);
 	failures.push(...errors.map((e) => `debug: ${e}`));
 	await page.close();
 }

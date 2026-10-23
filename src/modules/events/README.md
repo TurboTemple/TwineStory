@@ -21,6 +21,16 @@ The storylet (event) framework and the rules for when events happen.
 | `effects` | run when it fires; `{ interrupt: "reason" }` ends the activity or journey in progress |
 | `passage` | shown through the flow controller (prefix `Ev_`); end it with `<<view "event-end">>` |
 
+## Kinds
+- `story`: fires every time it's eligible, highest priority first.
+- `pool`: one picked by `weight` every time a trigger fires, with no game-wide limits. Used for a storyline stage's events (e.g. one event per shift).
+- `random`: goes through the selection hook and the game-wide limits below.
+- `manual`: no triggers; something fires it directly (a storyline stage's entry event).
+
+Other modules can add eligibility rules with `setup.events.addFilter((storylet, ctx) => boolean)` (storylines uses this so a stage's events only fire in that stage).
+
+When two events want to show at once (a shift event, then a promotion), the second waits and appears when you tap Continue.
+
 ## The rules (proposed by Claude, adjustable)
 Each time a trigger happens:
 1. **Eligible** = conditions pass, and the storylet isn't blocked by `once`, its `cooldown`, its `group` cooldown or its `maxPerDay`.
