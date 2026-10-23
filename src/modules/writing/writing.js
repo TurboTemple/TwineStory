@@ -185,7 +185,7 @@
 						const opts = rest[0] ?? {};
 						const { ok, reasons } = writing.check(opts);
 						if (!ok && opts.hidden) return;
-						const box = ui.el("div", { class: "m-writing choice" }, ui.button(label, () => writing.choose(passage, opts), { class: "btn-choice", disabled: !ok }));
+						const box = ui.el("div", { class: "m-writing choice" }, ui.button(label, () => writing.choose(passage, opts), { class: ok ? "btn-choice" : "btn-choice btn-locked", disabled: !ok }));
 						if (!ok) box.append(ui.el("p", { class: "locked", text: `Needs: ${reasons.join("; ")}` }));
 						this.output.append(box);
 					});

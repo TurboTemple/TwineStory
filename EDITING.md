@@ -127,6 +127,8 @@ conditions: { time: { from: "12:00", to: "21:00" }, stat: { id: "energy", min: 2
 
 Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: … }`.
 
+When an action's or a choice's conditions aren't met, it's still shown, greyed out, with what's needed underneath ("Needs: Energy at least 20"), so you can see what the character has in mind (decided by the user). Add `hidden: true` to hide it completely instead.
+
 | Condition | True when… |
 |---|---|
 | `{ time: { from: "12:00", to: "21:00" } }` | the clock is in that range (can run past midnight) |

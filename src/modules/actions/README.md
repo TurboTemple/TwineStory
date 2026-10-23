@@ -11,7 +11,7 @@ Things the PC can do that take time.
 - `costs` run first. `effects` run only if the action finishes uninterrupted. `perHour` runs on each hour boundary while it runs. `always` runs at the end either way.
 - A negative `money` effect in `costs` is the price. It's shown on the button, and the action is locked if you can't afford it.
 - Tip: add a status in `costs` and remove it in `always` to change how stats move **while** the action runs (sleeping, relaxing, exercising).
-- **Locked actions** (decided by the user) show their requirements ("Needs: …") but not what the action is. `hidden: true` hides one completely.
+- **Locked actions** (decided by the user) show what they are, greyed out, with their requirements underneath ("Needs: …"). `hidden: true` hides one completely.
 
 ## How `do(id)` runs
 conditions → costs → `action:start` → advance time in pieces up to each checkpoint → `action:checkpoint` (an event may interrupt) → effects (if not interrupted) → Result → `action:end`.

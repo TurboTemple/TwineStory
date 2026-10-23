@@ -27,8 +27,8 @@
 				defaults: {
 					at: [], atTag: null, whenClosed: false, desc: "", tags: [], mins: 0, durations: null, checkpoints: [], conditions: null,
 					costs: [], effects: [], perHour: [], always: [], interruptible: true, passage: null,
-					// Decided by the user: a locked action shows its requirements but not
-					// what it is. `hidden: true` hides it completely instead.
+					// Decided by the user: a locked action shows what it is, greyed out,
+					// with what's needed. `hidden: true` hides it completely instead.
 					hidden: false,
 				},
 				refs: { at: "location" },
@@ -207,9 +207,9 @@
 				for (const { def, ok, reasons } of list) {
 					const li = ui.el("li");
 					if (!ok) {
-						// Locked: show what's needed, not what the action is.
+						// Locked: greyed out, with what's needed (decided by the user).
 						li.append(
-							ui.button("Locked", () => {}, { disabled: true, class: "btn-locked" }),
+							ui.button(def.label, () => {}, { disabled: true, class: "btn-locked" }),
 							ui.el("p", { class: "locked", text: `Needs: ${reasons.join("; ")}` }),
 						);
 						ul.append(li);

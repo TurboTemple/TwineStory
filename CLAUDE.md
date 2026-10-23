@@ -557,7 +557,7 @@ User decisions so far:
 - NPC age lives on each NPC's character sheet (the `npc` definition).
 - Random events roll their own `chance` (`setup.config.events.selector = "chance"`). The test therapy interruption is 50%.
 - The event rules (story before random, cooldowns, groups, daily limits, game-wide limits of 4 a day and 60 minutes apart) were proposed by Claude at the user's request and are open to adjustment.
-- Locked actions show their requirements but not what the action is.
+- Locked actions and choices show what they are, greyed out, with the requirement listed (the character thought of it, but something stops them). `hidden: true` hides one completely. (Changed by the user; it used to hide the label.)
 - Travel: walking goes one neighbouring place at a time. Public transport only goes to hubs (a bus to its stops, a taxi to the city or suburbs). Travel costs money. What an interrupted journey means depends on the event.
 - Travel times should be sensible for the distance (e.g. 5 minutes to a house on the same street, much longer across town).
 - An NPC is met at the first encounter.
