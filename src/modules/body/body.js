@@ -1,12 +1,17 @@
 /*
  * body — the PC's body, one data-defined part at a time (height, weight,
- * eye colour, hair…). See README.md.
+ * eye colour, hair…).
  *
  * Each part is a number (with a unit and range) or a choice from a list.
  * A number part can have `bands` ("skinny", "slim", …): it's shown and
  * chosen by band, but still changes gradually underneath.
  * Parts can change over time through a named daily hook (hair grows) or
  * through effects (a workout takes off a little weight).
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-body.js (body parts)
+ *   src/content/mooresville/town-people.js (each NPC's looks)
+ * Every field, condition, effect and event is listed in src/modules/body/README.md.
  */
 (function () {
 	"use strict";

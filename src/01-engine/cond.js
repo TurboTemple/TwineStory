@@ -1,5 +1,18 @@
 /*
- * cond.js — requirements written as data (setup.cond, §6.5).
+ * ============================================================================
+ *  cond.js — conditions: requirements written as data (setup.cond, §6.5)
+ * ============================================================================
+ *
+ * Anywhere the game asks "is this allowed right now?" (can I do this action,
+ * can this event happen, is this effect on…) the answer is a *condition*
+ * written as plain data in the content files, for example:
+ *
+ *   { time: { from: "12:00", to: "21:00" }, stat: { id: "energy", min: 20 } }
+ *       → between 12:00 and 21:00 AND energy at least 20
+ *
+ * The words ("time", "stat", "npcHere"…) are "leaf operators". Each module
+ * registers the ones for its own data (stats registers "stat", world
+ * registers "at" and "open"…). The full list is in EDITING.md.
  *
  * Forms:
  *   true / false
@@ -43,6 +56,9 @@
 			 * @returns {boolean}
 			 */
 			test(c, ctx = {}) {
+				// `ctx` carries the situation being checked: which NPC you're
+				// talking to (ctx.npc), which action is running (ctx.action), the
+				// time (ctx.t)… Leaf operators read what they need from it.
 				if (c == null || c === true) return true;
 				if (c === false) return false;
 				if (Array.isArray(c)) return c.every((x) => cond.test(x, ctx));
@@ -65,6 +81,9 @@
 			 * @returns {{ ok: boolean, text: string }[]}
 			 */
 			explain(c, ctx = {}) {
+				// Each leaf's `describe` turns its data into words ("Energy 20+"),
+				// and `ok` says whether that part passes. Locked buttons show the
+				// failing parts after "Needs:".
 				if (c == null || c === true) return [];
 				if (c === false) return [{ ok: false, text: "Not available" }];
 				if (Array.isArray(c)) return c.flatMap((x) => cond.explain(x, ctx));

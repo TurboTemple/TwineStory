@@ -1,5 +1,5 @@
 /*
- * jobs — paid work: shifts, pay and missed shifts. See README.md.
+ * jobs — paid work: shifts, pay and missed shifts.
  *
  * A job is built on a storyline. The storyline's stages are the job's
  * career (hired → trainee → barista → …); the job says which stages you
@@ -15,6 +15,10 @@
  *   job:shift     { job, storyline, stage, ctx, result, interrupt }  halfway through
  *   job:shiftEnd  { job, mins, pay }
  *   job:missed    { job, day }
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-work.js (the barista job)
+ * Every field, condition, effect and event is listed in src/modules/jobs/README.md.
  */
 (function () {
 	"use strict";

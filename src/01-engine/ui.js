@@ -1,9 +1,26 @@
 /*
- * ui.js — DOM helpers and views (setup.ui).
+ * ============================================================================
+ *  ui.js — building screens from code (setup.ui)
+ * ============================================================================
  *
- * Long or data-driven lists are built with these helpers instead of
- * wikifying big strings (§8). Modules register named views; passages show
- * them with the <<view "name">> macro. The full UI shell arrives in Phase 2.
+ * Most of what you see (the Here screen, the wardrobe, the phone…) is built
+ * by JavaScript rather than written out in passages, because it comes from
+ * the game's data. The pattern:
+ *
+ *   1. A module registers a named "view":
+ *        ui.view("wardrobe", (box) => { box.append(ui.el("h2", { text: "…" })); });
+ *   2. A passage shows it with the macro:
+ *        :: Clothing_Wardrobe
+ *        <<view "wardrobe">>
+ *
+ * Helpers:
+ *   ui.el(tag, { class, text, attrs, on }, …children)   make any element
+ *   ui.button(label, fn)    a real <button>
+ *   ui.action(label, fn)    a button whose work runs through flow.perform(),
+ *                           so the right screen shows afterwards (use this
+ *                           for anything that changes the game)
+ *   ui.result(result)       the summary box for an effects Result
+ *   ui.notify(text)         a notice for the next Here screen ("Barista skill is now 5")
  */
 (function () {
 	"use strict";

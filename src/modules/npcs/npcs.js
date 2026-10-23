@@ -1,8 +1,12 @@
 /*
- * npcs — NPC character sheets, schedules and who is where. See README.md.
+ * npcs — NPC character sheets, schedules and who is where.
  *
  * Every NPC definition is its character sheet. `age` is required; classmates
  * and students must be exactly 18 (§1).
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-people.js (every character sheet and schedule)
+ * Every field, condition, effect and event is listed in src/modules/npcs/README.md.
  */
 (function () {
 	"use strict";

@@ -1,6 +1,10 @@
 /*
- * media.js — images, GIFs and videos for anything in the game (setup.media).
+ * ============================================================================
+ *  media.js — pictures, GIFs and videos (setup.media)
+ * ============================================================================
  *
+ * No code needed to add a picture: drop a file in the right folder with the
+ * right name, and the game uses it (see assets/media/README.md).
  * Media is found by name. Put a file at
  *   assets/media/<type>/<id>.<ext>
  * and it's used automatically; the build lists every file in a manifest

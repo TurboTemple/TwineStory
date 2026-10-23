@@ -1,10 +1,14 @@
 /*
  * status — active effects on the PC (tipsy, caffeinated, needs the toilet, …).
- * See README.md.
  *
  * A status can last a set time, last until removed, or follow a stat
  * (`while`: active whenever that stat is in a range). Active statuses feed
  * modifiers into the stats pipeline.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-needs.js (most effects)
+ *   src/content/mooresville/town-clothing.js, town-weather.js (clothing and weather effects)
+ * Every field, condition, effect and event is listed in src/modules/status/README.md.
  */
 (function () {
 	"use strict";

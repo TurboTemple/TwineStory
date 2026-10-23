@@ -1,5 +1,5 @@
 /*
- * stats — the PC's stats (energy, hunger, mood, …). See README.md.
+ * stats — the PC's stats (energy, hunger, mood, …).
  *
  * Only base values are saved. The effective value is the base adjusted by
  * modifiers that other modules supply (active effects now; traits, clothing
@@ -10,6 +10,10 @@
  *   op "mul"     effective × value
  *   op "rateAdd" + value per hour to how the stat changes over time
  *   op "rateMul" × value to how the stat changes over time
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-needs.js → part 1 (stats)
+ * Every field, condition, effect and event is listed in src/modules/stats/README.md.
  */
 (function () {
 	"use strict";

@@ -1,7 +1,16 @@
 /*
- * core-ops.js — generic built-in condition and effect operators (§6.5, §6.6).
- * No game rules here: these only manipulate engine data (flags, counters,
- * the clock, navigation).
+ * ============================================================================
+ *  core-ops.js — the built-in conditions and effects (§6.5, §6.6)
+ * ============================================================================
+ *
+ * The general-purpose words every content file can use, whatever modules
+ * are installed. Modules add their own (stat, status, money…) on top.
+ * No game rules here: these only touch engine data (flags, counters, the
+ * clock, which passage to show).
+ *
+ * Flags and counters are a free-form scratchpad for story bits that don't
+ * belong to any module: { flag: "met_the_mayor" } sets one,
+ * { flag: "met_the_mayor" } as a condition checks it.
  *
  * Conditions: flag, counter, time, weekday
  * Effects:    if, random, check, time, flag, counter, goto, toast, note, interrupt

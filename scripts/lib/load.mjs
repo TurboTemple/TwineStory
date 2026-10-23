@@ -108,7 +108,7 @@ export function bootGame(srcDir, opts = {}) {
 	});
 	setup.vars = () => vars;
 	// content: false leaves out the real game content (unit tests of the
-	// framework use only the _test fixture).
+	// framework add their own throwaway data instead).
 	if (opts.content === false) setup.__content = [];
 	opts.before?.(setup);
 	setup.boot({ includeTest: opts.includeTest ?? true });

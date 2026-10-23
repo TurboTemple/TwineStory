@@ -1,8 +1,18 @@
 /*
- * time.js — clock and calendar (setup.time, §6.8).
+ * ============================================================================
+ *  time.js — the clock and calendar (setup.time, §6.8)
+ * ============================================================================
  *
- * $time.t is integer minutes since setup.config.epoch (UTC, no DST).
- * The clock only moves through advance().
+ * The game's time is ONE whole number: $time.t, minutes since the epoch
+ * (00:00 on 1 September 2026, see config.js). Day 0 is 1 September, so
+ *   day  = floor(t / 1440)        hour = (t mod 1440) / 60
+ * There are no time zones or clock changes, which keeps the maths simple.
+ *
+ * The clock only ever moves forward through advance(), and it moves in
+ * steps: a 3-hour action is played as "to the next hour, to the next hour…"
+ * so everything that happens on the hour (stats ticking, events, alarms)
+ * happens at the right moment, and anything can stop the clock early
+ * (an event interrupting your sleep, closing time…).
  *
  * Events (emitted per segment, in this order):
  *   time:advanced {from, to, reason}
@@ -115,9 +125,15 @@
 				try {
 					let t = from;
 					while (t < end && !advancing.interrupted) {
+						// The next stop is the earliest of: the end, the next o'clock,
+						// or the next scheduled job (an alarm, a bill…).
 						let stop = Math.min(end, (Math.floor(t / 60) + 1) * 60);
 						const job = setup.sched.nextAt();
 						if (job != null && job > t && job < stop) stop = job;
+						// Move the clock to the stop, then tell everyone: first the
+						// minutes that passed (stats tick), then hour/day/week news,
+						// then any scheduled jobs that are due. Any of them may
+						// interrupt(), which ends the loop after this step.
 						V.time.t = stop;
 						setup.bus.emit("time:advanced", { from: t, to: stop, reason });
 						t = stop;

@@ -1,10 +1,14 @@
 /*
- * inventory — items and where they're kept. See README.md.
+ * inventory — items and where they're kept.
  *
  * Storage places are data: your bag (carried everywhere), a wardrobe or
  * kitchen cupboard at home (only reachable when you're there). Stackable
  * items share one entry with a quantity; others (clothes) are separate
  * instances with their own uid.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-items.js (storage places and items)
+ * Every field, condition, effect and event is listed in src/modules/inventory/README.md.
  */
 (function () {
 	"use strict";
@@ -35,6 +39,12 @@
 				refs: { at: "location", "start[].item": "item" },
 			});
 
+			// Saved state ($inv):
+			//   places: { bag: [{ uid, item, qty }, …], wardrobe: […], … }
+			//   seq:    counter for making unique ids ("i1", "i2"…)
+			// A stackable item (snacks) has one entry per place with a qty; an
+			// unstackable one (each piece of clothing) has its own entry and uid,
+			// so the game can tell your two pairs of socks apart.
 			const I = () => setup.vars().inv;
 			const P = (place) => (I().places[place] ??= []);
 			const item = (id) => registry.get("item", id);

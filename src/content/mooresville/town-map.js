@@ -1,39 +1,98 @@
 /*
- * Mooresville — the map: districts, places and the rooms inside them,
- * walking routes, the bus, taxis, and the player's money accounts.
+ * ============================================================================
+ *  Mooresville — the map
+ * ============================================================================
  *
- * Walking times are rough real-world distances: next door is a minute or
- * two, across town is 20–25 minutes. Moving between rooms of a place takes
- * each room's `innerMins` (default 1).
+ * What's in this file:
+ *   1. Districts (areas of town)
+ *   2. Atmosphere lines (one is shown under a place's description)
+ *   3. Places, and the rooms inside them
+ *   4. Walking routes between places
+ *   5. The Route 7 bus
+ *   6. Ways to travel (walk, bus, taxi)
+ *   7. Your money accounts (cash and bank card) and how much you start with
+ *
+ * The text you read at each place lives in src/story/mooresville/locations.twee
+ * (a passage called "Loc_<id>" for each place and room).
+ *
+ * ---------------------------------------------------------------------------
+ *  HOW TO ADD A PLACE
+ * ---------------------------------------------------------------------------
+ *   place({
+ *       id: "chip_shop",                 // lowercase_with_underscores; never rename once shipped
+ *       name: "Codfather's Chippy",      // what the player sees
+ *       district: "town_centre",         // one of the districts below
+ *       tags: ["shop"],                  // see TAGS below
+ *       hours: [hours.daily("11:00", "22:00")],  // leave out = always open
+ *   });
+ *   walk({ from: "high_street", to: "chip_shop", mins: 2 });  // so you can get there
+ *
+ *   Then add a passage ":: Loc_chip_shop" in locations.twee with its description.
+ *
+ *  HOW TO ADD A ROOM inside a place
+ *   room({ id: "chip_shop_toilet", name: "Toilet", parent: "chip_shop", tags: ["toilet", "sink"] });
+ *   Rooms follow their place's opening hours unless they have their own `hours`.
+ *   `innerMins` is how long it takes to walk into the room (default 1).
+ *
+ * ---------------------------------------------------------------------------
+ *  TAGS — what they switch on
+ * ---------------------------------------------------------------------------
+ *   toilet, sink, shower   → "Go for a wee", "Wash your hands", "Have a shower"
+ *   seating                → "Sit and relax"
+ *   bed, sofa, tv, kitchen → sleeping, napping, TV, cooking (see town-actions.js)
+ *   changing               → you can get changed here (bedroom, fitting rooms…)
+ *   hub                    → taxis can drop you here
+ *   bus_stop               → (for your own reference; the bus uses its routes)
+ *   start                  → where a new game begins (if config doesn't say)
+ *   anything else          → just a label you can use in conditions later
+ *
+ *  Other fields:
+ *   outdoor: true   → you're outside here (weather, cold and rain apply)
+ *   ambient: [...]  → atmosphere lines; filled in from AMBIENT below
+ *
+ *  Walking times are rough real-world distances: next door is a minute or
+ *  two, across town is 20–25 minutes.
  */
 (function () {
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const WEEKDAYS = [1, 2, 3, 4, 5];
-		const MON_SAT = [1, 2, 3, 4, 5, 6];
-		const SUN = [0];
-		const daily = (from, to) => ({ from, to });
-		const on = (days, from, to) => ({ days, from, to });
+		const { pounds, DAYS, hours } = setup.town;
 
-		/* ---- Districts --------------------------------------------------- */
+		/* ======================================================================
+		 *  1. Districts
+		 * ==================================================================== */
 
-		R.define("district", { id: "elm_park", name: "Elm Park", desc: "A quiet residential suburb of terraced houses and tidy front gardens." });
-		R.define("district", { id: "northfield", name: "Northfield", desc: "The north side of town, home to Mooresville Academy." });
-		R.define("district", { id: "town_centre", name: "Town Centre", desc: "Shops, cafés and pubs around the old high street." });
-		R.define("district", { id: "westgate", name: "Westgate", desc: "The newer side of town, built around the shopping centre." });
-		R.define("district", { id: "riverside", name: "Riverside", desc: "Green space along the River Moore." });
+		const district = (def) => R.define("district", def);
 
-		/* ---- Atmosphere ---------------------------------------------------- */
+		district({ id: "elm_park", name: "Elm Park", desc: "A quiet residential suburb of terraced houses and tidy front gardens." });
+		district({ id: "northfield", name: "Northfield", desc: "The north side of town, home to Mooresville Academy." });
+		district({ id: "town_centre", name: "Town Centre", desc: "Shops, cafés and pubs around the old high street." });
+		district({ id: "westgate", name: "Westgate", desc: "The newer side of town, built around the shopping centre." });
+		district({ id: "riverside", name: "Riverside", desc: "Green space along the River Moore." });
 
-		// One line is shown under a place's description, changing each hour.
-		// Lines with `when` are about right now (weather, time, how you feel)
-		// and take priority while they apply.
-		const wet = { weather: { wet: true } };
+		/* ======================================================================
+		 *  2. Atmosphere
+		 * ======================================================================
+		 *
+		 * One line is shown under a place's description, and it stays the same
+		 * for the whole in-game hour.
+		 *
+		 *   "Plain text"                       → can show any time
+		 *   { text: "…", when: CONDITION }     → only while the condition is true
+		 *
+		 * Lines with a `when` describe "right now" (rain, night, being tipsy),
+		 * so while one applies, the plain lines are skipped.
+		 */
+
+		// Conditions used by the lines below. Add your own the same way.
+		const wet = { weather: { wet: true } };              // drizzle, rain or snow
 		const sunny = { weather: { kind: "sunny" } };
-		const cold = { weather: { tempMax: 6 } };
+		const cold = { weather: { tempMax: 6 } };            // 6°C or colder
 		const evening = { time: { from: "19:00", to: "05:00" } };
 		const morning = { time: { from: "06:00", to: "09:30" } };
+
+		/** Place or room id → its atmosphere lines. */
 		const AMBIENT = {
 			home_bedroom: [
 				"Your phone charger is, as usual, just out of reach.",
@@ -93,120 +152,211 @@
 			],
 		};
 
-		/** A place (site) and, optionally, the rooms inside it. */
-		const place = (id, name, district, extra = {}) =>
-			R.define("location", { id, name, district, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...extra });
-		const room = (id, name, parent, extra = {}) =>
-			R.define("location", { id, name, parent, district: null, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...extra });
+		/* ======================================================================
+		 *  3. Places and rooms
+		 * ====================================================================== */
 
-		/* ---- Elm Park ---------------------------------------------------- */
+		/**
+		 * A place on the map (a "site"): you travel between places.
+		 * Its description passage is "Loc_<id>".
+		 */
+		const place = ({ id, name, district, ...rest }) =>
+			R.define("location", { id, name, district, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...rest });
 
-		place("home", "Your House", "elm_park", { tags: ["home"] });
-		room("home_bedroom", "Your Bedroom", "home", { tags: ["home", "bed", "start", "changing"] });
-		room("home_bathroom", "Bathroom", "home", { tags: ["home", "toilet", "sink", "shower", "changing"] });
-		room("home_kitchen", "Kitchen", "home", { tags: ["home", "kitchen"] });
-		room("home_living_room", "Living Room", "home", { tags: ["home", "sofa", "tv"] });
+		/**
+		 * A room inside a place (or inside another room). You walk between
+		 * rooms; it takes `innerMins` (default 1) to step into one.
+		 */
+		const room = ({ id, name, parent, ...rest }) =>
+			R.define("location", { id, name, parent, district: null, passage: `Loc_${id}`, ambient: AMBIENT[id] ?? [], ...rest });
 
-		place("elm_road", "Elm Road", "elm_park", { outdoor: true, tags: ["street", "hub", "bus_stop"] });
-		place("corner_shop", "Patel's Corner Shop", "elm_park", { hours: [daily("07:00", "22:00")] });
-		place("elm_park_green", "Elm Park Green", "elm_park", { outdoor: true, tags: ["park"] });
-		room("elm_green_pond", "The Duck Pond", "elm_park_green", { outdoor: true, tags: ["seating"], innerMins: 2 });
+		/* ---- Elm Park (home) -------------------------------------------------- */
 
-		/* ---- Northfield -------------------------------------------------- */
+		place({ id: "home", name: "Your House", district: "elm_park", tags: ["home"] });
+		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing"] });
+		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "changing"] });
+		room({ id: "home_kitchen", name: "Kitchen", parent: "home", tags: ["home", "kitchen"] });
+		room({ id: "home_living_room", name: "Living Room", parent: "home", tags: ["home", "sofa", "tv"] });
 
-		place("academy", "Mooresville Academy", "northfield", { tags: ["school", "bus_stop"], hours: [on(WEEKDAYS, "07:45", "17:00")] });
-		room("academy_form_room", "Form Room 12B", "academy", { tags: ["school", "classroom"], innerMins: 2 });
-		room("academy_canteen", "Canteen", "academy", { tags: ["school", "seating"], innerMins: 2 });
-		room("academy_library", "Library", "academy", { tags: ["school", "quiet"], innerMins: 2 });
-		room("academy_sports_hall", "Sports Hall", "academy", { tags: ["school"], innerMins: 3 });
-		room("academy_field", "Playing Field", "academy", { tags: ["school"], outdoor: true, innerMins: 3 });
-		room("academy_toilets", "Toilets", "academy", { tags: ["toilet", "sink"] });
+		place({ id: "elm_road", name: "Elm Road", district: "elm_park", outdoor: true, tags: ["street", "hub", "bus_stop"] });
 
-		/* ---- Town Centre ------------------------------------------------- */
+		place({ id: "corner_shop", name: "Patel's Corner Shop", district: "elm_park", hours: [hours.daily("07:00", "22:00")] });
 
-		place("high_street", "Mooresville High Street", "town_centre", { outdoor: true, tags: ["street", "hub", "bus_stop"] });
+		place({ id: "elm_park_green", name: "Elm Park Green", district: "elm_park", outdoor: true, tags: ["park"] });
+		room({ id: "elm_green_pond", name: "The Duck Pond", parent: "elm_park_green", outdoor: true, tags: ["seating"], innerMins: 2 });
 
-		const cafeHours = [on(MON_SAT, "07:30", "18:00"), on(SUN, "09:00", "16:00")];
-		place("daily_grind", "The Daily Grind", "town_centre", { tags: ["cafe"], hours: cafeHours });
-		room("grind_counter", "Counter", "daily_grind", { tags: ["cafe"] });
-		room("grind_seating", "Seating Area", "daily_grind", { tags: ["cafe", "seating"] });
-		room("grind_toilet", "Toilet", "daily_grind", { tags: ["toilet", "sink"] });
+		/* ---- Northfield (school) ---------------------------------------------- */
 
-		const pubHours = [on([1, 2, 3, 4], "11:00", "23:00"), on([5, 6], "11:00", "24:00"), on(SUN, "12:00", "22:30")];
-		place("red_lion", "The Red Lion", "town_centre", { tags: ["pub"], hours: pubHours });
-		room("lion_bar", "The Bar", "red_lion", { tags: ["pub"] });
-		room("lion_lounge", "Lounge", "red_lion", { tags: ["pub", "seating"] });
-		room("lion_beer_garden", "Beer Garden", "red_lion", { tags: ["pub", "seating"], outdoor: true });
-		room("lion_toilets", "Toilets", "red_lion", { tags: ["toilet", "sink"] });
+		place({
+			id: "academy",
+			name: "Mooresville Academy",
+			district: "northfield",
+			tags: ["school", "bus_stop"],
+			hours: [hours.on(DAYS.WEEKDAYS, "07:45", "17:00")],
+		});
+		room({ id: "academy_form_room", name: "Form Room 12B", parent: "academy", tags: ["school", "classroom"], innerMins: 2 });
+		room({ id: "academy_canteen", name: "Canteen", parent: "academy", tags: ["school", "seating"], innerMins: 2 });
+		room({ id: "academy_library", name: "Library", parent: "academy", tags: ["school", "quiet"], innerMins: 2 });
+		room({ id: "academy_sports_hall", name: "Sports Hall", parent: "academy", tags: ["school"], innerMins: 3 });
+		room({ id: "academy_field", name: "Playing Field", parent: "academy", tags: ["school"], outdoor: true, innerMins: 3 });
+		room({ id: "academy_toilets", name: "Toilets", parent: "academy", tags: ["toilet", "sink"] });
 
-		place("wellbeing", "Mooresville Wellbeing Centre", "town_centre", { tags: ["health"], hours: [on(WEEKDAYS, "09:00", "17:00")] });
-		room("wellbeing_reception", "Reception", "wellbeing");
-		room("wellbeing_waiting", "Waiting Room", "wellbeing", { tags: ["seating"] });
-		room("wellbeing_therapy", "Therapy Room", "wellbeing", { innerMins: 1 });
-		room("wellbeing_toilets", "Toilets", "wellbeing", { tags: ["toilet", "sink"] });
+		/* ---- Town Centre ------------------------------------------------------- */
 
-		place("snips", "Snips Hair Salon", "town_centre", { tags: ["shop", "salon"], hours: [on(MON_SAT, "09:00", "18:00")] });
+		place({ id: "high_street", name: "Mooresville High Street", district: "town_centre", outdoor: true, tags: ["street", "hub", "bus_stop"] });
 
-		const shopHours = [on(MON_SAT, "09:00", "17:30"), on(SUN, "10:30", "16:30")];
-		place("threadline", "Threadline", "town_centre", { tags: ["shop", "clothes"], hours: shopHours });
-		room("threadline_floor", "Shop Floor", "threadline", { tags: ["clothes"] });
-		room("threadline_fitting", "Fitting Rooms", "threadline", { tags: ["clothes", "fitting_room", "changing"] });
+		// The Daily Grind (café, and the barista job: see town-work.js)
+		place({
+			id: "daily_grind",
+			name: "The Daily Grind",
+			district: "town_centre",
+			tags: ["cafe"],
+			hours: [hours.on(DAYS.MON_SAT, "07:30", "18:00"), hours.on(DAYS.SUN, "09:00", "16:00")],
+		});
+		room({ id: "grind_counter", name: "Counter", parent: "daily_grind", tags: ["cafe"] });
+		room({ id: "grind_seating", name: "Seating Area", parent: "daily_grind", tags: ["cafe", "seating"] });
+		room({ id: "grind_toilet", name: "Toilet", parent: "daily_grind", tags: ["toilet", "sink"] });
 
-		place("pulsefit", "PulseFit Gym", "town_centre", { tags: ["gym"], hours: [daily("06:00", "22:00")] });
-		room("pulsefit_reception", "Reception", "pulsefit", { tags: ["gym"] });
-		room("pulsefit_floor", "Gym Floor", "pulsefit", { tags: ["gym"] });
-		room("pulsefit_changing", "Changing Rooms", "pulsefit", { tags: ["gym", "toilet", "sink", "shower", "changing"] });
+		// The Red Lion (pub). Open till midnight on Friday and Saturday.
+		place({
+			id: "red_lion",
+			name: "The Red Lion",
+			district: "town_centre",
+			tags: ["pub"],
+			hours: [
+				hours.on([1, 2, 3, 4], "11:00", "23:00"), // Monday–Thursday
+				hours.on([5, 6], "11:00", "24:00"),       // Friday–Saturday
+				hours.on(DAYS.SUN, "12:00", "22:30"),
+			],
+		});
+		room({ id: "lion_bar", name: "The Bar", parent: "red_lion", tags: ["pub"] });
+		room({ id: "lion_lounge", name: "Lounge", parent: "red_lion", tags: ["pub", "seating"] });
+		room({ id: "lion_beer_garden", name: "Beer Garden", parent: "red_lion", tags: ["pub", "seating"], outdoor: true });
+		room({ id: "lion_toilets", name: "Toilets", parent: "red_lion", tags: ["toilet", "sink"] });
 
-		/* ---- Westgate ---------------------------------------------------- */
+		// Wellbeing Centre (Dr Okafor, the therapist)
+		place({
+			id: "wellbeing",
+			name: "Mooresville Wellbeing Centre",
+			district: "town_centre",
+			tags: ["health"],
+			hours: [hours.on(DAYS.WEEKDAYS, "09:00", "17:00")],
+		});
+		room({ id: "wellbeing_reception", name: "Reception", parent: "wellbeing" });
+		room({ id: "wellbeing_waiting", name: "Waiting Room", parent: "wellbeing", tags: ["seating"] });
+		room({ id: "wellbeing_therapy", name: "Therapy Room", parent: "wellbeing", innerMins: 1 });
+		room({ id: "wellbeing_toilets", name: "Toilets", parent: "wellbeing", tags: ["toilet", "sink"] });
 
-		const arcadeHours = [on(MON_SAT, "09:00", "20:00"), on(SUN, "10:30", "16:30")];
-		place("arcade", "The Arcade Shopping Centre", "westgate", { tags: ["hub", "bus_stop", "shopping"], hours: arcadeHours });
-		room("arcade_concourse", "Main Concourse", "arcade", { tags: ["shopping", "seating"] });
-		room("arcade_food_court", "Food Court", "arcade", { tags: ["shopping", "seating"], innerMins: 2 });
-		room("arcade_freshway", "FreshWay Supermarket", "arcade", { tags: ["shopping", "supermarket"], innerMins: 2 });
-		room("arcade_urban_thread", "Urban Thread", "arcade", { tags: ["shopping", "clothes"], innerMins: 2 });
-		room("urban_thread_fitting", "Fitting Rooms", "arcade_urban_thread", { tags: ["clothes", "fitting_room", "changing"] });
+		place({
+			id: "snips",
+			name: "Snips Hair Salon",
+			district: "town_centre",
+			tags: ["shop", "salon"],
+			hours: [hours.on(DAYS.MON_SAT, "09:00", "18:00")],
+		});
+
+		// Threadline (clothes boutique)
+		place({
+			id: "threadline",
+			name: "Threadline",
+			district: "town_centre",
+			tags: ["shop", "clothes"],
+			hours: [hours.on(DAYS.MON_SAT, "09:00", "17:30"), hours.on(DAYS.SUN, "10:30", "16:30")],
+		});
+		room({ id: "threadline_floor", name: "Shop Floor", parent: "threadline", tags: ["clothes"] });
+		room({ id: "threadline_fitting", name: "Fitting Rooms", parent: "threadline", tags: ["clothes", "fitting_room", "changing"] });
+
+		// PulseFit Gym
+		place({ id: "pulsefit", name: "PulseFit Gym", district: "town_centre", tags: ["gym"], hours: [hours.daily("06:00", "22:00")] });
+		room({ id: "pulsefit_reception", name: "Reception", parent: "pulsefit", tags: ["gym"] });
+		room({ id: "pulsefit_floor", name: "Gym Floor", parent: "pulsefit", tags: ["gym"] });
+		room({ id: "pulsefit_changing", name: "Changing Rooms", parent: "pulsefit", tags: ["gym", "toilet", "sink", "shower", "changing"] });
+
+		/* ---- Westgate (shopping centre) --------------------------------------- */
+
+		place({
+			id: "arcade",
+			name: "The Arcade Shopping Centre",
+			district: "westgate",
+			tags: ["hub", "bus_stop", "shopping"],
+			hours: [hours.on(DAYS.MON_SAT, "09:00", "20:00"), hours.on(DAYS.SUN, "10:30", "16:30")],
+		});
+		room({ id: "arcade_concourse", name: "Main Concourse", parent: "arcade", tags: ["shopping", "seating"] });
+		room({ id: "arcade_food_court", name: "Food Court", parent: "arcade", tags: ["shopping", "seating"], innerMins: 2 });
+		room({ id: "arcade_freshway", name: "FreshWay Supermarket", parent: "arcade", tags: ["shopping", "supermarket"], innerMins: 2 });
+		room({ id: "arcade_urban_thread", name: "Urban Thread", parent: "arcade", tags: ["shopping", "clothes"], innerMins: 2 });
+		room({ id: "urban_thread_fitting", name: "Fitting Rooms", parent: "arcade_urban_thread", tags: ["clothes", "fitting_room", "changing"] });
 		// The cinema has its own entrance and stays open after the centre shuts.
-		room("arcade_cinema", "Arcade Cinema", "arcade", { tags: ["cinema"], innerMins: 3, hours: [daily("11:00", "23:00")] });
-		room("arcade_toilets", "Toilets", "arcade", { tags: ["toilet", "sink"] });
+		room({ id: "arcade_cinema", name: "Arcade Cinema", parent: "arcade", tags: ["cinema"], innerMins: 3, hours: [hours.daily("11:00", "23:00")] });
+		room({ id: "arcade_toilets", name: "Toilets", parent: "arcade", tags: ["toilet", "sink"] });
 
-		/* ---- Riverside --------------------------------------------------- */
+		/* ---- Riverside --------------------------------------------------------- */
 
-		place("riverside_park", "Riverside Park", "riverside", { outdoor: true, tags: ["park"] });
-		room("riverside_path", "River Path", "riverside_park", { outdoor: true, tags: ["seating"], innerMins: 3 });
-		room("riverside_kiosk", "Boathouse Kiosk", "riverside_park", { outdoor: true, innerMins: 4, hours: [daily("10:00", "17:00")] });
+		place({ id: "riverside_park", name: "Riverside Park", district: "riverside", outdoor: true, tags: ["park"] });
+		room({ id: "riverside_path", name: "River Path", parent: "riverside_park", outdoor: true, tags: ["seating"], innerMins: 3 });
+		room({ id: "riverside_kiosk", name: "Boathouse Kiosk", parent: "riverside_park", outdoor: true, innerMins: 4, hours: [hours.daily("10:00", "17:00")] });
 
-		/* ---- Walking routes (between places) ----------------------------- */
+		/* ======================================================================
+		 *  4. Walking routes
+		 * ======================================================================
+		 *
+		 * Each route works both ways. Walking goes one route at a time (decided
+		 * by the user), so a place is only reachable on foot through routes.
+		 * `mins` is the walking time in minutes.
+		 */
 
-		const walk = (a, b, mins) => R.define("route", { id: `walk_${a}_${b}`, from: a, to: b, mins });
-		walk("home", "elm_road", 1);
-		walk("elm_road", "corner_shop", 3);
-		walk("elm_road", "elm_park_green", 6);
-		walk("elm_road", "academy", 18);
-		walk("elm_road", "high_street", 25);
-		walk("academy", "high_street", 15);
-		walk("high_street", "daily_grind", 1);
-		walk("high_street", "red_lion", 2);
-		walk("high_street", "threadline", 2);
-		walk("high_street", "snips", 3);
-		walk("high_street", "wellbeing", 4);
-		walk("high_street", "pulsefit", 6);
-		walk("high_street", "arcade", 10);
-		walk("high_street", "riverside_park", 12);
-		walk("arcade", "riverside_park", 15);
+		const walk = ({ from, to, mins }) => R.define("route", { id: `walk_${from}_${to}`, from, to, mins });
 
-		/* ---- Bus: Route 7 ------------------------------------------------- */
+		walk({ from: "home", to: "elm_road", mins: 1 });
+		walk({ from: "elm_road", to: "corner_shop", mins: 3 });
+		walk({ from: "elm_road", to: "elm_park_green", mins: 6 });
+		walk({ from: "elm_road", to: "academy", mins: 18 });
+		walk({ from: "elm_road", to: "high_street", mins: 25 });
+		walk({ from: "academy", to: "high_street", mins: 15 });
+		walk({ from: "high_street", to: "daily_grind", mins: 1 });
+		walk({ from: "high_street", to: "red_lion", mins: 2 });
+		walk({ from: "high_street", to: "threadline", mins: 2 });
+		walk({ from: "high_street", to: "snips", mins: 3 });
+		walk({ from: "high_street", to: "wellbeing", mins: 4 });
+		walk({ from: "high_street", to: "pulsefit", mins: 6 });
+		walk({ from: "high_street", to: "arcade", mins: 10 });
+		walk({ from: "high_street", to: "riverside_park", mins: 12 });
+		walk({ from: "arcade", to: "riverside_park", mins: 15 });
 
-		const bus = (a, b, mins) => R.define("route", { id: `bus7_${a}_${b}`, network: "bus7", from: a, to: b, mins });
-		bus("elm_road", "academy", 6);
-		bus("academy", "high_street", 7);
-		bus("high_street", "arcade", 4);
+		/* ======================================================================
+		 *  5. The Route 7 bus
+		 * ======================================================================
+		 *
+		 * Stops in order along the route, with minutes between each pair.
+		 * You can ride several stops in one go (the fare is the same).
+		 */
 
-		/* ---- Travel modes ------------------------------------------------ */
+		const bus7 = ({ from, to, mins }) => R.define("route", { id: `bus7_${from}_${to}`, network: "bus7", from, to, mins });
 
-		// You need to be dressed to go out (see setup.config.clothing).
+		bus7({ from: "elm_road", to: "academy", mins: 6 });
+		bus7({ from: "academy", to: "high_street", mins: 7 });
+		bus7({ from: "high_street", to: "arcade", mins: 4 });
+
+		/* ======================================================================
+		 *  6. Ways to travel
+		 * ======================================================================
+		 *
+		 * Fields:
+		 *   conditions   who can use it (here: you must be dressed to go out)
+		 *   network      which routes it follows ("bus7" above; none = walking routes)
+		 *   multiHop     can go several stops in one trip
+		 *   destTag      only goes to places with this tag (taxis: "hub")
+		 *   minDistance  only offered when walking would take longer than this
+		 *   timeFactor   × the walking time (taxi: 0.3 = much faster)
+		 *   cost + fare  "flat": one price (fare.flat)
+		 *                "meter": fare.base + fare.perMin for each minute of the ride
+		 */
+
+		// Decided by the user: you need to be dressed to go out (see setup.config.clothing).
 		const dressed = { dressed: true };
+
 		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed });
+
 		R.define("travelMode", {
 			id: "bus7",
 			label: "Bus (Route 7)",
@@ -215,8 +365,9 @@
 			network: "bus7",
 			multiHop: true,
 			cost: "flat",
-			fare: { flat: 180 },
+			fare: { flat: pounds(1.80) },
 		});
+
 		R.define("travelMode", {
 			id: "taxi",
 			label: "Taxi",
@@ -225,16 +376,24 @@
 			multiHop: true,
 			destTag: "hub",
 			stopsOnWay: false,
-			// Only offered for trips longer than a 10-minute walk.
-			minDistance: 10,
+			minDistance: 10,   // only for trips longer than a 10-minute walk
 			timeFactor: 0.3,
 			cost: "meter",
-			fare: { base: 320, perMin: 35 },
+			fare: { base: pounds(3.20), perMin: pounds(0.35) },
 		});
 
-		/* ---- Money -------------------------------------------------------- */
+		/* ======================================================================
+		 *  7. Money accounts
+		 * ======================================================================
+		 *
+		 * `start`  how much is in each account on a new game.
+		 * `order`  paying tries accounts lowest order first (cash, then card),
+		 *          using the first one that can cover the whole amount. Money
+		 *          you earn goes to the first account unless something says
+		 *          otherwise (wages go to the bank: see town-work.js).
+		 */
 
-		R.define("account", { id: "cash", label: "Cash", kind: "cash", start: 3500, order: 0 });
-		R.define("account", { id: "bank", label: "Bank card", kind: "bank", start: 18000, order: 1 });
+		R.define("account", { id: "cash", label: "Cash", kind: "cash", start: pounds(35), order: 0 });
+		R.define("account", { id: "bank", label: "Bank card", kind: "bank", start: pounds(180), order: 1 });
 	});
 })();

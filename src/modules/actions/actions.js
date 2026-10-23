@@ -1,5 +1,5 @@
 /*
- * actions — things the PC can do that take time. See README.md.
+ * actions — things the PC can do that take time.
  *
  * do(id): conditions → costs → advance time (split at checkpoints, with
  * per-hour effects) → effects → Result → events.
@@ -8,6 +8,10 @@
  *   action:start      { action, ctx }
  *   action:checkpoint { action, elapsed, ctx, result, interrupt(reason) }
  *   action:end        { action, elapsed, interrupted, result, ctx }
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-actions.js (most actions; jobs, school and talk add their own)
+ * Every field, condition, effect and event is listed in src/modules/actions/README.md.
  */
 (function () {
 	"use strict";

@@ -1,6 +1,9 @@
 /*
- * devtools.js — debug-mode tooling (§13). Only runs when the URL has `?debug`.
+ * ============================================================================
+ *  devtools.js — debug-mode helpers (§13)
+ * ============================================================================
  *
+ * Only runs when the address ends in ?debug. It:
  * - loads the Eruda on-screen console (pinned version, see setup.config.devtools)
  * - exposes `window.GAME = setup` for poking at the engine from the console
  */

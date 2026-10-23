@@ -1,9 +1,13 @@
 /*
- * shops — buying items. See README.md.
+ * shops — buying items.
  *
  * A shop is data: where it is and what it sells. Prices come from a hook
  * (default: the item's own price, or a price set in the stock list).
  * Bought items go in your bag.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-shops.js (what each shop sells)
+ * Every field, condition, effect and event is listed in src/modules/shops/README.md.
  */
 (function () {
 	"use strict";

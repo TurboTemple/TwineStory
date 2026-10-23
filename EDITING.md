@@ -1,0 +1,189 @@
+# Editing the game
+
+This guide is for changing the game itself: prices, places, people, actions, events and text. No programming knowledge needed. For how the code works underneath, see `src/README.md`.
+
+## How to make a change from your phone
+
+1. In Safari, open the repository on github.com and go to the file (the table below says which one).
+2. Tap the **pencil** (Edit) icon. If you can't see it, use "Request Desktop Website".
+3. Make your change, then tap **Commit changes…**.
+4. Choose **Create a new branch and start a pull request**, then create the pull request.
+5. Wait for the checks. A **green tick** means the game still builds. A **red cross** means something's wrong: open the failed check, and the message says which file and which definition.
+6. Merge the pull request. About a minute later the change is live at https://turbotemple.github.io/TwineStory/.
+
+You can always ask Claude to make a change instead ("make the flat white £3.50").
+
+## Where things are
+
+All the game's content is in `src/content/mooresville/`. Each file starts with a guide to what's in it and how to add to it.
+
+| To change… | Edit this file |
+|---|---|
+| Places, rooms, opening hours, walking times, the bus, taxis, starting money | `town-map.js` |
+| A place's description | `src/story/mooresville/locations.twee` (passage `Loc_<id>`) |
+| Atmosphere lines under a place ("Rain taps against the window.") | `town-map.js`, part 2 |
+| Stats (Energy, Hunger…), how fast they change, and effects (Hungry, Tipsy…) | `town-needs.js` |
+| Things to do, their prices and what they do | `town-actions.js` |
+| Food, drink, groceries, the bag, wardrobe and cupboards | `town-items.js` |
+| Clothes, and effects clothes switch on | `town-clothing.js` |
+| What shops sell, and shop prices | `town-shops.js` |
+| People: who they are, their looks, where they are each day | `town-people.js` |
+| Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
+| The barista job: stages, shifts, pay, shift events | `town-work.js` |
+| Event text for the job | `src/story/mooresville/work.twee` |
+| School subjects, timetable, term dates | `town-school.js` |
+| Events around town | `town-events.js` |
+| Event text | `src/story/mooresville/events.twee` |
+| Weather and the climate | `town-weather.js` |
+| Apps on the phone | `town-phone.js` |
+| Body parts (height, weight, hair…) | `town-body.js` |
+| Game-wide settings: title, start date, random-event limits, the "dressed to go out" rule | `src/01-engine/config.js` |
+| Pictures, GIFs and videos | `assets/media/` (see `assets/media/README.md`) |
+
+## Quick changes
+
+| Change | Where |
+|---|---|
+| Starting cash and bank balance | `town-map.js`, part 7: `start: pounds(35)` |
+| An item's price | `town-items.js` or `town-clothing.js`: `price: pounds(…)` |
+| A shop's own price for an item | `town-shops.js`: `{ item: "sandwich", price: pounds(2.99) }` |
+| The price of a café drink, pub meal, haircut… | `town-actions.js`: `price: pounds(…)` |
+| Bus and taxi fares | `town-map.js`, part 6: `fare` |
+| Barista pay, shift times | `town-work.js`, part 3b |
+| Promotion points (Barista 20 / 50), shifts missed before being let go (3) | `town-work.js`, part 3a: `gates` |
+| How fast hunger, thirst and the rest change | `town-needs.js`, part 1: `perHour` |
+| When a place opens | `town-map.js`: `hours` |
+| Where a person is | `town-people.js`: `schedule` |
+| Term dates, the timetable | `town-school.js` |
+| Random events per day, gap between them | `src/01-engine/config.js`: `events` |
+
+## The basics
+
+Content is written as JavaScript objects, but you only need a few rules:
+
+- **Text goes in quotes:** `name: "Apple"`. If the text contains a `"`, use `\"` or write it with `'` quotes instead.
+- **Every line in a list or object ends with a comma.** A missing comma is the most common mistake: the check will fail and point to the line.
+- **Ids** are lowercase with underscores (`chocolate_bar`). They connect things together (a shop lists `"chocolate_bar"`), so **never rename an id** once it's in the game: old saves use it. Change the `name` or `label` instead, which is what players see.
+- **Money:** write `pounds(3.20)` for £3.20.
+- **Time:** durations are in **minutes** (`mins: 30`, `cooldown: 1440` = a day). Times of day are 24-hour text: `"07:30"`.
+- **Days:** `0` = Sunday, `1` = Monday … `6` = Saturday, or the shorthand `DAYS.WEEKDAYS`, `DAYS.SAT`, `DAYS.WEEKEND`…
+- **Stats** run from 0 to 100.
+- **Comments:** anything after `//`, or between `/*` and `*/`, is a note for people and is ignored by the game.
+
+Shorthand from `town-kit.js`:
+
+```js
+pounds(3.20)                         // £3.20
+DAYS.WEEKDAYS                        // Monday to Friday
+hours.daily("07:00", "22:00")        // open every day
+hours.on(DAYS.SAT, "09:00", "17:00") // open on Saturdays
+mod.add("mood", -6)                  // Mood 6 lower while the effect is on
+mod.perHour("energy", -3)            // Energy drops 3 more each hour
+mod.speed("food", 0.5)               // Food changes half as fast
+```
+
+## Conditions: when something is allowed
+
+Used in `conditions`, `when`, `whileCond` and `showIf`. Put several in one `{ }` and they must **all** be true.
+
+```js
+conditions: { time: { from: "12:00", to: "21:00" }, stat: { id: "energy", min: 20 } }
+```
+
+Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: … }`.
+
+| Condition | True when… |
+|---|---|
+| `{ time: { from: "12:00", to: "21:00" } }` | the clock is in that range (can run past midnight) |
+| `{ weekday: [1, 2, 3] }` | it's one of those days |
+| `{ stat: { id: "energy", min: 20, max: 80 } }` | a stat is in range |
+| `{ status: "tipsy" }` | an effect is on |
+| `{ skill: { id: "barista", min: 20 } }` | a skill is at least that level |
+| `{ money: { min: pounds(10) } }` | you have at least that much |
+| `{ has: "groceries" }` or `{ has: { item: "groceries", qty: 2 } }` | you have it with you (bag, or storage where you are) |
+| `{ wearing: "rain_jacket" }` or `{ wearing: { tag: "cosy" } }` | you're wearing it |
+| `{ outfit: { warmth: { min: 6 } } }` | your outfit's total warmth/formality is in range |
+| `{ dressed: true }` | you're dressed to go out |
+| `{ at: "high_street" }` | you're there (or in one of its rooms) |
+| `{ open: true }` | where you are is open |
+| `{ outdoors: true }` | you're outside |
+| `{ weather: { kind: "rain" } }`, `{ weather: { wet: true, tempMax: 6 } }` | the weather matches |
+| `{ tooCold: true }` | outdoors and not dressed warmly enough |
+| `{ body: { id: "hair_length", min: 4 } }`, `{ body: { id: "weight", is: "slim" } }` | a body part matches |
+| `{ npcHere: "jess_marlow" }` | that person is where you are |
+| `{ npcAt: { npc: "tom_reeves", at: "wellbeing" } }` | that person is at that place |
+| `{ npcMet: "jess_marlow" }` | you've met them |
+| `{ rel: { track: "friendship", min: 30 } }` | the person you're talking to likes you at least this much |
+| `{ hasContact: true }` | you have their number |
+| `{ ageAtLeast: 18 }` | you and the person involved are 18+ (**required on anything romantic**) |
+| `{ storyline: { id: "barista_job", stage: "trainee" } }` | a storyline is at that stage (`started: false` = not begun) |
+| `{ storylineCount: { id: "barista_job", key: "missed", min: 3 } }` | a storyline counter is in range |
+| `{ employed: "grind_barista" }` | you have that job |
+| `{ schoolDay: true }`, `{ homeworkDue: true }`, `{ schoolTrouble: { min: 1 } }` | school checks |
+| `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", min: 3 } }` | your own story flags and counters |
+| `{ action: "therapy_session" }`, `{ actionElapsed: { min: 60 } }` | (in events) during that action, this far in |
+| `{ travel: { mode: "bus7" } }` | (in events) during a journey |
+| `{ shiftOf: "grind_barista" }` | (in events) during a shift of that job |
+
+## Effects: what something does
+
+Used in `effects`, `costs`, `onEnter`. They run in order.
+
+| Effect | Does |
+|---|---|
+| `{ stat: { mood: 3, stress: -2 } }` | change stats |
+| `{ statSet: { bladder: 0 } }` | set stats |
+| `{ status: "caffeinated" }` / `{ statusRemove: "caffeinated" }` | switch an effect on / off |
+| `{ status: { id: "calm", mins: 60 } }` | switch it on for a set time |
+| `{ money: { amount: pounds(5) } }` | earn money (negative = pay); add `account: "cash"` to choose |
+| `{ item: { id: "apple", qty: 1 } }` | get an item (negative = use one up) |
+| `{ skill: { barista: 0.5 } }` | improve a skill |
+| `{ body: { weight: -0.2 } }` / `{ bodySet: { hair_colour: "pink" } }` | change / set a body part |
+| `{ rel: { friendship: 3 } }` | change how the person you're talking to feels |
+| `{ contact: "jess_marlow" }` | add someone's number to your phone |
+| `{ message: { from: "jess_marlow", text: "Hi!" } }` | a text arrives |
+| `{ storyline: { id: "barista_job", to: "barista" } }` | move a storyline to a stage |
+| `{ homework: true }` | finish the homework due soonest |
+| `{ moveTo: "home_bedroom" }` | put the player somewhere |
+| `{ time: 10 }` | 10 more minutes pass |
+| `{ note: "Text" }` | a line in the summary box |
+| `{ interrupt: "reason" }` | stop what you're doing (sleep, an action, a journey) |
+| `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", add: 1 } }` | set your own flags and counters |
+| `{ if: { cond: { … }, then: [ … ], else: [ … ] } }` | do one thing or another |
+| `{ random: [{ weight: 2, then: [ … ] }, { weight: 1, then: [ … ] }] }` | pick one at random (by weight) |
+
+## Writing text (`.twee` files)
+
+Each passage starts with `:: Name` on its own line, and everything below it (up to the next `::`) is its text.
+
+```
+:: Ev_lost_cat
+<<view "event-media">>
+<h1>A lost cat</h1>
+
+A small grey cat is crying on the wall.
+
+<<view "event-end">>
+```
+
+- Places are `Loc_<place id>`; events are `Ev_<event id>`.
+- Event passages start with `<<view "event-media">>` (the event's picture) and end with `<<view "event-end">>` (the Continue button).
+- A blank line starts a new paragraph. `<h1>…</h1>` is a heading. `//text//` is italic and `''text''` is bold (two single quotes each side).
+- British English, second person ("You…"), present tense.
+
+## Rules the checker enforces
+
+The build fails (red cross, nothing is published) if:
+
+- an id is used twice, or something points at an id that doesn't exist (a typo like `at: "hgih_street"`);
+- a passage is missing (e.g. an event without its `Ev_` passage);
+- a condition or effect name is misspelt;
+- **a person has no `age`; a classmate or student isn't exactly 18; or anything tagged `romance` lacks `{ ageAtLeast: 18 }`.**
+
+## Testing a change
+
+Open the game with `?debug` on the end: https://turbotemple.github.io/TwineStory/?debug
+
+- Red banners at the top list any problems.
+- **Menu → Debug → Debug tools** lets you jump anywhere, skip time, add money, set stats, skills and relationships, jump a storyline to a stage, force or block events, and see the week's weather.
+- If something looks wrong, take a screenshot and send it to Claude.

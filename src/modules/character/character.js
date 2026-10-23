@@ -1,6 +1,9 @@
 /*
  * character — the player character's identity and position ($pc).
- * See README.md.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/01-engine/config.js → pc (starting age, default name, pronoun choices)
+ * Every field, condition, effect and event is listed in src/modules/character/README.md.
  */
 (function () {
 	"use strict";

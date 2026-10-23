@@ -1,7 +1,6 @@
 /*
  * weather — the day's weather, worked out from the climate data and the
  * game's seed, so it's the same every time you look and needs no save data.
- * See README.md.
  *
  * Climate (data): for each month, how likely each kind of weather is and the
  * temperature range. The "seasonal" generation hook picks one kind and a
@@ -10,6 +9,10 @@
  * Being outdoors (a location with `outdoor: true`) in the cold or rain is up
  * to conditions: `weather`, `outdoors`, `tooCold` (your outfit's warmth
  * against the temperature). Content uses them for statuses like Cold and Wet.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-weather.js (weather kinds and the climate)
+ * Every field, condition, effect and event is listed in src/modules/weather/README.md.
  */
 (function () {
 	"use strict";

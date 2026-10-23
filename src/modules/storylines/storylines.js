@@ -1,6 +1,5 @@
 /*
  * storylines — progression through stages (a job, a friendship, therapy…).
- * See README.md.
  *
  * A storyline is a list of stages. Each stage can have:
  *   enter    a storylet shown once when you reach the stage (the interview,
@@ -12,6 +11,10 @@
  * Gates are checked after anything that might change them (actions, shifts,
  * skills, relationships, a new day…). Storylines also keep counters
  * (shifts done, shifts missed…) that gates and events can test.
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-work.js → part 3a (the barista career)
+ * Every field, condition, effect and event is listed in src/modules/storylines/README.md.
  */
 (function () {
 	"use strict";

@@ -1,6 +1,6 @@
 /*
  * education — school: terms, the timetable, lessons, homework, and what
- * happens when you skip. See README.md.
+ * happens when you skip.
  *
  * A school has terms (dates), school days, periods (lesson times) and a
  * timetable from a named hook (default "weekly": a grid in the data). In a
@@ -13,6 +13,10 @@
  * Events: school:lesson { school, subject, period, late },
  *         school:missed { school, day, lessons }, school:homeworkLate { subject },
  *         school:homeworkSet { subject, due }
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-school.js (subjects, timetable, term dates)
+ * Every field, condition, effect and event is listed in src/modules/education/README.md.
  */
 (function () {
 	"use strict";

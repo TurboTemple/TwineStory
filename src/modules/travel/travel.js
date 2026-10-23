@@ -1,6 +1,6 @@
 /*
  * travel — moving between locations. Travel always takes time, and may cost
- * money. See README.md.
+ * money.
  *
  * Routes are links between two places on a named network ("walk" by
  * default; e.g. a bus line uses its own network). Routes work both ways.
@@ -11,6 +11,10 @@
  *              passing each stop on the way
  *   - taxi:    board anywhere, go straight to a hub (destTag: "hub",
  *              stopsOnWay: false), time scaled from the walking distance
+ *
+ * WHERE TO EDIT THE GAME CONTENT FOR THIS:
+ *   src/content/mooresville/town-map.js → parts 4–6 (walking routes, the bus, travel modes)
+ * Every field, condition, effect and event is listed in src/modules/travel/README.md.
  */
 (function () {
 	"use strict";
