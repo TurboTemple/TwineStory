@@ -43,10 +43,11 @@
 				required: ["label", "at", "storyline", "workStages"],
 				defaults: {
 					desc: "", skill: null, skillPerShift: 0, pay: {}, payTo: null, shiftMins: 120,
-					effects: [], status: null, perHour: [], quitStage: null, order: 0,
+					effects: [], status: null, perHour: [], quitStage: null, dressCode: null, order: 0,
 				},
 				refs: { at: "location", storyline: "storyline", skill: "skill", status: "statusEffect" },
 				effects: ["effects", "perHour"],
+				conditions: ["dressCode.when"],
 				check(def) {
 					const errs = [];
 					for (const [s, p] of Object.entries(def.pay)) if (!Number.isInteger(p) || p < 0) errs.push(`pay.${s} must be whole pounds per hour`);
@@ -88,6 +89,7 @@
 					if (!setup.world.within(setup.world.loc(), j.at)) return { ok: false, reason: "You need to be at work." };
 					if (!setup.world.isOpen(j.at, t)) return { ok: false, reason: "It's closed." };
 					if (!setup.world.isOpen(j.at, t + j.shiftMins - 1)) return { ok: false, reason: `Not enough time for a shift (${fmt.duration(j.shiftMins)}) before closing.` };
+					if (j.dressCode && !cond.test(j.dressCode.when, { job: id, t })) return { ok: false, reason: j.dressCode.text ?? "You're not dressed for work." };
 					return { ok: true };
 				},
 
@@ -173,9 +175,10 @@
 			});
 
 			// { employed: "id" } — the PC has this job.
+			// { employed: "id" } — that job; { employed: true } — any job.
 			cond.register("employed", {
-				test: (spec) => jobs.employed(spec),
-				describe: (spec) => `You work as: ${registry.tryGet("job", spec)?.label ?? spec}`,
+				test: (spec) => (spec === true ? jobs.current().length > 0 : jobs.employed(spec)),
+				describe: (spec) => (spec === true ? "A job" : `You work as: ${registry.tryGet("job", spec)?.label ?? spec}`),
 			});
 
 			// { shiftOf: "id" } — during a shift of this job (ctx.job).

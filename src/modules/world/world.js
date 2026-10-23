@@ -25,10 +25,10 @@
 			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, outdoor: false, ambient: [] },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, dressCode: null, crowd: [], outdoor: false, ambient: [] },
 				refs: { district: "district", parent: "location" },
 				passages: ["passage"],
-				conditions: ["entry", "ambient[].when"],
+				conditions: ["entry", "dressCode.when", "crowd[].when", "ambient[].when"],
 				check(def) {
 					const errs = [];
 					if (!def.ambient.every((a) => typeof a === "string" || typeof a?.text === "string")) errs.push('ambient lines must be text or { text, when }');
@@ -142,6 +142,30 @@
 				},
 
 				/**
+				 * How busy a place is now: the first of its `crowd` entries whose
+				 * condition is true, e.g. { when: { time: … }, level: "busy", text: "It's packed." }.
+				 * Rooms without their own `crowd` use their parent's.
+				 * @returns {{level: string, text?: string}|null}
+				 */
+				crowd(id = world.loc(), t = time.now()) {
+					for (const p of world.chain(id)) {
+						const list = L(p).crowd;
+						if (list.length) return list.find((c) => cond.test(c.when ?? true, { loc: id, t })) ?? null;
+					}
+					return null;
+				},
+
+				/**
+				 * A place's dress code: `dressCode: { when: CONDITION, text }`.
+				 * @returns {string[]} Its `text` if what you're wearing doesn't pass, else [].
+				 */
+				dressCodeBlocks(id) {
+					const dc = L(id).dressCode;
+					if (!dc || cond.test(dc.when, { loc: id, t: time.now() })) return [];
+					return [dc.text ?? cond.explain(dc.when, {}).filter((e) => !e.ok).map((e) => e.text).join("; ")];
+				},
+
+				/**
 				 * Places you can walk to inside this site from here: the parent,
 				 * sub-locations and sibling areas, each with why it's locked (if it is).
 				 * @returns {{def: object, kind: "out"|"in"|"side", mins: number, ok: boolean, reasons: string[]}[]}
@@ -156,6 +180,7 @@
 							if (!world.isOpen(def.id)) reasons.push("It's closed");
 							const ctx = { loc: def.id, t: time.now() };
 							if (!cond.test(def.entry, ctx)) reasons.push(...cond.explain(def.entry, ctx).filter((e) => !e.ok).map((e) => e.text));
+							reasons.push(...world.dressCodeBlocks(def.id));
 						}
 						const mins = kind === "out" ? here.innerMins : def.innerMins;
 						out.push({ def, kind, mins, ok: !reasons.length, reasons });
@@ -227,6 +252,12 @@
 				describe: (spec) => `At ${setup.util.toArray(spec).map((id) => registry.tryGet("location", id)?.name ?? id).join(" or ")}`,
 			});
 
+			// { crowd: "busy" } — how busy where you are is (its `crowd` level).
+			cond.register("crowd", {
+				test: (spec) => setup.util.toArray(spec).includes(world.crowd()?.level),
+				describe: (spec) => `It's ${setup.util.toArray(spec).join(" or ")} here`,
+			});
+
 			// { open: true } — current location is open; { open: "loc_id" } — that one is.
 			cond.register("open", {
 				test: (spec, ctx) => {
@@ -285,6 +316,8 @@
 				else if (here.desc) box.append(ui.el("p", { text: here.desc }));
 				const line = world.ambientLine(here.id);
 				if (line) box.append(ui.el("p", { class: "ambient", text: line }));
+				const crowd = world.crowd(here.id);
+				if (crowd?.text) box.append(ui.el("p", { class: "ambient crowd", text: crowd.text }));
 				if (!world.isOpen(here.id)) {
 					const hours = world.hoursOf(here.id);
 					const today = hours?.filter((h) => !h.days || h.days.includes(time.weekday(time.now())));

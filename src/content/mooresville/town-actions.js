@@ -124,8 +124,8 @@
 			label: "Do your makeup",
 			atTag: "sink", // any bathroom
 			mins: 15,
-			conditions: { has: "makeup_kit" }, // the kit isn't used up
-			effects: [{ status: "made_up" }],
+			conditions: { has: "makeup_kit" },
+			effects: [{ status: "made_up" }, { useUp: "makeup_kit" }], // one of the kit's 10 goes
 			desc: "Needs a makeup kit (FreshWay sells them).",
 		});
 		act({ id: "sit_relax", label: "Sit and relax", atTag: "seating", mins: 30, whileDoing: "relaxing" });
@@ -521,7 +521,7 @@
 			mins: 30,
 			price: 10,
 			conditions: hairAtLeast(4),
-			effects: [{ body: { hair_length: -2 } }, { stat: { mood: 2 } }],
+			effects: [{ body: { hair_length: -2 } }, { stat: { mood: 2 } }, { status: "fresh_haircut" }],
 		});
 		act({
 			id: "haircut_short",
@@ -530,7 +530,7 @@
 			mins: 40,
 			price: 20,
 			conditions: hairAtLeast(8),
-			effects: [{ bodySet: { hair_length: 6 } }, { stat: { mood: 2 } }],
+			effects: [{ bodySet: { hair_length: 6 } }, { stat: { mood: 2 } }, { status: "fresh_haircut" }],
 		});
 		act({
 			id: "haircut_crop",
@@ -539,7 +539,7 @@
 			mins: 20,
 			price: 10,
 			conditions: hairAtLeast(2),
-			effects: [{ bodySet: { hair_length: 1 } }],
+			effects: [{ bodySet: { hair_length: 1 } }, { status: "fresh_haircut" }],
 		});
 
 		// Hair dye: one action per colour. Not offered for the colour you already have.

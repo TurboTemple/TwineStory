@@ -9,6 +9,8 @@
  *   stats       stat modifiers it gives while worn (only things with slots:
  *               carried items never change stats, decided by the user)
  *   use         what using it does (eat, drink…)
+ *   uses        how many goes it has before it runs out (a makeup kit: 10).
+ *               { useUp: "makeup_kit" } takes one go; at 0 the item is gone.
  *   price, size, desc, and `tags` for anything else you want to label
  *
  * Storage places are data: your bag (carried everywhere), a wardrobe or
@@ -37,7 +39,7 @@
 				// wearable things unique); true/false to say so yourself.
 				defaults: {
 					desc: "", kind: "misc", shops: [], attributes: [], stats: [], tags: [],
-					price: 0, stackable: null, size: 1, use: null,
+					price: 0, stackable: null, size: 1, use: null, uses: null,
 				},
 				refs: { "stats[].stat": "stat", shops: "shop" },
 				conditions: ["use.conditions"],
@@ -46,6 +48,7 @@
 					const errs = [];
 					if (!Number.isInteger(def.price) || def.price < 0) errs.push("price must be whole pounds ≥ 0");
 					if (!(def.size >= 0)) errs.push("size must be ≥ 0");
+					if (def.uses != null && !(Number.isInteger(def.uses) && def.uses > 0)) errs.push("uses must be a whole number above 0");
 					// Only worn things change stats (decided by the user).
 					if (def.stats.length && !def.slots?.length) errs.push("only things you wear (with slots) can have stats");
 					return errs;
@@ -187,6 +190,44 @@
 					return { ok: true };
 				},
 
+				/**
+				 * Take one go from an item with `uses` (the one in your bag first,
+				 * then storage here). When its last go is used, one is removed.
+				 * An item without `uses` is simply used up.
+				 * @param {string} itemId
+				 * @returns {{ok: boolean, reason?: string, left?: number, gone?: boolean}}
+				 */
+				useUp(itemId) {
+					const def = item(itemId);
+					const places = inventory.accessible().filter((p) => p !== "worn");
+					if (!def.uses) {
+						const r = inventory.remove(itemId, 1, places);
+						return r.ok ? { ok: true, left: 0, gone: true } : r;
+					}
+					for (const p of places) {
+						const list = P(p);
+						const e = list.find((x) => x.item === itemId);
+						if (!e) continue;
+						const left = (e.usesLeft ?? def.uses) - 1;
+						if (left > 0) {
+							e.usesLeft = left;
+							return { ok: true, left, gone: false };
+						}
+						e.qty -= 1;
+						delete e.usesLeft;
+						if (e.qty <= 0) list.splice(list.indexOf(e), 1);
+						bus.emit("inventory:removed", { item: itemId, qty: 1 });
+						return { ok: true, left: 0, gone: true };
+					}
+					return { ok: false, reason: `You don't have ${def.name}` };
+				},
+
+				/** @returns {number|null} Goes left on an entry (null if the item has no `uses`). */
+				usesLeft(entry) {
+					const def = item(entry.item);
+					return def.uses ? entry.usesLeft ?? def.uses : null;
+				},
+
 				/** Remove one instance (or a whole stack) by uid. */
 				removeUid(uid) {
 					const f = inventory.find(uid);
@@ -222,6 +263,20 @@
 				},
 
 				/**
+				 * Move a whole entry to another place, ignoring room and what the
+				 * place accepts (moving house uses this).
+				 * @param {string} uid @param {string} to
+				 */
+				moveAll(uid, to) {
+					const f = inventory.find(uid);
+					if (!f || f.place === to) return;
+					P(f.place).splice(P(f.place).indexOf(f.entry), 1);
+					const into = stackable(item(f.entry.item)) && P(to).find((e) => e.item === f.entry.item);
+					if (into) into.qty += f.entry.qty;
+					else P(to).push(f.entry);
+				},
+
+				/**
 				 * Use an item (eat, drink…): takes its time, applies its effects and
 				 * uses one up unless `use.consume` is false.
 				 * @param {string} uid
@@ -241,7 +296,8 @@
 						return result;
 					}
 					if (def.use.mins) time.advance(def.use.mins, { reason: `use:${def.id}` });
-					if (def.use.consume !== false) {
+					if (def.use.consume !== false && def.uses) inventory.useUp(def.id);
+					else if (def.use.consume !== false) {
 						f.entry.qty -= 1;
 						if (f.entry.qty <= 0) P(f.place).splice(P(f.place).indexOf(f.entry), 1);
 					}
@@ -282,6 +338,18 @@
 				describe: (spec) => `${(spec.qty ?? 1) >= 0 ? "Get" : "Uses"} ${registry.tryGet("item", spec.id)?.name ?? spec.id}`,
 			});
 
+			// { useUp: "makeup_kit" } — take one go from an item with `uses`.
+			effects.register("useUp", {
+				apply(spec, ctx, result) {
+					const def = item(spec);
+					const r = inventory.useUp(spec);
+					if (!r.ok) result.changes.push({ kind: "item", text: r.reason });
+					else if (r.gone) result.changes.push({ kind: "item", text: `You've used up your ${def.name.toLowerCase()}.` });
+					else if (def.uses) result.changes.push({ kind: "item", text: `${def.name}: ${r.left} ${r.left === 1 ? "go" : "goes"} left.` });
+				},
+				describe: (spec) => `Uses some ${registry.tryGet("item", spec)?.name ?? spec}`,
+			});
+
 			/* ---- UI: the Bag ------------------------------------------------- */
 
 			/** One row per entry with buttons for what you can do with it. */
@@ -290,6 +358,8 @@
 				const li = ui.el("li", { class: "inv-row" },
 					setup.media.thumb("item", def.id, def.name),
 					ui.el("span", { class: "inv-name", text: e.qty > 1 ? `${def.name} × ${e.qty}` : def.name }));
+				const left = inventory.usesLeft(e);
+				if (left != null) li.append(ui.el("span", { class: "note", text: `${left} ${left === 1 ? "go" : "goes"} left` }));
 				const extra = (inventory.rowButtons ?? []).flatMap((fn) => fn(e, place, def) ?? []);
 				for (const b of [...buttons, ...extra]) li.append(b);
 				if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));

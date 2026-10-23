@@ -82,13 +82,16 @@
 			describe: () => "Something random happens",
 		});
 
-		// { check: { resolver: "name", ...spec, then: [...], else: [...] } }
-		// The engine ships no resolvers: check rules are a design decision.
+		// { check: { resolver: "name", ...spec, label?, then: [...], else: [...] } }
+		// The engine ships no resolvers (the checks module adds "skill" and
+		// "stat"). With a `label`, the summary says how it went.
 		effects.register("check", {
 			apply(spec, ctx, result) {
 				const fn = effects.resolver(spec.resolver);
 				if (!fn) throw new setup.GameError(`No check resolver "${spec.resolver}"`);
-				effects.run(fn(spec, ctx) ? spec.then : spec.else, ctx, result);
+				const pass = Boolean(fn(spec, ctx));
+				if (spec.label) result.changes.push({ kind: "check", text: `${spec.label}: ${pass ? "success" : "failed"}` });
+				effects.run(pass ? spec.then : spec.else, ctx, result);
 			},
 			describe: (spec) => `Check (${spec.resolver})`,
 		});

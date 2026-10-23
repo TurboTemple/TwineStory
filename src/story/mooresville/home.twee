@@ -1,0 +1,10 @@
+:: Ev_curfew
+<<view "event-media">>
+<h1>Curfew</h1>
+
+Your phone buzzes. It's <<name "mum">>.
+
+//It's gone 11. Where are you? Home. Now, please.//
+
+<<choice "Reply that you're on your way">>
+<<choice "Text back that you're fine" { effects: [{ rel: { npc: "mum", friendship: -1 } }] }>>

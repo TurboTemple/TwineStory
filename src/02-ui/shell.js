@@ -203,7 +203,14 @@
 					li.append(ui.el("div", { class: "bar" }, ui.el("div", { class: "bar-fill", attrs: { style: `width:${pct}%` } })));
 					const notes = [];
 					if (d.desc) notes.push(d.desc);
-					if (Math.round(base) !== Math.round(v)) notes.push(`Underlying: ${Math.round(base)}.`);
+					// A derived stat: list what it's made of ("Hygiene +17", "Made up +20").
+					if (d.derive) {
+						for (const part of setup.stats.breakdown(d.id)) {
+							const n = Math.round(part.value);
+							if (n) notes.push(`${part.label} ${n > 0 ? "+" : "−"}${Math.abs(n)}`);
+						}
+					}
+					else if (Math.round(base) !== Math.round(v)) notes.push(`Underlying: ${Math.round(base)}.`);
 					if (d.change !== "none" && Math.abs(rate) >= 0.05) notes.push(d.change === "toward" ? `Drifts back towards ${d.target ?? d.start}.` : `${rate > 0 ? "Rises" : "Falls"} about ${Math.abs(Math.round(rate * 10) / 10)} an hour.`);
 					for (const m of setup.stats.modifiers(d.id)) notes.push(`${setup.stats.describeModifier(m)}${m.source ? ` (${sourceName(m.source)})` : ""}`);
 					if (notes.length) li.append(ui.el("ul", { class: "mods" }, ...notes.map((n) => ui.el("li", { text: n }))));

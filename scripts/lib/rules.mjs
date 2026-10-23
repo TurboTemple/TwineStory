@@ -243,6 +243,11 @@ export function checkStoryMacros(passages, setup, hasPassage) {
 				if (opts.conditions != null) badConds(opts.conditions, what);
 				for (const op of setup.effects.ops(opts.effects ?? [])) if (!setup.effects.has(op)) errors.push(`${where}: ${what} uses unknown effect "${op}"`);
 				for (const c of setup.effects.conds(opts.effects ?? [])) badConds(c, what);
+				// Skill and stat checks must name a real skill or stat.
+				const checksIn = (list) => setup.util.toArray(list).flatMap((it) => (it && typeof it === "object" ? [it.check, ...Object.values(it).flatMap((v) => (v && typeof v === "object" ? checksIn(Array.isArray(v) ? v : [v]) : []))] : [])).filter(Boolean);
+				for (const c of checksIn(opts.effects ?? [])) {
+					if ((c.resolver === "skill" || c.resolver === "stat") && !setup.registry.has(c.resolver, c[c.resolver])) errors.push(`${where}: ${what} checks unknown ${c.resolver} "${c[c.resolver]}"`);
+				}
 				npc(opts.npc, what);
 			}
 			else {

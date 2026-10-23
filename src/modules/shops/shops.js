@@ -32,6 +32,9 @@
 
 			const priceHooks = new Map();
 
+			/** Where bought items go, other than the bag (see addDestination). */
+			const destinations = [];
+
 			const shops = {
 				/**
 				 * Register a pricing rule: (shop, item) => whole pounds.
@@ -91,18 +94,27 @@
 					};
 					const closed = shops.closedReason(shopId);
 					if (closed) return fail(closed);
-					const room = setup.inventory.refuses("bag", itemId, 1);
+					// Where it goes: your bag, unless a module says otherwise (housing
+					// delivers furniture to your home).
+					const dest = destinations.map((fn) => fn(item)).find(Boolean) ?? { place: "bag" };
+					const room = setup.inventory.refuses(dest.place, itemId, 1);
 					if (room) return fail(room);
 					const cost = shops.price(def, item);
 					const paid = setup.money.pay(cost, { from: def.payWith ?? undefined, reason: `${item.name} at ${def.name}` });
 					if (!paid.ok) return fail(paid.reason);
-					setup.inventory.add(itemId, 1, "bag");
+					setup.inventory.add(itemId, 1, dest.place);
 					if (def.mins) time.advance(def.mins, { reason: "shopping" });
 					result.ok = true;
-					result.changes.push({ kind: "buy", text: `Bought ${item.name} for ${fmt.money(cost)}.` });
+					result.changes.push({ kind: "buy", text: `Bought ${item.name} for ${fmt.money(cost)}.${dest.note ? ` ${dest.note}` : ""}` });
 					bus.emit("shop:bought", { shop: shopId, item: itemId, price: cost });
 					return result;
 				},
+
+				/**
+				 * Send some bought items somewhere other than the bag:
+				 * fn(itemDef) => { place: storageId, note?: "Delivered to your home." } | null.
+				 */
+				addDestination: (fn) => destinations.push(fn),
 
 				/** The shop whose page is open (not saved). */
 				viewing: null,

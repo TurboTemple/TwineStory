@@ -16,7 +16,7 @@ Validation fails if a shop sells nothing.
 ## API (`setup.shops`)
 `here()`, `stock(shop)`, `price(shop, item)`, `buy(shopId, itemId)`, `closedReason(shopId)`, `open(shopId)`
 
-Buying checks the shop is open, your bag has room and you can pay (first account that covers it), then puts the item in your bag.
+Buying checks the shop is open, your bag has room and you can pay (first account that covers it), then puts the item in your bag. Other modules can send items elsewhere with `addDestination((item) => ({ place, note }) | null)`: housing delivers furniture to your home.
 
 ## UI
 "Browse …" on Here → `Shops_Shop`. Items are grouped under their kind, and each row shows the item's attributes.

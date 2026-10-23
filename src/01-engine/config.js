@@ -35,7 +35,7 @@
 	 * (A brand-new module doesn't need a bump: save.js adds its slice.)
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 7;
+	setup.SCHEMA_VERSION = 8;
 
 	/** Static game configuration. */
 	setup.config = {
@@ -63,6 +63,18 @@
 			startAge: 18,
 			defaultName: "Alex",
 			pronounOptions: ["she/her", "he/him", "they/them"],
+		},
+		// Skill and stat checks (the checks module). DESIGN: user to decide —
+		// these numbers are neutral placeholders.
+		//   "chance":    the odds of success = base + (value − difficulty) × perPoint,
+		//                kept between min and max. At value = difficulty it's `base`.
+		//   "threshold": you pass if value ≥ difficulty, no luck involved.
+		checks: {
+			mode: "chance",
+			base: 0.5,      // 50% when you're exactly at the difficulty
+			perPoint: 0.03, // each point above (or below) adds (or takes) 3%
+			min: 0.05,      // never worse than 5%…
+			max: 0.95,      // …or better than 95%
 		},
 		// Where a new game starts (falls back to a location tagged "start").
 		startLocation: "home_bedroom",

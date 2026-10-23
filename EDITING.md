@@ -32,6 +32,10 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Things to say in the Talk menu, Friendship and Romance | `town-social.js` |
 | The barista job: stages, shifts, pay, shift events | `town-work.js` |
 | Getting fit: a second storyline (the gym) | `town-fitness.js` |
+| Home and family: where you live, the flat to rent, rent and pocket money, furniture, chores, the curfew | `town-home.js` |
+| Things on in town on set days (the Saturday market, fireworks night) | `town-events.js`, part 2 |
+| How busy a place is at different times, and dress codes | `town-map.js`: each place's `crowd` and `dressCode` |
+| Your parents and the letting agent | `town-people.js` |
 | Event text for the job | `src/story/mooresville/work.twee` |
 | School subjects, timetable, term dates | `town-school.js` |
 | Events around town | `town-events.js` |
@@ -60,6 +64,10 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Promotion points (Barista 20 / 50) | `town-work.js`, part 3a: `gates` |
 | How often shift events happen (15% each) | `town-work.js`, part 3d: `EVENT_CHANCE` |
 | What makeup does, and for how long | `town-needs.js`, part 3: `made_up` |
+| What Beauty is made of | `town-needs.js`, part 1: Beauty's `derive` list |
+| How many goes the makeup kit has | `town-items.js`: `uses` |
+| Rent, deposit, pocket money, what missing rent does | `town-home.js`, parts 2 and 3 |
+| How likely skill checks are to succeed | `src/01-engine/config.js`: `checks` |
 | How fast hunger, thirst and the rest change | `town-needs.js`, part 1: `perHour` |
 | When a place opens | `town-map.js`: `hours` |
 | Where a person is | `town-people.js`: `schedule` |
@@ -157,7 +165,13 @@ When an action's or a choice's conditions aren't met, it's still shown, greyed o
 | `{ ageAtLeast: 18 }` | you and the person involved are 18+ (**required on anything romantic**) |
 | `{ storyline: { id: "barista_job", stage: "trainee" } }` | a storyline is at that stage (`started: false` = not begun) |
 | `{ storylineCount: { id: "barista_job", key: "shifts", min: 3 } }` | a storyline counter is in range |
-| `{ employed: "grind_barista" }` | you have that job |
+| `{ employed: "grind_barista" }`, `{ employed: true }` | you have that job, or any job |
+| `{ livesAt: "family_home" }`, `{ atHome: true }` | you live there; you're at home now |
+| `{ renting: true }`, `{ renting: "riverside_flat" }` | you rent somewhere (or that place) |
+| `{ furniture: "tv_set" }` | there's one at the home you live in |
+| `{ billMissed: { id: "rent_riverside_flat", min: 2 } }` | that many payments missed in a row |
+| `{ happening: "saturday_market" }` | that city event is on now |
+| `{ crowd: "busy" }` | where you are is that busy (its `crowd` list) |
 | `{ schoolDay: true }`, `{ homeworkDue: true }`, `{ schoolTrouble: { min: 1 } }` | school checks |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", min: 3 } }` | your own story flags and counters |
 | `{ action: "therapy_session" }`, `{ actionElapsed: { min: 60 } }` | (in events) during that action, this far in |
@@ -178,6 +192,9 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ habit: "coffee" }` | count today towards a habit (traits are earned from habits) |
 | `{ trait: "gym_regular" }` / `{ traitRemove: "gym_regular" }` | give / take away a trait |
 | `{ item: { id: "apple", qty: 1 } }` | get an item (negative = use one up) |
+| `{ useUp: "makeup_kit" }` | take one go from an item with `uses` |
+| `{ moveIn: "riverside_flat" }`, `{ leaveHome: true }`, `{ evict: true }` | move home; end your tenancy (deposit back); be evicted (no deposit) |
+| `{ check: { resolver: "skill", skill: "barista", difficulty: 25, label: "Latte art", then: [ … ], else: [ … ] } }` | a skill check (or `resolver: "stat", stat: "beauty"`): `then` on success, `else` on failure |
 | `{ skill: { barista: 0.5 } }` | improve a skill |
 | `{ body: { weight: -0.2 } }` / `{ bodySet: { hair_colour: "pink" } }` | change / set a body part |
 | `{ rel: { friendship: 3 } }` | change how the person you're talking to feels |
@@ -208,6 +225,16 @@ The game's core loop (decided by the user): **a story event → a task you repea
 7. **Occasional events** during the task: list them in the stage's `events`, with `kind: "pool"` and a `chance` (0.15 = 15% each time).
 8. **Rewards:** a stage can unlock things. Give an action, interaction or anything with `conditions` the condition `{ storyline: { id: "barista_job", stage: ["barista", "supervisor"] } }` (and `hidden: true` to keep it secret until then). The café's staff coffee is the example. `onEnter` effects can also give things straight away (money, an item, a text).
 9. **Crossovers:** anything can depend on another storyline's progress: a skill, a stat, a stage. See "Talk about coffee" (needs Barista skill) and "Suggest hanging out" (needs Beauty) in `town-social.js`.
+
+## Life around town
+
+- **Stats worked out from others.** Beauty has a `derive` list instead of a saved value: `{ add: 10 }`, `{ stat: "hygiene", times: 0.2 }`, `{ when: { status: "smartly_dressed" }, add: 10 }`. The Profile tab shows what's counting. Makeup still adds on top. Any stat can work this way.
+- **Things that run out.** Give an item `uses: 10`, and an action the effect `{ useUp: "item_id" }`. The bag shows how many goes are left.
+- **Dress codes.** On a place: `dressCode: { when: { wearing: { attribute: "sportswear", min: 2 } }, text: "Gym kit only…" }`. On a job, the same field covers working a shift.
+- **How busy it is.** On a place: `crowd: [{ when: { time: { from: "08:00", to: "18:00" } }, level: "busy", text: "Shoppers crowd the pavements." }]`. The first true line shows on the place, and `{ crowd: "busy" }` can be tested.
+- **Things on in town.** A `cityEvent` (`town-events.js`, part 2) says where and when. Its activities are actions with `conditions: { happening: "id" }` and `hidden: true`.
+- **Home.** `town-home.js`: residences, rent and pocket money (bills), furniture (kind `"furniture"`, delivered home), chores and the curfew.
+- **Skill checks.** Use them in actions, events and choices: `<<choice "Talk him down (Barista)" { effects: [{ check: { resolver: "skill", skill: "barista", difficulty: 25, then: [{ goto: "Ev_win" }], else: [{ goto: "Ev_lose" }] } }] }>>`. How likely success is lives in `config.js` → `checks`.
 
 ## Writing text (`.twee` files)
 

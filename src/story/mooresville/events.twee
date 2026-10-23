@@ -46,3 +46,25 @@ He sighs. "This is your final year. I'm not going to shout, but I am going to no
 You mumble something. He lets it go, for now.
 
 <<view "event-end">>
+
+:: Ev_night_footsteps
+<<view "event-media">>
+<h1>Footsteps</h1>
+
+The street is dark and empty, and there are footsteps behind you, keeping pace.
+<<when { stat: { id: "stress", min: 60 } }>>Your heart is already hammering.<</when>>
+
+<<choice "Walk faster" "Ev_night_footsteps_fast" { effects: [{ stat: { energy: -2 } }] }>>
+<<choice "Turn round" "Ev_night_footsteps_look" { effects: [{ stat: { stress: -2 } }] }>>
+
+:: Ev_night_footsteps_fast
+<<view "event-media">>
+You speed up until you reach the lights of the main road. When you glance back, there's nobody there.
+
+<<view "event-end">>
+
+:: Ev_night_footsteps_look
+<<view "event-media">>
+You turn. A man in running gear and a head torch gives you an apologetic wave and jogs past. You laugh at yourself, a little shakily.
+
+<<view "event-end">>

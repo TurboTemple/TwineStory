@@ -69,7 +69,7 @@
 
 				if (has("stats")) {
 					box.append(ui.el("h2", { text: "Stats" }));
-					const stats = setup.stats.defs().map((d) => [d.id, d.label]);
+					const stats = setup.stats.defs().filter((d) => !d.derive).map((d) => [d.id, d.label]);
 					for (const [label, value] of [["Set to 0", 0], ["Set to 50", 50], ["Set to 100", 100]]) {
 						box.append(picker(label, stats, "Set", (id) => flow.perform(() => setup.stats.set(id, value))));
 					}

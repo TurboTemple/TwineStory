@@ -286,5 +286,50 @@
 				{ at: "pulsefit_reception", from: "08:00", to: "16:00", days: DAYS.WEEKEND },
 			],
 		});
+
+		npc({
+			id: "dawn_fletcher",
+			name: "Dawn Fletcher",
+			age: 41,
+			pronouns: "she/her",
+			role: "letting agent",
+			desc: "Runs Keys & Co Lettings. Brisk, organised, and keeps a very close eye on who's paid their rent.",
+			body: { height: "average", weight: "average", hair_colour: "auburn", hair_length: "shoulder-length", eye_colour: "green", skin_tone: "fair" },
+			schedule: [{ at: "keys_lettings", from: "09:00", to: "17:30", days: DAYS.MON_SAT }],
+		});
+
+		/* ======================================================================
+		 *  Your family (you live with them at the start: town-home.js)
+		 * ====================================================================== */
+
+		npc({
+			id: "mum",
+			name: "Mum",
+			age: 47,
+			pronouns: "she/her",
+			role: "your mum",
+			tags: ["family"],
+			desc: "Works long shifts at the hospital and worries about you more than she lets on.",
+			body: { height: "average", weight: "average", hair_colour: "light brown", hair_length: "shoulder-length", eye_colour: "brown", skin_tone: "fair" },
+			schedule: [
+				{ at: "home_kitchen", from: "07:00", to: "08:00" },
+				{ at: "home_living_room", from: "18:30", to: "22:30" },
+			],
+		});
+
+		npc({
+			id: "dad",
+			name: "Dad",
+			age: 49,
+			pronouns: "he/him",
+			role: "your dad",
+			tags: ["family"],
+			desc: "An electrician with terrible jokes and a strong opinion about leaving lights on.",
+			body: { height: "tall", weight: "average", hair_colour: "dark brown", hair_length: "short", eye_colour: "blue", skin_tone: "fair" },
+			schedule: [
+				{ at: "home_kitchen", from: "06:30", to: "07:15" },
+				{ at: "home_living_room", from: "18:00", to: "23:00" },
+			],
+		});
 	});
 })();

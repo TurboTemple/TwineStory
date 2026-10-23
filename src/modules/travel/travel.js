@@ -144,6 +144,7 @@
 							const mins = legMins.reduce((a, b) => a + b, 0);
 							const cost = costHooks.get(mode.cost)(mins, legs, mode, ctx);
 							const reasons = cond.test(mode.conditions, ctx) ? [] : cond.explain(mode.conditions, ctx).filter((e) => !e.ok).map((e) => e.text);
+							reasons.push(...setup.world.dressCodeBlocks(to));
 							if (cost > 0 && moneyOn() && !reasons.length) {
 								const from = mode.payWith ?? undefined;
 								const can = (from ?? registry.all("account").map((a) => a.id)).some((id) => setup.money.balance(id) >= cost);

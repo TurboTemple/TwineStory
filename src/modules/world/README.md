@@ -14,7 +14,9 @@ A location with a `parent` is a room (sub-location): a pub's bar and toilets, a 
 - `location` — `{ id, name, district, parent, innerMins, tags[], desc, passage, hours, entry, outdoor }`
   - `passage`: description passage (prefix `Loc_`), shown on Here; falls back to `desc`
   - `hours`: `null` = always open, or `[{ days?: [0–6, 0 = Sunday], from: "HH:MM", to: "HH:MM" }]`
-  - `entry`: entry condition (stored; enforced once travel rules for it are designed)
+  - `entry`: a condition for walking into this room (e.g. only while you live there)
+  - `dressCode`: `{ when: CONDITION, text }` — you can only go in (or travel there) dressed like this; `text` says why not
+  - `crowd`: `[{ when: CONDITION, level: "busy", text }]` — how busy it is: the first entry that's true shows its text on Here; `{ crowd: "busy" }` tests the level. Rooms use their place's list unless they have their own
   - tag `start`: the new-game start location
 
 ## Atmosphere
@@ -26,7 +28,7 @@ The phone's Map app view (`app-map`) lists every place by district with today's 
 `$world = { visited: { [locId]: count } }`. The current location is `$pc.loc` (owned by `character`).
 
 ## API (`setup.world`)
-`loc()`, `here()`, `parent(id)`, `children(id)`, `chain(id)`, `site(id)`, `within(a, b)`, `exitMins(id)`, `isOpen(id, t?)`, `hoursOf(id)`, `nearby()`, `walkTo(id)`, `moveTo(id)`, `addHereSection(name, order, fn)`
+`loc()`, `here()`, `parent(id)`, `children(id)`, `chain(id)`, `site(id)`, `within(a, b)`, `exitMins(id)`, `isOpen(id, t?)`, `hoursOf(id)`, `nearby()`, `walkTo(id)`, `moveTo(id)`, `crowd(id?)`, `dressCodeBlocks(id)`, `addHereSection(name, order, fn)`
 
 ## Conditions
 - `{ at: "loc" }` / `{ at: ["a", "b"] }` — the PC is there, or in a room inside it
