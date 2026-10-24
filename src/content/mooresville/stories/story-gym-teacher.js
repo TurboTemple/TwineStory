@@ -30,7 +30,10 @@
 			role: "PE teacher (Mr Grant)",
 			tags: ["story", "staff"],
 			desc: "The Academy's PE teacher. [Describe Mark here]",
-			schedule: [{ at: "academy_sports_hall", from: "08:30", to: "16:30", days: DAYS.WEEKDAYS }],
+			schedule: [
+				{ at: "academy_canteen", from: "12:00", to: "13:00", days: DAYS.WEEKDAYS }, // lunch in the canteen
+				{ at: "academy_sports_hall", from: "08:30", to: "16:30", days: DAYS.WEEKDAYS },
+			],
 		});
 
 		/* ---- 2. The storyline ------------------------------------------------ */

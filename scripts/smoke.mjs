@@ -170,6 +170,41 @@ async function playTherapy(page) {
 	if (!(await sidebar(page)).includes("Bursting")) failures.push("debug: Bursting effect not shown after bladder set to 100");
 }
 
+/** Debug mode: a school day: attend, five lessons, lunch in the canteen, school's out. */
+async function playSchool(page) {
+	await page.evaluate(() => {
+		const s = window.SugarCube.setup;
+		// Keep the run predictable: no random invitation at lunch.
+		for (const who of ["john", "arvel", "micheal"]) s.events.force(`cosplay_invite_${who}`, false);
+		let d = s.time.day(s.time.now()) + 1;
+		while (!s.education.schoolDay("academy", d)) d++;
+		s.debugTools.skip(s.time.at(d, "08:30") - s.time.now());
+	});
+	await debugRow(page, "Go", "academy");
+	await expectPassage(page, "Here", /Attend school[\s\S]*Library, Sports Hall and Playing Field: Between 15:00 and 17:00/, "school entrance");
+	await click(page, "Attend school");
+	// Lessons were skipped earlier in this run, so Mr Hale has a word first.
+	await expectPassage(page, "Ev_tutor_word", null, "tutor's word");
+	await click(page, "Continue");
+	await expectPassage(page, "Here", /Form Room 12B[\s\S]*Today's lessons/, "form room");
+	// The next lesson is the main button each time.
+	for (let i = 0; i < 3; i++) {
+		await page.locator("#passages .btn-primary").first().click();
+		await page.waitForTimeout(100);
+	}
+	await expectPassage(page, "Here", /Lunch until 13:00[\s\S]*Canteen[\s\S]*Back to class/, "lunch");
+	await click(page, "Boys' Toilets");
+	await expectPassage(page, "Here", /Boys' Toilets[\s\S]*Back to class/, "toilets at lunch");
+	await click(page, "Back to class");
+	await expectPassage(page, "Here", /Form Room 12B/, "after lunch");
+	await click(page, "· 14:00–15:00"); // the last lesson
+	await expectPassage(page, "Here", /School's out[\s\S]*School's finished for today/, "school's out");
+	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
+	await click(page, "Timetable");
+	await expectPassage(page, "Phone_Home", /Monday[\s\S]*09:00 Maths[\s\S]*12:00 Lunch/, "timetable app");
+	await click(page, "Home screen");
+}
+
 /** Debug mode: get the café job, work the first shift, read Jess's text, sleep. */
 async function playJob(page) {
 	const skipTo = (day, hm) => page.evaluate(([d, h]) => {
@@ -260,6 +295,7 @@ async function playChoice(page) {
 	await playTherapy(page);
 	await playJob(page);
 	await playChoice(page);
+	await playSchool(page);
 	failures.push(...errors.map((e) => `debug: ${e}`));
 	await page.close();
 }

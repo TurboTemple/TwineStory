@@ -4,16 +4,24 @@
  * ============================================================================
  *
  * How school works in the game:
- *   - On a school day, go to Form Room 12B. During a lesson's time a
- *     "Go to <subject>" button appears. You can join from 5 minutes before
- *     until 15 minutes before the end; more than 5 minutes late is noted
- *     (earlyMins, lastEntryMins and lateMins in part 2).
+ *   - At the school entrance, tap "Attend school". You go to Form Room 12B.
+ *   - Five lessons, one after another: tap each one to have it. If you
+ *     arrive late you can still join a lesson until 15 minutes before it
+ *     ends; more than 5 minutes late is noted (lastEntryMins and lateMins
+ *     in part 2).
+ *   - Lunch is in the middle (`breaks` in part 2): the bell takes you to
+ *     the canteen. Talk to the students and teachers there, go to the boys'
+ *     or girls' toilets, and random events can happen (events that use the
+ *     trigger "school:break"). "Back to class" starts the next lesson.
+ *   - After the last lesson you're back at the entrance. "Leave school"
+ *     goes early: the lessons left count as skipped.
  *   - A lesson in a subject that sets homework gives you homework, due at
  *     08:40 (homeworkDue) that many days later (only one piece per subject at a time).
  *     "Do homework" (your bedroom) or "Study" (the library) finishes it.
  *   - The next day, every lesson you missed counts as skipped, and homework
- *     past its due time counts as late. Mr Hale has a word about it when
- *     you next walk into the form room (part 4).
+ *     past its due time counts as late. Mr Hale has a word about it at the
+ *     start of your next school day (part 4).
+ *   - The phone's Timetable app shows the week.
  *
  * Term dates follow a typical English school year. Everything here is
  * open to change.
@@ -24,7 +32,9 @@
  *   Add a subject:      subject({ id: "chemistry", label: "Chemistry", teacher: "Mr Shah", homeworkDays: 3 });
  *                       then put "chemistry" into the timetable (part 2).
  *   No homework:        homeworkDays: null
- *   Change the times:   edit `periods` (one entry per lesson slot).
+ *   Change the times:   edit `periods` (one entry per lesson slot) and `breaks`.
+ *   Add a break:        { id: "morning_break", label: "Break", from: "10:00", to: "10:15", at: "academy_canteen" }
+ *                       (`at` is where you spend it; move the lessons round it).
  *   Change the week:    edit `week`: for each day, one subject per period, in order.
  *                       Use null for a free period.
  *   Dates:              "YYYY-MM-DD".
@@ -43,11 +53,10 @@
 
 		const subject = (def) => R.define("subject", def);
 
-		subject({ id: "english", label: "English", teacher: "Mrs Clarke", homeworkDays: 3 });
 		subject({ id: "maths", label: "Maths", teacher: "Mr Lloyd", homeworkDays: 2 });
-		subject({ id: "history", label: "History", teacher: "Mr Hale", homeworkDays: 3 });
-		subject({ id: "biology", label: "Biology", teacher: "Dr Fry", homeworkDays: 4 });
-		subject({ id: "art", label: "Art", teacher: "Ms Costa", homeworkDays: null });
+		subject({ id: "english", label: "English", teacher: "Mrs Clarke", homeworkDays: 3 });
+		subject({ id: "science", label: "Science", teacher: "Dr Fry", homeworkDays: 3 });
+		subject({ id: "ict", label: "ICT", teacher: "Mr Hale", homeworkDays: 4 });         // also your form tutor
 		subject({ id: "pe", label: "PE", teacher: "Mr Grant", homeworkDays: null }); // Mark Grant: stories/story-gym-teacher.js
 
 		/* ======================================================================
@@ -65,22 +74,28 @@
 			lastEntryMins: 15,   // you can't go in during the last this-many minutes of a lesson
 			homeworkDue: "08:40", // homework is due at this time on its due day
 
-			// Lesson slots, in order. Break is 11:00–11:20, lunch 12:20–13:10.
+			// Lesson slots, in order: five lessons, one after another.
 			periods: [
 				{ from: "09:00", to: "10:00" },
 				{ from: "10:00", to: "11:00" },
-				{ from: "11:20", to: "12:20" },
-				{ from: "13:10", to: "14:10" },
-				{ from: "14:10", to: "15:10" },
+				{ from: "11:00", to: "12:00" },
+				// (lunch, below)
+				{ from: "13:00", to: "14:00" },
+				{ from: "14:00", to: "15:00" },
 			],
 
-			// The timetable: 1 = Monday … 5 = Friday, one subject per slot above.
+			// Breaks between lessons. `at` is where you spend them.
+			breaks: [
+				{ id: "lunch", label: "Lunch", from: "12:00", to: "13:00", at: "academy_canteen" },
+			],
+
+			// The timetable: 1 = Monday … 5 = Friday, one subject per lesson slot above.
 			week: {
-				1: ["english", "maths", "history", "biology", "art"],
-				2: ["maths", "history", "english", "pe", "biology"],
-				3: ["biology", "english", "maths", "history", "art"],
-				4: ["history", "maths", "biology", "english", "pe"],
-				5: ["english", "art", "maths", "history", "biology"],
+				1: ["maths", "english", "science", "ict", "pe"],
+				2: ["english", "science", "maths", "pe", "ict"],
+				3: ["science", "maths", "ict", "english", "pe"],
+				4: ["ict", "english", "science", "maths", "pe"],
+				5: ["maths", "ict", "english", "science", "pe"],
 			},
 
 			// Term time. Outside these dates there are no lessons.
@@ -108,7 +123,7 @@
 		 *  4. Skipping: your form tutor has a word
 		 * ======================================================================
 		 *
-		 * Plays when you walk into the form room while Mr Hale is there, if
+		 * Plays at the start of a school day (registration in the form room), if
 		 * you've skipped lessons or handed homework in late since the last
 		 * time. Afterwards the count starts again. Its text (which says how
 		 * many) is the passage "Ev_tutor_word" in events.twee.
@@ -118,8 +133,8 @@
 			id: "tutor_word",
 			kind: "story",
 			passage: "Ev_tutor_word",
-			triggers: ["world:enter"],
-			conditions: { at: "academy_form_room", npcHere: "mr_hale", schoolTrouble: { min: 1 } },
+			triggers: ["school:dayStart"],
+			conditions: { schoolTrouble: { min: 1 } },
 			effects: [{ stat: { stress: 5 } }, { schoolClearTrouble: true }],
 		});
 	});

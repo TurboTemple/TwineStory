@@ -52,8 +52,8 @@
 		// The school day for everyone in form 12B: lunch in the canteen,
 		// otherwise in the form room. (Lunch comes first so it wins.)
 		const schoolDay = [
-			{ at: "academy_canteen", from: "12:20", to: "13:10", days: DAYS.WEEKDAYS },
-			{ at: "academy_form_room", from: "08:40", to: "15:20", days: DAYS.WEEKDAYS },
+			{ at: "academy_canteen", from: "12:00", to: "13:00", days: DAYS.WEEKDAYS },
+			{ at: "academy_form_room", from: "08:40", to: "15:00", days: DAYS.WEEKDAYS },
 		];
 
 		/* ======================================================================
@@ -104,7 +104,7 @@
 			schedule: [
 				...schoolDay,
 				{ at: "threadline_floor", from: "16:00", to: "17:30", days: DAYS.FRI },
-				{ at: "arcade_concourse", from: "11:00", to: "16:00", days: DAYS.SAT },
+				{ at: "arcade", from: "11:00", to: "16:00", days: DAYS.SAT },
 			],
 		});
 
@@ -150,9 +150,12 @@
 			age: 41,
 			pronouns: "he/him",
 			role: "form tutor",
-			desc: "Your form tutor and history teacher. Tired tweed jacket, endless patience, terrible puns.",
+			desc: "Your form tutor and ICT teacher. Tired tweed jacket, endless patience, terrible puns.",
 			body: { height: "tall", weight: "average", hair_colour: "dark brown", hair_length: "short", eye_colour: "brown", skin_tone: "light" },
-			schedule: [{ at: "academy_form_room", from: "08:30", to: "15:30", days: DAYS.WEEKDAYS }],
+			schedule: [
+				{ at: "academy_canteen", from: "12:00", to: "13:00", days: DAYS.WEEKDAYS }, // on lunch duty
+				{ at: "academy_form_room", from: "08:30", to: "15:30", days: DAYS.WEEKDAYS },
+			],
 		});
 
 		npc({
@@ -259,7 +262,7 @@
 			role: "receptionist",
 			desc: "Keeps the Wellbeing Centre running: phones, bookings and the occasional emergency.",
 			body: { height: "average", weight: "slim", hair_colour: "light brown", hair_length: "short", eye_colour: "blue", skin_tone: "light" },
-			schedule: [{ at: "wellbeing_reception", from: "09:00", to: "17:00", days: DAYS.WEEKDAYS }],
+			schedule: [{ at: "wellbeing", from: "09:00", to: "17:00", days: DAYS.WEEKDAYS }],
 		});
 
 		npc({

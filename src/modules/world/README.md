@@ -5,7 +5,9 @@ Districts, locations (with **rooms inside them**), opening hours and the **`Here
 ## Places and rooms
 A location with a `parent` is a room (sub-location): a pub's bar and toilets, a shop's fitting rooms. Rooms can nest. The top-level location is the **site**.
 - Travel goes between sites. Leaving from a room first walks you out (`exitMins`).
-- Walking between rooms of a site takes the target room's `innerMins` (default 1). By default a room connects to its parent and the rooms inside it. Give a place or room `links: ["other_room", …]` to say exactly which rooms it opens onto instead (links work both ways), e.g. bedroom → living room → hallway. `world.neighbours(id)` lists them.
+- Walking between rooms of a site takes the target room's `innerMins` (default 1). By default a room connects to its parent and the rooms inside it. Give a place or room `links: ["other_room", …]` to say exactly which rooms it opens onto instead (links work both ways), e.g. bedroom → living room → hallway. `world.neighbours(id)` lists them. `links: []` means no doors (you get in and out some other way, e.g. the school day).
+- `roomsLabel` (e.g. `"Shops"`) is the heading over a place's rooms (default "Around here"). Rooms locked for the same reason share one note under the buttons.
+- A room merged into another keeps old saves working with `R.alias("location", old, new)`: `world.loc()` moves a saved location onto the new id.
 - A room without its own `hours` follows its parent's.
 - **At closing time** anyone in a closed room is shown out to the site (`world:closed`).
 

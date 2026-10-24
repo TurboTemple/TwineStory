@@ -39,7 +39,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | How busy a place is at different times, and dress codes | `town-map.js`: each place's `crowd` and `dressCode` |
 | Your parents and the letting agent | `town-people.js` |
 | Event text for the job | `src/story/mooresville/work.twee` |
-| School subjects, timetable, term dates | `town-school.js` |
+| School subjects, timetable, lunch, term dates | `town-school.js` |
 | Events around town | `town-events.js` |
 | Event text | `src/story/mooresville/events.twee` |
 | Weather and the climate | `town-weather.js` |
@@ -307,7 +307,7 @@ Each key character has a storyline in `src/content/mooresville/stories/story-<na
 
 - **How each starts** (decided by the user):
   - Dennis: your first hypnotherapy session. Sessions unlock when your parents send you, after more than three nights out past the 10pm curfew (the `late_home` counter; the event is `Ev_hypnotherapy_sent`).
-  - The cosplay club: you go to the club after one of them invites you at school (a random event).
+  - The cosplay club: you go to the club after one of them invites you at school lunch (a random event).
   - Mark: you sign up for his volleyball class.
   - Lenny: you get the job at The Daily Grind.
   - The MMO clan: you first play online.
@@ -326,7 +326,7 @@ Each key character has a storyline in `src/content/mooresville/stories/story-<na
 1. **Copy the two files** into the game: `templates/storyline.js` → `src/content/mooresville/town-<story>.js`, and `templates/storyline.twee` → `src/story/mooresville/<story>.twee`.
 2. **Rename** every `my_story` to your own id (lowercase_with_underscores), and change `high_street` to where your story happens.
 3. **The stages** (part 1): give each a `label`, `desc` and `hint` (the Diary shows them), and `gates` for when it moves on. Gates can test a counter, a skill, a stat, a friendship, another storyline… anything in the conditions table.
-4. **How it starts** (part 2): an event with `kind: "story"` and a trigger (`"world:enter"` when you arrive somewhere, `"time:hour"`, `"npc:met"`…), or `start: "first_stage"` on the storyline to begin with a new game, or a Talk option (below).
+4. **How it starts** (part 2): an event with `kind: "story"` and a trigger (`"world:enter"` when you arrive somewhere, `"time:hour"`, `"npc:met"`, `"school:break"` at school lunch, `"school:dayStart"`…), or `start: "first_stage"` on the storyline to begin with a new game, or a Talk option (below).
 5. **The task** (part 3): an action whose effects add to the counter, with a `random` outcome. Several tasks can feed the same counter.
 6. **Rewards** (part 4): anything with `conditions: { storyline: { id: "my_story", stage: "done" } }` and `hidden: true` appears only from that stage.
 7. **Write the text** in the `.twee` file: one `Ev_` passage per event, with choices and `<<when>>` where you want them.

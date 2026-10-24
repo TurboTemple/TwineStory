@@ -56,6 +56,17 @@
  *                     onto its place's entrance and any rooms inside it.
  *                     You can only travel to other places from a place's
  *                     entrance (the place itself, e.g. your hallway).
+ *                     links: [] means no doors at all (the school form room:
+ *                     you come and go through the school day).
+ *   roomsLabel: "Shops"
+ *                   → the heading over the rooms list (default "Around here").
+ *   entry: CONDITION
+ *                   → you can only go in while this is true (the school's
+ *                     library and sports hall: after school).
+ *
+ *  Merging a room into another (so old saves still work):
+ *   R.alias("location", "old_room_id", "new_room_id");
+ *   A saved game that was in the old room moves to the new one.
  *   crowd: [{ when: CONDITION, level: "busy", text: "…" }, …]
  *                   → how busy it is: the first entry that's true shows its
  *                     text, and { crowd: "busy" } tests its level. Rooms use
@@ -154,7 +165,7 @@
 				{ text: "Mist hangs low over the water.", when: { weather: { kind: "fog" } } },
 				{ text: "The river is high and fast after the rain.", when: wet },
 			],
-			arcade_concourse: [
+			arcade: [
 				"Piped music and the squeak of trainers on polished floors.",
 				"A child is having a meltdown outside the toy shop.",
 				{ text: "The concourse is packed with people escaping the rain.", when: wet },
@@ -209,13 +220,22 @@
 			district: "northfield",
 			tags: ["school", "bus_stop"],
 			hours: [hours.on(DAYS.WEEKDAYS, "07:45", "17:00")],
+			links: ["academy_library", "academy_sports_hall", "academy_field"], // after school
 		});
-		room({ id: "academy_form_room", name: "Form Room 12B", parent: "academy", tags: ["school", "classroom"], innerMins: 2 });
-		room({ id: "academy_canteen", name: "Canteen", parent: "academy", tags: ["school", "seating"], innerMins: 2 });
-		room({ id: "academy_library", name: "Library", parent: "academy", tags: ["school", "quiet"], innerMins: 2 });
-		room({ id: "academy_sports_hall", name: "Sports Hall", parent: "academy", tags: ["school"], innerMins: 3 });
-		room({ id: "academy_field", name: "Playing Field", parent: "academy", tags: ["school"], outdoor: true, innerMins: 3 });
-		room({ id: "academy_toilets", name: "Toilets", parent: "academy", tags: ["toilet", "sink"] });
+		// The school day (town-school.js): "Attend school" at the entrance takes
+		// you to the form room for lessons, and lunch is in the canteen with the
+		// toilets off it. None of these rooms open onto the entrance (links: []):
+		// you come and go through the school day.
+		room({ id: "academy_form_room", name: "Form Room 12B", parent: "academy", tags: ["school", "classroom"], links: [] });
+		room({ id: "academy_canteen", name: "Canteen", parent: "academy", tags: ["school", "seating"], links: ["academy_boys_toilets", "academy_girls_toilets"] });
+		room({ id: "academy_boys_toilets", name: "Boys' Toilets", parent: "academy", tags: ["toilet", "sink"], links: ["academy_canteen"] });
+		room({ id: "academy_girls_toilets", name: "Girls' Toilets", parent: "academy", tags: ["toilet", "sink"], links: ["academy_canteen"] });
+		R.alias("location", "academy_toilets", "academy_canteen"); // the old single toilets
+		// After school (from the end of lessons until the school shuts), these open off the entrance.
+		const afterSchool = { time: { from: "15:00", to: "17:00" } };
+		room({ id: "academy_library", name: "Library", parent: "academy", tags: ["school", "quiet"], innerMins: 2, entry: afterSchool });
+		room({ id: "academy_sports_hall", name: "Sports Hall", parent: "academy", tags: ["school"], innerMins: 3, entry: afterSchool });
+		room({ id: "academy_field", name: "Playing Field", parent: "academy", tags: ["school"], outdoor: true, innerMins: 3, entry: afterSchool });
 
 		// The community centre: halls for clubs (the cosplay club: story-cosplay-club.js).
 		place({ id: "community_centre", name: "Northfield Community Centre", district: "northfield", hours: [hours.daily("09:00", "22:00")] });
@@ -279,11 +299,13 @@
 			id: "wellbeing",
 			name: "Mooresville Wellbeing Centre",
 			district: "town_centre",
-			tags: ["health"],
+			tags: ["health", "seating"],
 			hours: [hours.on(DAYS.WEEKDAYS, "09:00", "17:00")],
 		});
-		room({ id: "wellbeing_reception", name: "Reception", parent: "wellbeing" });
-		room({ id: "wellbeing_waiting", name: "Waiting Room", parent: "wellbeing", tags: ["seating"] });
+		// You walk in to the waiting room (with the reception desk); the
+		// session is through the door, in the therapy room.
+		R.alias("location", "wellbeing_reception", "wellbeing"); // old rooms, now part of the waiting room
+		R.alias("location", "wellbeing_waiting", "wellbeing");
 		room({ id: "wellbeing_therapy", name: "Therapy Room", parent: "wellbeing", innerMins: 1 });
 		room({ id: "wellbeing_toilets", name: "Toilets", parent: "wellbeing", tags: ["toilet", "sink"] });
 
@@ -327,10 +349,12 @@
 			id: "arcade",
 			name: "The Arcade Shopping Centre",
 			district: "westgate",
-			tags: ["hub", "bus_stop", "shopping"],
+			tags: ["hub", "bus_stop", "shopping", "seating"],
 			hours: [hours.on(DAYS.MON_SAT, "09:00", "20:00"), hours.on(DAYS.SUN, "10:30", "16:30")],
+			// One hub: the concourse, with every shop listed under this heading.
+			roomsLabel: "Shops",
 		});
-		room({ id: "arcade_concourse", name: "Main Concourse", parent: "arcade", tags: ["shopping", "seating"] });
+		R.alias("location", "arcade_concourse", "arcade"); // old room, now the concourse itself
 		room({ id: "arcade_food_court", name: "Food Court", parent: "arcade", tags: ["shopping", "seating"], innerMins: 2 });
 		room({ id: "arcade_freshway", name: "FreshWay Supermarket", parent: "arcade", tags: ["shopping", "supermarket"], innerMins: 2 });
 		room({ id: "arcade_urban_thread", name: "Urban Thread", parent: "arcade", tags: ["shopping", "clothes"], innerMins: 2 });
@@ -360,9 +384,11 @@
 			id: "calm_waters",
 			name: "Calm Waters Hypnotherapy",
 			district: "town_centre",
+			tags: ["seating"],
 			hours: [hours.on(DAYS.WEEKDAYS, "10:00", "18:00")],
 		});
-		room({ id: "calm_waters_waiting", name: "Waiting Room", parent: "calm_waters", tags: ["seating"] });
+		// The door opens into the waiting room; the session is in the therapy room.
+		R.alias("location", "calm_waters_waiting", "calm_waters"); // old room, now the place itself
 		room({ id: "calm_waters_room", name: "Therapy Room", parent: "calm_waters", tags: ["seating"] });
 
 		/* ---- Letting agent (High Street) -------------------------------------- */

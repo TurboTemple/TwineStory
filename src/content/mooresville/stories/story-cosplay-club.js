@@ -25,7 +25,6 @@
 	"use strict";
 
 	(setup.__content ??= []).push((R) => {
-		const { DAYS } = setup.town;
 
 		/** When the club meets: Tuesday and Thursday evenings, Saturday afternoons. */
 		const clubTimes = [
@@ -61,18 +60,14 @@
 		/* ---- 3. The invitation: a random event at school --------------------- */
 
 		// One event per member; whichever comes up, the others won't (the
-		// "cosplay_invited" flag). chance is per arrival at the school.
+		// "cosplay_invited" flag). chance is per lunchtime at school
+		// (the trigger "school:break").
 		const invite = (who) => R.define("storylet", {
 			id: `cosplay_invite_${who}`,
 			passage: `Ev_cosplay_invite_${who}`,
-			triggers: ["world:enter"],
-			conditions: {
-				at: "academy",
-				weekday: DAYS.WEEKDAYS,
-				time: { from: "08:00", to: "16:00" },
-				not: { flag: "cosplay_invited" },
-			},
-			chance: 0.1,     // DESIGN: how likely (10% each time you arrive, per member)
+			triggers: ["school:break"],
+			conditions: { not: { flag: "cosplay_invited" } },
+			chance: 0.1,     // DESIGN: how likely (10% each lunchtime, per member)
 			group: "cosplay_invite",
 			cooldown: 1440,  // at most one a day
 			effects: [{ meet: who }, { flag: "cosplay_invited" }],
