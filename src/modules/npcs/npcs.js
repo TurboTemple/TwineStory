@@ -309,7 +309,7 @@
 				// The picture: assets/media/npc/<id>/here.* (a picture of them out and about), else their portrait.
 				const pic = setup.media.render("npc", id, { sub: "here", class: "media-wide", alt: def.name }) ?? setup.media.render("npc", id, { class: "media-wide", alt: def.name });
 				if (pic) box.append(pic);
-				else if (setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/npc/${id}/here.webp (or .gif, .mp4), or npc/${id}.webp` }));
+				else box.append(setup.media.slot(`npc/${id}/here`));
 				const text = ui.el("div", { class: "scene-text" });
 				const passage = def.passage ?? `Npc_${id}`;
 				if (setup.sc.hasPassage(passage)) ui.wiki(text, passage);

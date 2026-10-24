@@ -88,7 +88,8 @@ async function playTown(page, label) {
 	}
 	await click(page, "Bathroom");
 	await click(page, "Go for a wee");
-	await scene(page, /Go for a wee[\s\S]*Go for a wee edit here/, `${label}: action screen`);
+	// Every action screen has a picture frame, even before a picture is uploaded.
+	await scene(page, label === "release" ? /Go for a wee[\s\S]*Picture goes here[\s\S]*Go for a wee edit here/ : /Go for a wee[\s\S]*Picture: assets\/media\/action\/use_toilet[\s\S]*Go for a wee edit here/, `${label}: action screen`);
 	await click(page, "Have a shower");
 	await scene(page, /Have a shower edit here[\s\S]*Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Continue/, `${label}: shower`);
 	await expectPassage(page, "Here", /Bathroom/, `${label}: back from the shower`);
