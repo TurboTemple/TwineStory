@@ -26,7 +26,7 @@ The wardrobe lists what you're wearing and what you could put on, each with a ti
 `wear(uid)`, `takeOff(uid, to?)`, `worn()`, `wornItems()`, `isWearable(def)`, `dressed()`, `canChangeHere()`, `saveOutfit(name)`, `wearOutfit(name)`, `deleteOutfit(name)`
 
 ## Conditions
-`{ wearing: "item" }` / `{ wearing: { attribute, min? } }` (at least `min` things with the attribute, default 1), `{ dressed: true }`
+`{ wearing: "item" }` / `{ wearing: { attribute, min? } }` (at least `min` things with the attribute, default 1) / `{ wearing: { slot } }` (anything in that slot), `{ dressed: true }`
 
 ## UI
 "Get changed" on Here (where you can change) and in the sidebar's Profile tab → `Clothing_Wardrobe`.

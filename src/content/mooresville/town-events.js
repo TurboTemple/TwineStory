@@ -145,6 +145,7 @@
 			mins: 30,
 			hidden: true,
 			conditions: { happening: "saturday_market" },
+			cooldown: 240, // once every 4 hours
 			effects: [{ stat: { mood: 3 } }],
 		});
 		R.define("action", {
@@ -173,7 +174,77 @@
 			mins: 45,
 			hidden: true,
 			conditions: { happening: "fireworks_night" },
+			cooldown: 1440, // once
 			effects: [{ stat: { mood: 8, stress: -4 } }],
+		});
+
+		/* ----------------------------------------------------------------------
+		 *  Clubs at the community centre (the Main Hall), each once a week.
+		 *  The cosplay club also meets there (Tue, Thu evenings and Saturday
+		 *  afternoon: stories/story-cosplay-club.js), so these avoid its times.
+		 *
+		 *  club({ id, label, days, from, to, mins, price, effects, conditions })
+		 *  makes the city event (shown as "On now" and in the calendar) and its
+		 *  action (shown only while it's on, once per session).
+		 * ---------------------------------------------------------------------- */
+
+		const club = ({ id, label, desc, days, from, to, mins, price, effects, conditions }) => {
+			R.define("cityEvent", { id, label, at: "community_hall", desc, days, hours: { from, to } });
+			R.define("action", {
+				id: `club_${id}`,
+				label: `Join in: ${label}`,
+				at: "community_hall",
+				mins,
+				hidden: true,
+				cooldown: 1440, // once a session
+				conditions: { all: [{ happening: id }, ...(conditions ? [conditions] : [])] },
+				costs: price ? [{ money: { amount: -price, reason: label } }] : [],
+				effects,
+			});
+		};
+
+		club({
+			id: "yoga_class",
+			label: "Yoga class",
+			desc: "Mats in rows, candles that aren't allowed to be lit, and a very calm instructor.",
+			days: [1, 3], // Monday and Wednesday
+			from: "18:00",
+			to: "19:00",
+			mins: 60,
+			price: 5,
+			conditions: { wearing: { attribute: "sportswear" }, text: "Something sporty to move in" },
+			effects: [{ stat: { stress: -10, mood: 3, energy: -4 } }, { body: { stomach: 0.3, legs: 0.3 } }, { status: "calm" }],
+		});
+		club({
+			id: "art_class",
+			label: "Art class",
+			desc: "Easels, a bowl of fruit nobody is allowed to eat, and a lot of charcoal.",
+			days: [1], // Monday
+			from: "19:15",
+			to: "21:00",
+			mins: 90,
+			price: 5,
+			effects: [{ stat: { mood: 5, stress: -6 } }],
+		});
+		club({
+			id: "choir",
+			label: "Community choir",
+			desc: "Twenty people of every age, singing slightly flat with enormous enthusiasm.",
+			days: [5], // Friday
+			from: "18:00",
+			to: "19:30",
+			mins: 90,
+			effects: [{ stat: { mood: 7, stress: -4, energy: -3 } }],
+		});
+		club({
+			id: "board_games",
+			label: "Board games afternoon",
+			desc: "Tables of board games, a tea urn and some very competitive pensioners.",
+			days: [0], // Sunday
+			from: "14:00",
+			to: "17:00",
+			mins: 120,
+			effects: [{ stat: { mood: 5, stress: -4 } }],
 		});
 	});
 })();

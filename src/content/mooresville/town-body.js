@@ -29,10 +29,15 @@
  * ---------------------------------------------------------------------------
  *   id, label, desc   the part, its name, and a note shown in the sidebar's Profile tab
  *   start             the default on the new game screen
- *   creation: true    the player picks it on the new game screen (all parts here)
+ *   creation: true    the player picks it on the new game screen
+ *                     (the fitness parts aren't picked: everyone starts the same)
  *   order, group      position, and the heading it's listed under ("Looks")
  *   min, max, unit    for numbers
  *   change, perDay    how it changes by itself: "grow" adds perDay each day
+ *
+ *  Workouts build the fitness parts (arms, legs, stomach, bum): see the
+ *  workout() helper in town-actions.js, e.g. squats → { bum: 1.5, legs: 0.5 }.
+ *  They don't fade by themselves (change: "none").
  *
  *  Actions change parts with { body: { weight: -0.2 } } (add) or
  *  { bodySet: { hair_colour: "pink" } } (set).
@@ -133,6 +138,84 @@
 			change: "grow",
 			perDay: 0.04,
 			desc: "Grows about a centimetre a month. Snips on the High Street can cut it.",
+		});
+
+		/* ---- Fitness: built up by working out (town-actions.js) -------------- */
+		// Each is a 0–100 scale. A focused half-hour workout adds 1.5 to the
+		// part it works, a full workout 0.5 to each.
+
+		part({
+			id: "arms",
+			label: "Arms",
+			kind: "number",
+			min: 0,
+			max: 100,
+			start: 20,
+			order: 10,
+			group: "Fitness",
+			creation: false,
+			bands: [
+				{ label: "soft", below: 30 },
+				{ label: "toned", below: 55 },
+				{ label: "strong", below: 80 },
+				{ label: "muscular" },
+			],
+			desc: "Gets stronger with weights: arm curls at PulseFit, swimming, press-ups.",
+		});
+		part({
+			id: "legs",
+			label: "Legs",
+			kind: "number",
+			min: 0,
+			max: 100,
+			start: 25,
+			order: 11,
+			group: "Fitness",
+			creation: false,
+			bands: [
+				{ label: "soft", below: 30 },
+				{ label: "toned", below: 55 },
+				{ label: "athletic", below: 80 },
+				{ label: "powerful" },
+			],
+			desc: "Running, squats and the treadmill build them up.",
+		});
+		part({
+			id: "stomach",
+			label: "Stomach",
+			kind: "number",
+			min: 0,
+			max: 100,
+			start: 25,
+			order: 12,
+			group: "Fitness",
+			creation: false,
+			bands: [
+				{ label: "soft", below: 30 },
+				{ label: "flat", below: 55 },
+				{ label: "toned", below: 80 },
+				{ label: "six-pack" },
+			],
+			desc: "Core workouts, swimming and yoga tone it.",
+		});
+		part({
+			id: "bum",
+			label: "Bum",
+			kind: "number",
+			min: 0,
+			max: 100,
+			start: 40,
+			order: 13,
+			group: "Fitness",
+			creation: false,
+			bands: [
+				{ label: "flat", below: 15 },
+				{ label: "small", below: 35 },
+				{ label: "average", below: 55 },
+				{ label: "round", below: 75 },
+				{ label: "big" },
+			],
+			desc: "Squats make it bigger and rounder.",
 		});
 	});
 })();

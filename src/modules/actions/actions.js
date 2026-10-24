@@ -11,6 +11,10 @@
  * only shows if nothing more important (an event, a story moment, the
  * daily summary) wants the screen. actions.illustrate() asks for one.
  *
+ * Cooldowns: an action with `cooldown: 240` can't be done again until 4
+ * hours after the last time (it shows greyed out with "Not again for …").
+ * When each action was last done is saved in $acts.last.
+ *
  * Events:
  *   action:start      { action, ctx }
  *   action:checkpoint { action, elapsed, ctx, result, interrupt(reason) }
@@ -27,8 +31,11 @@
 
 	(setup.__modules ??= []).push({
 		id: "actions",
-		version: 1,
+		version: 2, // 2: cooldowns ($acts)
 		deps: ["world"],
+		// Saved state ($acts): last: { actionId: time it was last done }
+		state: "acts",
+		defaultState: () => ({ last: {} }),
 
 		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
 			registry.defineType("action", {
@@ -36,6 +43,8 @@
 				defaults: {
 					at: [], atTag: null, whenClosed: false, desc: "", tags: [], mins: 0, durations: null, checkpoints: [], conditions: null,
 					costs: [], effects: [], perHour: [], always: [], interruptible: true, passage: null,
+					// Minutes before it can be done again (0 = any time).
+					cooldown: 0,
 					// Decided by the user: a locked action shows what it is, greyed out,
 					// with what's needed. `hidden: true` hides it completely instead.
 					// `showIf`: only listed at all while this is true (e.g. once a
@@ -61,6 +70,7 @@
 					if (def.durations && !def.durations.every((d) => (ok(d) && d > 0) || hm(d))) errs.push('durations must be whole minutes > 0 or "HH:MM" (until that time)');
 					if (!setup.util.toArray(def.at).length && !def.atTag && !def.with && !def.withTag) errs.push("needs `at` (location ids), `atTag`, `with` or `withTag`");
 					if (!def.checkpoints.every((c) => ok(c) && c > 0)) errs.push("checkpoints must be whole numbers > 0");
+					if (!ok(def.cooldown)) errs.push("cooldown must be whole minutes ≥ 0");
 					return errs;
 				},
 			});
@@ -98,13 +108,23 @@
 			/** Offered with this person, here? */
 			const offeredWith = (def, npc) => personal(def) && forNpc(def, npc) && (!setup.util.toArray(def.at).length && def.atTag == null ? true : atHere(def));
 
+			/** @returns {number|null} Minutes until an action's cooldown is over (null if it's ready). */
+			const cooldownLeft = (def) => {
+				const last = setup.vars().acts?.last[def.id];
+				if (!def.cooldown || last == null) return null;
+				const left = last + def.cooldown - time.now();
+				return left > 0 ? left : null;
+			};
+
 			/**
 			 * Every reason an action can't be done now: not open (unless the
-			 * action has `whenClosed: true`), conditions, then price.
+			 * action has `whenClosed: true`), its cooldown, conditions, then price.
 			 */
 			const blockers = (def, ctx) => {
 				const reasons = [];
 				if (!def.whenClosed && ctx.loc && !setup.world.isOpen(ctx.loc)) reasons.push("It's open");
+				const left = cooldownLeft(def);
+				if (left != null) reasons.push(`Not again for ${fmt.duration(left)}`);
 				if (!cond.test(def.conditions, ctx)) reasons.push(...cond.explain(def.conditions, ctx).filter((e) => !e.ok).map((e) => e.text));
 				const price = priceOf(def);
 				if (price && moneyOn() && setup.money.balance() < price) reasons.push(`${fmt.money(price)} to pay`);
@@ -195,6 +215,7 @@
 						time.interrupt(interrupted);
 					};
 					running = { def, ctx, result };
+					if (def.cooldown) setup.vars().acts.last[id] = time.now();
 					try {
 						effects.run(def.costs, ctx, result);
 						bus.emit("action:start", { action: id, ctx });

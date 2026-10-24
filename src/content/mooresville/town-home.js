@@ -170,14 +170,14 @@
 			label: "Do the washing up",
 			at: "home_kitchen",
 			mins: 20,
-			effects: [{ rel: { npc: "mum", friendship: 2 } }, { rel: { npc: "dad", friendship: 1 } }, { stat: { stress: 1 } }],
+			effects: [{ rel: { npc: "mum", friendship: 2 } }, { rel: { npc: "dad", friendship: 1 } }, { stat: { stress: 1, energy: -2 } }],
 		});
 		chore({
 			id: "chore_hoover",
 			label: "Hoover the living room",
 			at: "home_living_room",
 			mins: 25,
-			effects: [{ rel: { npc: "dad", friendship: 2 } }, { rel: { npc: "mum", friendship: 1 } }, { stat: { energy: -3 } }],
+			effects: [{ rel: { npc: "dad", friendship: 2 } }, { rel: { npc: "mum", friendship: 1 } }, { stat: { energy: -3, stress: 1 } }],
 		});
 
 		// The curfew (decided by the user: 10pm): living at home and still out at

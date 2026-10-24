@@ -218,14 +218,17 @@
 			// { wearing: "item_id" } — you have it on.
 			// { wearing: { attribute: "smart", min: 2 } } — at least `min`
 			// (default 1) things you're wearing have that attribute.
+			// { wearing: { slot: "outer" } } — something is on in that slot (a coat).
 			cond.register("wearing", {
 				test(spec) {
 					const worn = clothing.wornItems();
 					if (typeof spec === "string") return worn.some((w) => w.item.id === spec);
+					if (spec.slot) return clothing.covers(spec.slot);
 					return worn.filter((w) => w.item.attributes.includes(spec.attribute)).length >= (spec.min ?? 1);
 				},
 				describe: (spec) => (typeof spec === "string"
 					? `Wearing ${registry.tryGet("item", spec)?.name ?? spec}`
+					: spec.slot ? `Wearing something as your ${(registry.tryGet("clothingSlot", spec.slot)?.label ?? spec.slot).toLowerCase()}`
 					: `Wearing ${spec.min > 1 ? `${spec.min} things` : "something"} ${spec.attribute}`),
 			});
 

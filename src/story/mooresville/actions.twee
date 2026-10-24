@@ -227,7 +227,7 @@
 [Buy a day pass edit here]
 
 :: Act_gym_workout
-[Work out edit here]
+[Full workout edit here]
 
 :: Act_window_shop
 [Window-shop edit here]
@@ -348,7 +348,7 @@
 [Take out £50 edit here]
 
 :: Act_bank_pay_in
-[Pay in £20 cash edit here]
+[Pay in all your cash edit here]
 
 :: Act_bank_ask_savings
 [Ask about a savings account edit here]
@@ -418,3 +418,46 @@
 
 :: Act_scarlets_try_on
 [Try something on edit here]
+
+:: Act_bath
+[Have a bath edit here]
+
+:: Act_blow_dry
+[Wash and blow-dry edit here]
+
+:: Act_gym_curls
+[Lift weights (arm curls) edit here]
+
+:: Act_gym_squats
+[Do squats edit here]
+
+:: Act_gym_treadmill
+[Run on the treadmill edit here]
+
+:: Act_gym_core
+[Core workout edit here]
+
+:: Act_personal_training
+[Personal training with Kyle edit here]
+
+:: Act_watch_boats
+[Watch the boats edit here]
+
+:: Act_club_yoga_class
+[Join in: Yoga class edit here]
+
+:: Act_club_art_class
+[Join in: Art class edit here]
+
+:: Act_club_choir
+[Join in: Community choir edit here]
+
+:: Act_club_board_games
+[Join in: Board games afternoon edit here]
+
+:: Act_calm_waters_magazine
+You pick up a glossy magazine from the pile on the table. It's called //Content//, and the woman on the cover is smiling a very, very peaceful smile.
+
+<<oneof>>"Imagine never worrying again," says the first article. "Imagine waking each morning with nothing in your head but a soft, warm yes." There's a photo of a couple holding hands on a beach, both gazing at nothing in particular.<<or>>A two-page spread asks //Is your mind too busy?// and lists the symptoms: overthinking, saying no, wanting things for yourself. The cure, it says, is "letting a gentle voice do the thinking for you."<<or>>The letters page is full of thank-yous. "I used to argue with everyone," writes one reader. "After my sessions I just don't feel the need any more. I'm so much happier doing what I'm told." Someone has underlined //told// in biro.<<or>>An advert on the back page shows a swinging pocket watch over the words: //Relax. Let go. Obey your happiness.// The small print underneath gives this address.<</oneof>>
+
+You put it back. The room is very quiet, and for a moment you feel very calm. Calmer than you'd expect.

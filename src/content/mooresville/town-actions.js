@@ -48,6 +48,8 @@
  *               with what's needed underneath (decided by the user). Add
  *               text: "…" to a condition to word that line yourself.
  *   hidden      true = don't show it at all when it's not allowed
+ *   cooldown    minutes before it can be done again (EVERY_FEW_HOURS = 4 hours,
+ *               ONCE_A_DAY): for small treats, so they can't be repeated for free stats
  *   showIf      only list it while this is true (e.g. a day pass you
  *               haven't bought yet); `conditions` then grey it out as usual
  *   with        OR instead of `at`: a person's id (or a list): it shows on
@@ -83,11 +85,15 @@
  *   { picture: "rough" }                    this outcome's own picture on the action
  *                                           screen (assets/media/action/<id>/rough.*)
  *
+ *   { moneyMove: { from: "cash", to: "bank" } }   pay all your cash in
+ *
  *  CONDITIONS YOU CAN USE
  *   { time: { from: "12:00", to: "21:00" } }    { weekday: [1, 2, 3] }
  *   { stat: { id: "energy", min: 20 } }         { status: "gym_pass" }
  *   { has: "groceries" }                        { npcHere: "dr_okafor" }
  *   { open: true }                              { ageAtLeast: 18 }
+ *   { status: { id: "tipsy", min: 4 } }  (Very drunk or worse)
+ *   { wearing: { slot: "outer" } }       (a coat on)
  *   { body: { id: "hair_length", min: 4 } }     { not: { … } }  { any: [ … ] }
  */
 (function () {
@@ -117,6 +123,48 @@
 			conditions: { has: { item: "groceries", qty: n } },
 		});
 
+		/* ----------------------------------------------------------------------
+		 *  EXERCISE: every workout works the same way.
+		 * ----------------------------------------------------------------------
+		 *   workout({
+		 *       id, label, at, mins, whileDoing,
+		 *       works: { arms: 1.5 },   // body parts it builds (town-body.js:
+		 *                               // arms, legs, stomach, bum; weight: −0.2 = slimmer)
+		 *       workouts: 0.5,          // how much it counts towards Getting fit
+		 *                               // (town-fitness.js; a full hour = 1)
+		 *       kit: false,             // leave out: you need gym kit on
+		 *       effects: [ … ],         // anything extra (random outcomes…)
+		 *   });
+		 *
+		 * Every workout needs Energy 20+ (and gym kit, unless kit: false), gives
+		 * the Post-workout glow and counts towards the "exercise" habit (the
+		 * Gym regular trait). On a training plan with Kyle (the effect
+		 * "on_training_plan", from a personal training session) its body and
+		 * fitness gains are multiplied by TRAINER_BOOST.
+		 */
+		const TRAINER_BOOST = 1.5;
+		const gymKit = { wearing: { attribute: "sportswear", min: 2 }, text: "Gym kit: trainers and a sporty top or bottoms" };
+		const times = (parts, n) => Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, Math.round(v * n * 100) / 100]));
+		const gains = (works, workouts, n) => [
+			{ body: times(works, n) },
+			{ storylineCount: { id: "fitness", key: "workouts", add: Math.round(workouts * n * 100) / 100 } },
+		];
+		const workout = ({ works, workouts = 1, kit = true, effects = [], conditions = null, ...def }) =>
+			act({
+				...def,
+				conditions: { all: [...(kit ? [gymKit] : []), { stat: { id: "energy", min: 20 } }, ...(conditions ? [conditions] : [])] },
+				effects: [
+					{ status: "post_workout" },
+					{ habit: "exercise" },
+					{ if: { cond: { status: "on_training_plan" }, then: gains(works, workouts, TRAINER_BOOST), else: gains(works, workouts, 1) } },
+					...effects,
+				],
+			});
+
+		/** Small, free things you'd enjoy now and then: once every few hours (their `cooldown`). */
+		const EVERY_FEW_HOURS = 240; // 4 hours
+		const ONCE_A_DAY = 1440;
+
 		/* ======================================================================
 		 *  Anywhere with the right fittings (by room tag: see town-map.js)
 		 * ====================================================================== */
@@ -128,7 +176,7 @@
 			label: "Have a shower",
 			atTag: "shower",
 			mins: 12,
-			effects: [{ statSet: { hygiene: 100 } }, { status: "refreshed" }, { statusRemove: "made_up" }],
+			effects: [{ statSet: { hygiene: 100 } }, { status: "refreshed" }, { statusRemove: ["made_up", "blow_dried"] }],
 		});
 		act({
 			id: "do_makeup",
@@ -161,9 +209,9 @@
 			at: "home_bedroom",
 			mins: 60,
 			whileDoing: "studying",
-			conditions: { stat: { id: "stress", max: 85 } },
+			conditions: { all: [{ stat: { id: "stress", max: 85 } }, { stat: { id: "energy", min: 10 } }] },
 			effects: [{ homework: true }],
-			desc: "Finishes the homework due soonest. Too stressed (85+) and you can't focus.",
+			desc: "Finishes the homework due soonest. Too stressed (85+) or too tired and you can't focus.",
 		});
 		act({
 			id: "scroll_phone",
@@ -171,6 +219,15 @@
 			at: ["home_bedroom", "home_living_room"],
 			mins: 30,
 			whileDoing: "scrolling",
+		});
+		act({
+			id: "bath",
+			label: "Have a bath",
+			atTag: "bath",
+			mins: 45,
+			whileDoing: "relaxing",
+			effects: [{ statSet: { hygiene: 100 } }, { stat: { stress: -8, mood: 3 } }, { status: "refreshed" }, { statusRemove: ["made_up", "blow_dried"] }],
+			desc: "A long soak. Slower than a shower, but you come out a new person.",
 		});
 		act({ id: "brush_teeth", label: "Brush your teeth", at: "home_bathroom", mins: 3, effects: [{ stat: { hygiene: 4 } }] });
 
@@ -203,12 +260,19 @@
 			...groceries(2),
 		});
 		act({ id: "glass_of_water", label: "Have a glass of water", atTag: "kitchen", mins: 1, effects: [{ stat: { drink: 20, bladder: 4 } }] });
-		act({ id: "make_tea", label: "Make a cup of tea", atTag: "kitchen", mins: 6, effects: [{ stat: { drink: 15, bladder: 6, mood: 2 } }] });
+		// Tea and coffee are free at your parents' house; anywhere else they
+		// use up some of your groceries.
+		const brew = {
+			conditions: { any: [{ at: "home" }, { has: "groceries" }], text: "Groceries (free at your parents' house)" },
+			costs: [{ if: { cond: { not: { at: "home" } }, then: [{ item: { id: "groceries", qty: -1 } }] } }],
+		};
+		act({ id: "make_tea", label: "Make a cup of tea", atTag: "kitchen", mins: 6, ...brew, effects: [{ stat: { drink: 15, bladder: 6, mood: 2 } }] });
 		act({
 			id: "make_coffee",
 			label: "Make a coffee",
 			atTag: "kitchen",
 			mins: 5,
+			...brew,
 			effects: [{ stat: { drink: 10, bladder: 6 } }, { status: "caffeinated" }, { habit: "coffee" }],
 		});
 
@@ -221,23 +285,23 @@
 		 *  Elm Road and the green
 		 * ====================================================================== */
 
-		act({
+		workout({
 			id: "go_jogging",
 			label: "Go for a jog",
 			at: ["elm_road", "riverside_path"],
 			mins: 30,
 			whileDoing: "jogging",
-			conditions: { stat: { id: "energy", min: 20 } },
-			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
+			works: { legs: 1, weight: -0.2 },
+			workouts: 0.5,
 		});
 		act({ id: "walk_green", label: "Walk round the green", at: "elm_park_green", mins: 20, whileDoing: "walking" });
-		act({ id: "feed_ducks", label: "Feed the ducks", at: "elm_green_pond", mins: 15, effects: [{ stat: { mood: 4, stress: -3 } }] });
+		act({ id: "feed_ducks", label: "Feed the ducks", at: "elm_green_pond", mins: 15, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 4, stress: -3 } }] });
 
 		/* ======================================================================
 		 *  Patel's Corner Shop (snacks and groceries are sold in town-shops.js)
 		 * ====================================================================== */
 
-		act({ id: "shop_magazines", label: "Flick through the magazines", at: "corner_shop", mins: 10, effects: [{ stat: { mood: 2 } }] });
+		act({ id: "shop_magazines", label: "Flick through the magazines", at: "corner_shop", mins: 10, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 3 } }] });
 
 		/* ======================================================================
 		 *  Mooresville Academy (lessons are on the timetable: town-school.js)
@@ -249,6 +313,7 @@
 			at: "academy_library",
 			mins: 60,
 			whileDoing: "studying",
+			conditions: { all: [{ stat: { id: "stress", max: 85 } }, { stat: { id: "energy", min: 10 } }] },
 			effects: [{ homework: true }],
 			desc: "Finishes the homework due soonest, if you have any.",
 		});
@@ -262,13 +327,14 @@
 			conditions: { time: { from: "11:45", to: "13:45" } },
 			effects: [{ stat: { food: 25, drink: 10 } }],
 		});
-		act({
+		workout({
 			id: "shoot_hoops",
 			label: "Shoot some hoops",
 			at: "academy_sports_hall",
 			mins: 30,
 			whileDoing: "exercising",
-			effects: [{ body: { weight: -0.2 } }, { habit: "exercise" }],
+			works: { arms: 0.5, legs: 0.5, weight: -0.2 },
+			workouts: 0.5,
 		});
 		act({ id: "walk_field", label: "Walk laps of the field", at: "academy_field", mins: 20, whileDoing: "walking" });
 
@@ -381,6 +447,7 @@
 			at: "lion_lounge",
 			mins: 20,
 			price: 1,
+			cooldown: 120, // a game every two hours
 			effects: [{ stat: { mood: 5, stress: -3 } }],
 		});
 		act({
@@ -388,6 +455,7 @@
 			label: "Get some fresh air",
 			at: "lion_beer_garden",
 			mins: 10,
+			cooldown: 120,
 			effects: [{ stat: { stress: -2, energy: 2 } }],
 		});
 
@@ -402,7 +470,7 @@
 			mins: 3,
 			effects: [{ note: "Tom says Dr Okafor sees people in the therapy room, weekdays 09:00–17:00." }],
 		});
-		act({ id: "read_leaflets", label: "Read the leaflets", at: "wellbeing", mins: 5, effects: [{ stat: { stress: -1 } }] });
+		act({ id: "read_leaflets", label: "Read the leaflets", at: "wellbeing", mins: 5, cooldown: ONCE_A_DAY, effects: [{ stat: { stress: -2 } }] });
 		act({
 			id: "therapy_session",
 			label: "Therapy session",
@@ -417,11 +485,28 @@
 		});
 
 		/* ======================================================================
+		 *  Calm Waters Hypnotherapy (the waiting room)
+		 * ======================================================================
+		 *
+		 * The magazine on the table is a hint of where the hypnotherapist's
+		 * story is going: its text is Act_calm_waters_magazine (actions.twee).
+		 */
+
+		act({
+			id: "calm_waters_magazine",
+			label: "Read a magazine",
+			at: "calm_waters",
+			mins: 15,
+			cooldown: ONCE_A_DAY,
+			effects: [{ stat: { stress: -3, mood: 2 } }],
+		});
+
+		/* ======================================================================
 		 *  Threadline
 		 * ====================================================================== */
 
 		act({ id: "threadline_browse", label: "Browse the rails", at: "threadline_floor", mins: 20, whileDoing: "browsing" });
-		act({ id: "threadline_try_on", label: "Try a few things on", at: "threadline_fitting", mins: 20, effects: [{ stat: { mood: 3 } }] });
+		act({ id: "threadline_try_on", label: "Try a few things on", at: "threadline_fitting", mins: 20, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 4 } }] });
 
 		/* ======================================================================
 		 *  PulseFit Gym (buy a day pass at reception, then work out)
@@ -436,19 +521,18 @@
 			showIf: { not: { status: "gym_pass" } }, // not offered while you have one
 			effects: [{ status: "gym_pass" }],
 		});
-		act({
+		// The gym floor's dress code already asks for gym kit (town-map.js).
+		const dayPass = { status: "gym_pass", text: "A day pass (from reception)" };
+		workout({
 			id: "gym_workout",
-			label: "Work out",
+			label: "Full workout",
 			at: "pulsefit_floor",
 			mins: 60,
 			whileDoing: "exercising",
-			conditions: { status: "gym_pass", stat: { id: "energy", min: 20 } },
+			kit: false,
+			conditions: dayPass,
+			works: { arms: 0.5, legs: 0.5, stomach: 0.5, bum: 0.5, weight: -0.4 },
 			effects: [
-				{ status: "post_workout" },
-				{ body: { weight: -0.4 } },
-				{ habit: "exercise" },
-				// Counts towards the "Getting fit" storyline (town-fitness.js).
-				{ storylineCount: { id: "fitness", key: "workouts" } },
 				// How it went. Tired workouts go wrong more often.
 				{
 					random: [
@@ -465,6 +549,35 @@
 					],
 				},
 			],
+		});
+		// Focused half-hour workouts: each builds one part of you more.
+		workout({ id: "gym_curls", label: "Lift weights (arm curls)", at: "pulsefit_floor", mins: 30, whileDoing: "exercising", kit: false, conditions: dayPass, works: { arms: 1.5 }, workouts: 0.5 });
+		workout({ id: "gym_squats", label: "Do squats", at: "pulsefit_floor", mins: 30, whileDoing: "exercising", kit: false, conditions: dayPass, works: { bum: 1.5, legs: 0.5 }, workouts: 0.5 });
+		workout({ id: "gym_treadmill", label: "Run on the treadmill", at: "pulsefit_floor", mins: 30, whileDoing: "jogging", kit: false, conditions: dayPass, works: { legs: 1, weight: -0.3 }, workouts: 0.5 });
+		workout({ id: "gym_core", label: "Core workout", at: "pulsefit_floor", mins: 30, whileDoing: "exercising", kit: false, conditions: dayPass, works: { stomach: 1.5 }, workouts: 0.5 });
+
+		// Personal training with Kyle (£20, no day pass needed): double the
+		// gains of a full workout, and you go on his training plan for a week,
+		// which multiplies every workout's gains (TRAINER_BOOST, above). Each
+		// session also counts towards the "Training with Kyle" storyline
+		// (town-fitness.js), which has its own events.
+		workout({
+			id: "personal_training",
+			label: "Personal training with Kyle",
+			at: "pulsefit_floor",
+			mins: 60,
+			price: 20,
+			whileDoing: "exercising",
+			kit: false,
+			conditions: { npcAt: { npc: "kyle_dunn", at: "pulsefit" }, text: "Kyle is working (weekdays from 15:00, weekends 08:00–16:00)" },
+			works: { arms: 1, legs: 1, stomach: 1, bum: 1, weight: -0.6 },
+			workouts: 2,
+			effects: [
+				{ status: "on_training_plan" },
+				{ if: { cond: { storyline: { id: "personal_training", started: false } }, then: [{ storyline: { id: "personal_training", to: "start" } }] } },
+				{ progression: "personal_training" },
+			],
+			desc: "An hour with Kyle, and a week on his training plan: every workout counts for more.",
 		});
 
 		/* ======================================================================
@@ -497,7 +610,7 @@
 			effects: [{ stat: { drink: 20, bladder: 10, mood: 4 } }],
 		});
 		act({ id: "urban_thread_browse", label: "Browse the clothes", at: "arcade_urban_thread", mins: 20, whileDoing: "browsing" });
-		act({ id: "urban_thread_try_on", label: "Try a few things on", at: "urban_thread_fitting", mins: 20, effects: [{ stat: { mood: 3 } }] });
+		act({ id: "urban_thread_try_on", label: "Try a few things on", at: "urban_thread_fitting", mins: 20, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 4 } }] });
 		act({
 			id: "cinema_film",
 			label: "Watch a film",
@@ -554,6 +667,17 @@
 			effects: [{ bodySet: { hair_length: 1 } }, { status: "fresh_haircut" }],
 		});
 
+		act({
+			id: "blow_dry",
+			label: "Wash and blow-dry",
+			at: "snips",
+			mins: 30,
+			price: 10,
+			conditions: { body: { id: "hair_length", min: 4 } },
+			effects: [{ status: "blow_dried" }, { stat: { mood: 2 } }],
+			desc: "Salon-smooth hair for the day (a shower, bath or swim undoes it).",
+		});
+
 		// Hair dye: one action per colour. Not offered for the colour you already have.
 		const dye = ({ colour, price }) =>
 			act({
@@ -595,25 +719,15 @@
 
 		// The park itself: a walk round, a workout on the grass, people-watching.
 		act({ id: "park_walk", label: "Go for a walk", at: "riverside_park", mins: 30, whileDoing: "walking" });
-		act({
+		// Free, unlike the gym: press-ups, lunges and sit-ups on the grass.
+		workout({
 			id: "park_exercise",
 			label: "Exercise",
 			at: "riverside_park",
 			mins: 45,
 			whileDoing: "exercising",
-			// Free, unlike the gym, but you need to be in gym kit.
-			conditions: {
-				all: [
-					{ wearing: { attribute: "sportswear", min: 2 }, text: "Gym kit: trainers and a sporty top or bottoms" },
-					{ stat: { id: "energy", min: 20 } },
-				],
-			},
-			effects: [
-				{ status: "post_workout" },
-				{ body: { weight: -0.3 } },
-				{ habit: "exercise" },
-				{ storylineCount: { id: "fitness", key: "workouts" } }, // counts like a gym workout (town-fitness.js)
-			],
+			works: { arms: 0.5, legs: 0.5, stomach: 0.5, bum: 0.5, weight: -0.3 },
+			workouts: 0.75,
 		});
 		act({ id: "park_watch_people", label: "Watch people", at: "riverside_park", mins: 20, whileDoing: "relaxing" });
 
@@ -642,12 +756,11 @@
 
 		act({
 			id: "bank_pay_in",
-			label: "Pay in £20 cash",
+			label: "Pay in all your cash",
 			at: "crown_bank",
 			mins: 5,
-			conditions: { money: { account: "cash", min: 20 }, text: "£20 in cash" },
-			costs: [{ money: { amount: -20, account: "cash", reason: "Paid in at the bank" } }],
-			effects: [{ money: { amount: 20, account: "bank", reason: "Paid in at the bank" } }],
+			conditions: { money: { account: "cash", min: 1 }, text: "Some cash on you" },
+			effects: [{ moneyMove: { from: "cash", to: "bank", reason: "Paid in at the bank" } }],
 		});
 		act({
 			id: "bank_ask_savings",
@@ -661,33 +774,51 @@
 
 		// The film studio: hooks for your stories. Leaving your details sets the
 		// flag "grumman_details" (once); the sound stage needs "grumman_pass".
-		act({ id: "grumman_casting_board", label: "Read the casting notices", at: "grumman_studios", mins: 5, effects: [{ stat: { mood: 1 } }] });
+		act({ id: "grumman_casting_board", label: "Read the casting notices", at: "grumman_studios", mins: 5, cooldown: ONCE_A_DAY, effects: [{ stat: { mood: 2 } }] });
+		// It's a film and modelling studio: they only take people who look the
+		// part. Beauty 50 = clean plus makeup, or clean, smart and a fresh cut.
 		act({
 			id: "grumman_leave_details",
 			label: "Leave your details for extras work",
 			at: "grumman_casting",
 			mins: 15,
 			showIf: { not: { flag: "grumman_details" } },
+			conditions: { stat: { id: "beauty", min: 50 }, text: "Beauty 50+ (they want people who look the part)" },
 			effects: [{ flag: "grumman_details" }, { note: "Your name is on the extras list now." }],
 		});
-		act({ id: "grumman_watch_filming", label: "Watch them filming", at: "grumman_stage", mins: 30, effects: [{ stat: { mood: 3, stress: -2 } }] });
+		act({ id: "grumman_watch_filming", label: "Watch them filming", at: "grumman_stage", mins: 30, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 3, stress: -2 } }] });
 
 		/* ======================================================================
 		 *  South Town
 		 * ====================================================================== */
 
 		// Club Neon: pay at the door, then dance and drink. £10 in (the film price tier).
+		// Dressed up (Dressed to impress or Smartly dressed), the bouncer waves
+		// you past the queue; otherwise you wait 20 minutes more.
+		const dressedUp = { any: [{ status: "dressed_to_impress" }, { status: "smartly_dressed" }] };
 		act({
 			id: "neon_entry",
 			label: "Pay to get in",
 			at: "club_neon",
-			mins: 10, // the queue
+			mins: 5,
 			price: 10,
 			showIf: { not: { status: "neon_stamp" } },
 			conditions: { ageAtLeast: 18 },
-			effects: [{ status: "neon_stamp" }],
+			effects: [
+				{ status: "neon_stamp" },
+				{ if: { cond: dressedUp, then: [{ note: "Marcus looks you up and down and waves you straight past the queue." }], else: [{ time: 20 }, { note: "You queued for twenty minutes." }] } },
+			],
 		});
-		act({ id: "neon_dance", label: "Dance", at: "neon_dance_floor", mins: 60, whileDoing: "dancing", conditions: { stat: { id: "energy", min: 15 } } });
+		act({
+			id: "neon_dance",
+			label: "Dance",
+			at: "neon_dance_floor",
+			mins: 60,
+			whileDoing: "dancing",
+			conditions: { stat: { id: "energy", min: 15 } },
+			// An outfit for a night out makes it even better.
+			effects: [{ if: { cond: { status: "dressed_to_impress" }, then: [{ stat: { mood: 3 } }] } }],
+		});
 		act({
 			id: "neon_drink",
 			label: "Buy a drink",
@@ -707,10 +838,11 @@
 			effects: [{ stat: { mood: 4 } }, { status: "tipsy" }, { status: "tipsy" }],
 		});
 		act({ id: "neon_water", label: "Ask for a glass of water", at: "neon_bar", mins: 5, effects: [{ stat: { drink: 15, bladder: 6 } }] });
-		act({ id: "neon_fresh_air", label: "Get some air", at: "neon_smoking", mins: 10, effects: [{ stat: { stress: -2, energy: 2 } }] });
+		act({ id: "neon_fresh_air", label: "Get some air", at: "neon_smoking", mins: 10, cooldown: 120, effects: [{ stat: { stress: -2, energy: 2 } }] });
 
 		act({ id: "scarlets_browse", label: "Browse discreetly", at: "scarlets", mins: 15, whileDoing: "browsing" });
-		act({ id: "scarlets_try_on", label: "Try something on", at: "scarlets_fitting", mins: 15, effects: [{ stat: { mood: 3 } }] });
+		act({ id: "scarlets_try_on", label: "Try something on", at: "scarlets_fitting", mins: 15, cooldown: EVERY_FEW_HOURS, effects: [{ stat: { mood: 4 } }] });
+		act({ id: "watch_boats", label: "Watch the boats", at: "south_town", mins: 20, whileDoing: "relaxing", effects: [{ stat: { stress: -2 } }], cooldown: EVERY_FEW_HOURS });
 
 		act({
 			id: "grill_kebab",
@@ -743,23 +875,28 @@
 			at: "beach_sand",
 			mins: 60,
 			whileDoing: "sunbathing",
-			conditions: { weather: { kind: "sunny" }, text: "Sunshine" },
+			conditions: { all: [{ weather: { kind: "sunny" }, text: "Sunshine" }, { not: { wearing: { slot: "outer" } }, text: "Take your coat off" }] },
 			effects: [
 				{ status: "sun_kissed" },
 				{ if: { cond: { not: { status: "sun_cream" } }, then: [{ status: "sunburnt" }, { note: "You forgot the sun cream. Ouch." }] } },
 			],
 		});
 		act({ id: "beach_walk", label: "Walk along the shore", at: "beach_sand", mins: 30, whileDoing: "walking" });
-		act({
+		// Swimwear is the sea's dress code (town-map.js), so no gym kit here.
+		workout({
 			id: "swim",
 			label: "Swim",
 			at: "beach_sea",
 			mins: 30,
 			whileDoing: "swimming",
-			conditions: { stat: { id: "energy", min: 20 } },
+			kit: false,
+			// Kai won't let anyone very drunk into the water.
+			conditions: { not: { status: { id: "tipsy", min: 4 } }, text: "Not very drunk" },
+			works: { arms: 0.5, stomach: 0.5, weight: -0.2 },
+			workouts: 0.5,
 			effects: [
 				{ status: "sea_fresh" },
-				{ habit: "exercise" },
+				{ statusRemove: "blow_dried" },
 				{ stat: { hygiene: -10 } }, // salty and sandy: a shower in the changing area sorts it
 				// Cold water is more of a shock than a treat.
 				{ if: { cond: { weather: { tempMax: 12 } }, then: [{ stat: { mood: -6, energy: -5 } }, { note: "The water was freezing." }] } },
@@ -789,7 +926,7 @@
 			price: 8,
 			effects: [{ stat: { food: 50, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
 		});
-		act({ id: "pier_view", label: "Look out to sea", at: "beach_pier", mins: 15, whileDoing: "relaxing" });
+		act({ id: "pier_view", label: "Look out to sea", at: "beach_pier", mins: 15, whileDoing: "relaxing", cooldown: EVERY_FEW_HOURS, effects: [{ stat: { stress: -2 } }] });
 
 		/* ======================================================================
 		 *  Out and about

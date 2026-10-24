@@ -46,6 +46,8 @@
 
 	(setup.__content ??= []).push((R) => {
 		const adults = { ageAtLeast: 18 };
+		// Nobody wants to be flirted with (or hang out) by someone unwashed or bursting for the loo.
+		const presentable = { not: { status: ["unwashed", "bursting"] }, text: "Not unwashed or bursting for the toilet" };
 
 		/* ======================================================================
 		 *  1. Relationship tracks
@@ -136,7 +138,7 @@
 			cooldown: 720,
 			order: 4,
 			tags: ["romance"],
-			conditions: { all: [adults, { rel: { track: "friendship", min: 10 } }] },
+			conditions: { all: [adults, { rel: { track: "friendship", min: 10 } }, presentable] },
 			effects: [{ rel: { romance: 4, friendship: 1 } }],
 		});
 
@@ -168,7 +170,7 @@
 			cooldown: 2880, // every two days
 			order: 6,
 			npcTags: ["student"],
-			conditions: { stat: { id: "beauty", min: 40 }, rel: { track: "friendship", min: 20 } },
+			conditions: { all: [{ stat: { id: "beauty", min: 40 } }, { rel: { track: "friendship", min: 20 } }, presentable] },
 			effects: [{ rel: { friendship: 6 } }, { stat: { mood: 6, stress: -4 } }],
 		});
 	});

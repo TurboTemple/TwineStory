@@ -125,6 +125,24 @@
 				describe: (spec) => (spec.amount >= 0 ? `Gain ${fmt.money(spec.amount)}` : `Costs ${fmt.money(-spec.amount)}`),
 			});
 
+			// { moneyMove: { from: "cash", to: "bank", amount? } } — move money
+			// between your own accounts (all of it if no amount is given).
+			effects.register("moneyMove", {
+				apply(spec, ctx, result) {
+					const n = spec.amount ?? money.balance(spec.from);
+					if (n <= 0) return;
+					const paid = money.pay(n, { from: [spec.from], reason: spec.reason ?? "Moved" });
+					if (!paid.ok) {
+						result.changes.push({ kind: "money", text: paid.reason });
+						return;
+					}
+					money.earn(n, { to: spec.to, reason: spec.reason ?? "Moved" });
+					const label = (id) => registry.tryGet("account", id)?.label ?? id;
+					if (!ctx.quiet) result.changes.push({ kind: "money", text: `${fmt.money(n)} from ${label(spec.from)} to ${label(spec.to)}` });
+				},
+				describe: (spec) => `Moves ${spec.amount != null ? fmt.money(spec.amount) : "all your money"} from ${registry.tryGet("account", spec.from)?.label ?? spec.from} to ${registry.tryGet("account", spec.to)?.label ?? spec.to}`,
+			});
+
 			// Banking app (for the phone): balances and recent transactions.
 			ui.view("app-bank", (box) => {
 				const accounts = registry.all("account").sort((a, b) => a.order - b.order);
