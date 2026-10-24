@@ -15,6 +15,7 @@
  *   job/<id>                 a work shift's action screen
  *   interaction/<id>         talking to someone (action screen)
  *   item/<id>/use            using an item from your bag (action screen)
+ *   travelMode/<id>          a journey's action screen
  *   storylet/<id>            shown at the top of the event
  *   item/<id>                items in the bag, shops and wardrobe
  *   npc/<id>                 profile picture

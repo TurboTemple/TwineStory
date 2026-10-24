@@ -24,6 +24,10 @@ After doing something, the player sees an **action screen**: a picture, GIF or v
 | A work shift | `assets/media/job/<job>` | `Act_shift_<job>` (or the job's `passage`) |
 | Talking | `assets/media/interaction/<id>` | `Act_talk_<id>_<person>`, else `Act_talk_<id>` (or the interaction's `passage`) |
 | Using an item from your bag | `assets/media/item/<id>/use` | `Act_use_<id>` (or the item's `use.passage`) |
+| A journey (see the mode's `screen`) | `assets/media/travelMode/<mode>` | `Act_travel_<mode>_<place>`, else `Act_travel_<mode>` (or the mode's `passage`) |
+| Getting changed | `assets/media/action/get_changed` | `Act_get_changed` |
+
+Not shown (decided by the user): walking between rooms, walking round one area (the same district), and shopping.
 
 A missing passage shows `[<title> edit here]`; in debug mode the screen also says where the picture and passage go. Every current one has a placeholder passage in `src/story/mooresville/actions.twee`. The passages are ordinary story passages: `<<when>>`, `<<name>>` and the pronoun macros all work.
 

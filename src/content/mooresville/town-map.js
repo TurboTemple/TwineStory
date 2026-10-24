@@ -457,7 +457,11 @@
 		 *   destTag      only goes to places with this tag (taxis: "hub")
 		 *   minDistance  only offered when walking would take longer than this
 		 *   timeFactor   × the walking time (taxi: 0.3 = much faster)
- *   viaPhone     true = booked from the phone's Taxi app instead of the "Go to" buttons
+		 *   viaPhone     true = booked from the phone's Taxi app instead of the "Go to" buttons
+		 *   screen       when a journey gets an action screen: "always" (default),
+		 *                "otherDistrict" (only between districts) or "never".
+		 *                Its text: passage Act_travel_<mode> (or Act_travel_<mode>_<place>
+		 *                for one destination); picture: assets/media/travelMode/<mode>.
 		 *   cost + fare  in whole pounds:
 		 *                "flat": one price (fare.flat)
 		 *                "meter": fare.base + fare.perMin for each minute of the
@@ -467,7 +471,7 @@
 		// Decided by the user: you need to be dressed to go out (see setup.config.clothing).
 		const dressed = { dressed: true };
 
-		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed });
+		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed, screen: "otherDistrict" }); // an action screen only between districts
 
 		R.define("travelMode", {
 			id: "bus7",

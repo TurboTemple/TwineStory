@@ -44,12 +44,20 @@
 					// viaPhone: true — booked from the phone's Taxi app (view
 					// "app-taxi") instead of listed under "Go to".
 					viaPhone: false,
+					// When a journey gets an action screen (decided by the user):
+					// "always" (the bus, a taxi), "otherDistrict" (walking: only
+					// between districts, e.g. your street to the town centre, not
+					// round the shops of one area) or "never".
+					screen: "always",
+					passage: null,
 				},
+				passages: ["passage"],
 				refs: { payWith: "account" },
 				conditions: ["conditions"],
 				check(def) {
 					const errs = [];
 					if (!(def.timeFactor > 0)) errs.push("timeFactor must be > 0");
+					if (!["always", "otherDistrict", "never"].includes(def.screen)) errs.push('screen must be "always", "otherDistrict" or "never"');
 					return errs;
 				},
 			});
@@ -232,6 +240,16 @@
 							: `${mode.label} to ${name(to)}${fare}: ${fmt.duration(result.mins)}.`,
 					});
 					bus.emit(interrupted ? "travel:interrupted" : "travel:arrived", { from, to, at: setup.world.loc(), mode: modeId, mins: result.mins });
+					// The action screen (mode's `screen` says when): one passage for this
+					// destination, else one for the mode.
+					const district = (id) => registry.get("location", id).district;
+					if (mode.screen === "always" || (mode.screen === "otherDistrict" && district(from) !== district(to))) {
+						setup.actions?.illustrate({
+							title: `${mode.label} to ${name(to)}`,
+							media: { type: "travelMode", id: modeId },
+							passage: mode.passage ?? [`Act_travel_${modeId}_${to}`, `Act_travel_${modeId}`],
+						});
+					}
 					return result;
 				},
 			};
