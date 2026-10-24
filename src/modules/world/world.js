@@ -51,6 +51,17 @@
 						}
 						seen.add(p);
 					}
+					// `links` are doors inside one building: each must be in the same
+					// place (going to another place is travel, not a door).
+					const siteOf = (id) => {
+						let cur = id;
+						for (let i = 0; i < 20 && registry.tryGet("location", cur)?.parent; i++) cur = registry.tryGet("location", cur).parent;
+						return cur;
+					};
+					for (const l of def.links ?? []) {
+						if (registry.has("location", l) && siteOf(l) !== siteOf(def.id)) errs.push(`links: "${l}" is in another place (${siteOf(l)}); links only join rooms of the same place`);
+						if (l === def.id) errs.push("links: a room can't link to itself");
+					}
 					return errs;
 				},
 			});
@@ -237,11 +248,13 @@
 				 * from sections that different modules add, top to bottom:
 				 *     5  result       what just happened, and notices    (world)
 				 *    10  description  picture, name, text, atmosphere     (world)
+				 *    12  cityevents   "On now: the Saturday market"       (cityevents)
+				 *    15  school       "Attend school", the day's lessons  (education)
 				 *    20  people       who's here                          (npcs)
 				 *    25  areas        rooms you can walk to               (world)
-				 *    15  school       "Attend school", the day's lessons  (education)
 				 *    28  work         "Work a shift"                      (jobs)
 				 *    28  shops        "Browse …"                          (shops)
+				 *    29  lettings     flats to rent                       (housing)
 				 *    30  actions      "Things to do"                      (actions)
 				 *    32  wardrobe     "Get changed"                       (clothing)
 				 *    40  travel       "Go to" buttons                     (travel)

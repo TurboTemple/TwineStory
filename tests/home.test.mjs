@@ -105,7 +105,7 @@ test("chores make your parents happier, once every 12 hours", () => {
 	const mum = setup.rel.get("mum", "friendship");
 	setup.actions.do("chore_washing_up");
 	assert.ok(setup.rel.get("mum", "friendship") > mum);
-	assert.ok(!setup.actions.available().find((a) => a.def.id === "chore_washing_up").ok, "not again yet");
+	assert.ok(!setup.actions.available().some((a) => a.def.id === "chore_washing_up"), "gone until the chores reset");
 });
 
 test("the curfew: out after 10pm while living at home, Mum texts", () => {

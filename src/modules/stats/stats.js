@@ -49,6 +49,21 @@
 						if (kinds !== 1) errs.push('each derive part needs one of: { add }, { stat, times }, { when, add }');
 						if ("stat" in part && part.stat === def.id) errs.push("a derived stat can't use itself");
 					}
+					// …nor go round in a circle through other derived stats (A uses B, B uses A),
+					// which would never finish working out.
+					const loop = (id, path) => {
+						for (const part of registry.tryGet("stat", id)?.derive ?? []) {
+							if (!("stat" in part)) continue;
+							if (part.stat === def.id) return [...path, part.stat];
+							if (!path.includes(part.stat)) {
+								const found = loop(part.stat, [...path, part.stat]);
+								if (found) return found;
+							}
+						}
+						return null;
+					};
+					const circle = def.derive ? loop(def.id, [def.id]) : null;
+					if (circle && circle.length > 2) errs.push(`derive goes round in a circle: ${circle.join(" → ")}`);
 					if (!(def.max > def.min)) errs.push("max must be greater than min");
 					if (!["high", "low"].includes(def.good)) errs.push('good must be "high" or "low"');
 					if (def.start < def.min || def.start > def.max) errs.push("start must be between min and max");

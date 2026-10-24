@@ -45,13 +45,22 @@
  *               part 4: "relaxing", "asleep", "studying"…). This is how
  *               activities change your stats hour by hour.
  *   conditions  when it's allowed. If they fail, the button is greyed out
- *               with what's needed underneath (decided by the user).
+ *               with what's needed underneath (decided by the user). Add
+ *               text: "…" to a condition to word that line yourself.
  *   hidden      true = don't show it at all when it's not allowed
+ *   showIf      only list it while this is true (e.g. a day pass you
+ *               haven't bought yet); `conditions` then grey it out as usual
+ *   with        OR instead of `at`: a person's id (or a list): it shows on
+ *               their screen when you tap them, not in the place's list
+ *               (withTag: "student" = anyone with that tag or role)
  *   effects     what happens at the end (see below)
  *   costs       things taken at the start (items, money…)
  *   desc        a short line under the button
  *   whenClosed  true = can be done even when the place is closed
  *   tags        labels, e.g. "sleep" (waking from it shows the daily summary)
+ *   passage     the action screen's text (default: the passage Act_<id> in
+ *               src/story/mooresville/actions.twee); its picture is
+ *               assets/media/action/<id>.webp, .gif or .mp4
  *
  *  Everyday tasks get one sensible length (decided by the user); only things
  *  where the length matters (sleep, waiting) offer a choice.
@@ -71,6 +80,8 @@
  *   { homework: true }                      finish the homework due soonest
  *   { habit: "coffee" }                     count today towards a habit (traits: town-traits.js)
  *   { note: "Text" }                        a line in the summary afterwards
+ *   { picture: "rough" }                    this outcome's own picture on the action
+ *                                           screen (assets/media/action/<id>/rough.*)
  *
  *  CONDITIONS YOU CAN USE
  *   { time: { from: "12:00", to: "21:00" } }    { weekday: [1, 2, 3] }
@@ -317,7 +328,8 @@
 		 *  The Red Lion (alcohol is 18+)
 		 * ====================================================================== */
 
-		const adults = { ageAtLeast: 18 };
+		// `text` is what a locked button says after "Needs:".
+		const adults = { ageAtLeast: 18, text: "18 or over" };
 
 		act({
 			id: "pub_pint",
@@ -421,7 +433,7 @@
 			at: "pulsefit_reception",
 			mins: 3,
 			price: 5,
-			conditions: { not: { status: "gym_pass" } },
+			showIf: { not: { status: "gym_pass" } }, // not offered while you have one
 			effects: [{ status: "gym_pass" }],
 		});
 		act({
@@ -550,7 +562,8 @@
 				at: "snips",
 				mins: 90,
 				price,
-				conditions: { body: { id: "hair_length", min: 2 }, not: { body: { id: "hair_colour", is: colour } } },
+				showIf: { not: { body: { id: "hair_colour", is: colour } } },
+				conditions: { body: { id: "hair_length", min: 2 } },
 				effects: [{ bodySet: { hair_colour: colour } }, { stat: { mood: 3 } }],
 			});
 		dye({ colour: "blonde", price: 50 });

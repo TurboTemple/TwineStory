@@ -24,7 +24,7 @@
 		version: 1,
 		deps: ["world"],
 
-		install({ registry, cond, effects, time, bus, ui, flow, fmt }) {
+		install({ registry, cond, effects, time, bus, ui, fmt, text }) {
 			registry.defineType("travelMode", {
 				required: ["label"],
 				defaults: {
@@ -299,8 +299,17 @@
 						row.append(ui.action(`${registry.get("location", o.to).name} · ${meta}`, () => travel.go(o.to, mode.id), { disabled: !o.ok, title: o.reasons.join("; ") || null }));
 					}
 					group.append(row);
-					const blocked = [...new Set(list.filter((o) => !o.ok).flatMap((o) => o.reasons))];
-					if (blocked.length) group.append(ui.el("p", { class: "locked", text: blocked.join("; ") }));
+					// Why some can't be reached, said once per reason. A reason that
+					// applies to every destination ("You need to get dressed") stands
+					// alone; others name where they apply ("PulseFit Gym: Gym kit only").
+					const why = new Map();
+					for (const o of list.filter((x) => !x.ok)) {
+						const key = o.reasons.join("; ");
+						why.set(key, [...(why.get(key) ?? []), registry.get("location", o.to).name]);
+					}
+					for (const [reason, names] of why) {
+						group.append(ui.el("p", { class: "locked", text: names.length === list.length ? reason : `${text.list(names)}: ${reason}` }));
+					}
 					box.append(group);
 				}
 			});
@@ -324,33 +333,6 @@
 					ul.append(li);
 				}
 				box.append(ul);
-			});
-
-			ui.view("travel", (box) => {
-				box.classList.add("m-travel");
-				const loc = setup.world.loc();
-				box.append(ui.el("h1", { text: "Where to?" }));
-				if (loc) {
-					const site = registry.get("location", setup.world.site(loc));
-					const exit = setup.world.exitMins(loc);
-					box.append(ui.el("p", { class: "status-line", text: `Leaving ${site.name}${exit ? ` (${fmt.duration(exit)} to get outside)` : ""}` }));
-				}
-				const byMode = new Map();
-				for (const o of travel.options()) byMode.set(o.mode, [...(byMode.get(o.mode) ?? []), o]);
-				for (const [mode, opts] of byMode) {
-					box.append(ui.el("h2", { text: mode.label }));
-					const ul = ui.el("ul");
-					for (const o of opts) {
-						const via = o.legs.length > 1 ? ` via ${o.legs.slice(0, -1).map((l) => registry.get("location", l.to).name).join(", ")}` : "";
-						const fare = o.cost ? `, ${fmt.money(o.cost)}` : "";
-						const li = ui.el("li", {}, ui.action(`${registry.get("location", o.to).name} (${fmt.duration(o.mins)}${fare})`, () => travel.go(o.to, mode.id), { disabled: !o.ok }));
-						if (via) li.append(ui.el("p", { class: "note", text: `Stops at${via.slice(4)}` }));
-						if (!o.ok) li.append(ui.el("p", { class: "locked", text: o.reasons.join("; ") }));
-						ul.append(li);
-					}
-					box.append(ul);
-				}
-				box.append(ui.button("Stay here", () => flow.go(flow.home)));
 			});
 		},
 

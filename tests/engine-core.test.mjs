@@ -358,3 +358,50 @@ test("fmt and text helpers", () => {
 	assert.equal(setup.text.pronouns("she/her").their, "her");
 	assert.equal(setup.text.vary("k", ["x", "y", "z"]), setup.text.vary("k", ["x", "y", "z"]));
 });
+
+/* ---- review fixes ------------------------------------------------------ */
+
+test("24:00 is a valid end of day, 24:30 isn't", () => {
+	const { setup } = boot();
+	assert.equal(setup.time.parseHM("24:00"), 1440);
+	assert.throws(() => setup.time.parseHM("24:30"), /Bad time/);
+});
+
+test("a condition's `text` replaces the automatic wording after Needs:", () => {
+	const { setup } = boot();
+	const c = { flag: "sent_by_parents", text: "Your parents to send you" };
+	assert.equal(setup.cond.test(c), false);
+	assert.deepEqual(plain(setup.cond.explain(c)), [{ ok: false, text: "Your parents to send you" }]);
+	assert.deepEqual(plain(setup.cond.ops(c)), ["flag"], "text isn't a condition");
+	setup.vars().meta.flags.sent_by_parents = true;
+	assert.equal(setup.cond.test(c), true);
+	assert.throws(() => setup.cond.register("text", { test: () => true }), /reserved/);
+});
+
+test("the checker catches broken aliases, room links to other places, and derived stats in a circle", () => {
+	const { setup } = boot({
+		includeTest: true,
+		before(s) {
+			(s.__testContent ??= []).push((R) => {
+				R.define("location", { id: "t_a", name: "A" });
+				R.define("location", { id: "t_a_room", name: "A room", parent: "t_a", links: ["t_b_room"] });
+				R.define("location", { id: "t_b", name: "B" });
+				R.define("location", { id: "t_b_room", name: "B room", parent: "t_b" });
+				R.alias("location", "t_old", "t_nowhere");
+				R.define("stat", { id: "t_x", label: "X", derive: [{ stat: "t_y" }] });
+				R.define("stat", { id: "t_y", label: "Y", derive: [{ stat: "t_x" }] });
+			});
+		},
+	});
+	const errs = setup.validate({ hasPassage: () => true }).join("\n");
+	assert.match(errs, /alias "t_old" points at missing location "t_nowhere"/);
+	assert.match(errs, /t_a_room.*links: "t_b_room" is in another place/);
+	assert.match(errs, /derive goes round in a circle: t_x → t_y → t_x/);
+});
+
+test("merging results keeps an outcome's own picture", () => {
+	const { setup } = boot();
+	const a = setup.effects.newResult();
+	const b = Object.assign(setup.effects.newResult(), { picture: "rough" });
+	assert.equal(setup.effects.merge(a, b).picture, "rough");
+});

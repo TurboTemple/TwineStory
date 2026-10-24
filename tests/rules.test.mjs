@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources, guaranteesAdult, IFID } from "../scripts/lib/rules.mjs";
+import { checkDefs, checkFileNames, checkLinks, checkPassages, checkSources, checkWaysOn, guaranteesAdult, IFID } from "../scripts/lib/rules.mjs";
 import { findPassageRefs } from "../scripts/lib/twee.mjs";
 
 const p = (name, text = "", tags = []) => ({ name, text, tags, file: "t.twee", line: 1 });
@@ -78,4 +78,18 @@ test("guaranteesAdult only trusts conditions that always apply", () => {
 test("script and style files need unique names (Tweego uses them as passage names)", () => {
 	assert.deepEqual(checkFileNames(["src/a/x.js", "src/b/y.js"]), []);
 	assert.match(checkFileNames(["src/a/x.js", "src/b/x.js"]).join(), /both called "x\.js"/);
+});
+
+test("an event passage with no Continue or choice is caught (the player would be stuck)", () => {
+	const fakeSetup = { registry: { all: () => [{ passage: "Ev_stuck" }, { passage: "Ev_fine" }] } };
+	const passages = [
+		p("Ev_stuck", "Something happens. The end."),
+		p("Ev_fine", 'Hello.\n<<choice "Go on" "Ev_next">>'),
+		p("Ev_next", "Where a choice leads needs a way on too."),
+	];
+	const errs = checkWaysOn(passages, fakeSetup);
+	assert.equal(errs.length, 2);
+	assert.match(errs[0], /Ev_stuck.*no way on/);
+	assert.match(errs[1], /Ev_next.*no way on/);
+	assert.deepEqual(checkWaysOn([p("Ev_stuck", 'Done.\n<<view "event-end">>')], fakeSetup), []);
 });

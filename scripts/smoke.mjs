@@ -203,7 +203,7 @@ async function playSchool(page) {
 		s.debugTools.skip(s.time.at(d, "08:30") - s.time.now());
 	});
 	await debugRow(page, "Go", "academy");
-	await expectPassage(page, "Here", /Attend school[\s\S]*Library, Sports Hall and Playing Field: Between 15:00 and 17:00/, "school entrance");
+	await expectPassage(page, "Here", /Attend school[\s\S]*Library, Sports Hall and Playing Field: After school \(15:00–17:00\)/, "school entrance");
 	await click(page, "Attend school");
 	// Lessons were skipped earlier in this run, so Mr Hale has a word first.
 	await expectPassage(page, "Ev_tutor_word", null, "tutor's word");
@@ -267,7 +267,8 @@ async function playJob(page) {
 	await expectPassage(page, "Ev_grind_interview", /Staff wanted/, "job interview");
 	await click(page, "Continue");
 	// Getting the job also starts Lenny's story: its start screen comes next.
-	await expectPassage(page, "Ev_coffee_shop_start", /The Coffee Shop Owner edit here/, "Lenny's start screen");
+	// Its picture spot appears at the top automatically (no <<view "event-media">> in the passage).
+	await expectPassage(page, "Ev_coffee_shop_start", /Picture: assets\/media\/storylet\/coffee_shop_start[\s\S]*The Coffee Shop Owner edit here/, "Lenny's start screen");
 	await click(page, "Continue");
 	await click(page, "Work a shift · 2 hr, £20");
 	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");

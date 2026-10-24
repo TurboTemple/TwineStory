@@ -139,7 +139,15 @@ conditions: { time: { from: "12:00", to: "21:00" }, stat: { id: "energy", min: 2
 
 Combine with `{ all: [ … ] }`, `{ any: [ … ] }` (at least one) and `{ not: … }`.
 
-When an action's or a choice's conditions aren't met, it's still shown, greyed out, with what's needed underneath ("Needs: Energy at least 20"), so you can see what the character has in mind (decided by the user). Add `hidden: true` to hide it completely instead.
+When an action's or a choice's conditions aren't met, it's still shown, greyed out, with what's needed underneath ("Needs: Energy at least 20"), so you can see what the character has in mind (decided by the user). Add `hidden: true` to hide it completely instead, or use `showIf` for "only list it while…" (e.g. a day pass you haven't bought yet).
+
+**Your own wording for "Needs:":** add `text` to any condition, and the locked button says that instead of the automatic words:
+
+```js
+conditions: { weekday: [2, 4], time: { from: "15:15", to: "16:15" }, text: "Class time: Tuesdays and Thursdays, 15:15–16:15" }
+```
+
+Mix it with other parts using `all`: `{ npcHere: "mark", all: [{ weekday: [2, 4], text: "Tuesdays and Thursdays" }] }` shows "Mark Grant is here" and "Tuesdays and Thursdays".
 
 | Condition | True when… |
 |---|---|
@@ -210,6 +218,8 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ moveTo: "home_bedroom" }` | put the player somewhere |
 | `{ time: 10 }` | 10 more minutes pass |
 | `{ note: "Text" }` | a line in the summary box |
+| `{ toast: "Text" }` | a short extra line under the summary |
+| `{ schoolClearTrouble: true }` | forget the skipped lessons and late homework counted so far (after the tutor's word) |
 | `{ picture: "rough" }` | the action screen shows that outcome's own picture (`assets/media/<type>/<id>/rough.*`, e.g. `job/grind_barista/rough.gif`), if there is one |
 | `{ goto: "Ev_my_scene" }` | show that passage next (e.g. a Talk option that opens a scene) |
 | `{ interrupt: "reason" }` | stop what you're doing (sleep, an action, a journey) |

@@ -20,6 +20,7 @@
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-work.js (the barista job)
+ *   src/story/mooresville/actions.twee (each job's shift screen text: Act_shift_<job>)
  * Every field, condition, effect and event is listed in src/modules/jobs/README.md.
  */
 (function () {

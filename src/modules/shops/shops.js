@@ -170,7 +170,7 @@
 					const ul = ui.el("ul", { class: "inv" });
 					for (const item of items) {
 						const cost = shops.price(def, item);
-						const owned = setup.inventory.count(item.id, Object.keys(setup.vars().inv.places));
+						const owned = setup.inventory.count(item.id, setup.inventory.allPlaces());
 						const li = ui.el("li", { class: "inv-row" },
 							setup.media.thumb("item", item.id, item.name),
 							ui.el("span", { class: "inv-name", text: item.name }),

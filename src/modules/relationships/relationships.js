@@ -14,6 +14,7 @@
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-social.js (Friendship, Romance, the Talk menu)
+ *   src/story/mooresville/actions.twee (each chat's flavour text: Act_talk_<id>)
  * Every field, condition, effect and event is listed in src/modules/relationships/README.md.
  */
 (function () {
@@ -170,6 +171,8 @@
 			// { rel: { npc?, track, min?, max? } } — npc defaults to the one in context.
 			cond.register("rel", {
 				test(spec, ctx) {
+					// No one in context (e.g. checked away from a conversation): not true.
+					if (!(spec.npc ?? ctx.npc)) return false;
 					const v = rel.get(spec.npc ?? ctx.npc, spec.track);
 					return (spec.min == null || v >= spec.min) && (spec.max == null || v <= spec.max);
 				},

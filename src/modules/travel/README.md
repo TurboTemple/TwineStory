@@ -44,7 +44,7 @@ The Here screen ends with **Go to**, but only at a place's entrance (a place wit
 `travel:depart`, `travel:checkpoint { mode, from, to, at, elapsed, interrupt() }`, `travel:arrived`, `travel:interrupted`
 
 ## UI
-"Go somewhere else" on Here → `Travel_Pick`, grouped by mode, showing time, fare and stops.
+See **Inline buttons** above. Locked destinations are greyed out; underneath, each reason is said once, naming the destinations it applies to (unless it applies to all of them, like "You need to get dressed").
 
 ## Open decisions
 - Bus timetables (waiting for the next bus) — buses currently leave as soon as you board.

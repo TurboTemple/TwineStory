@@ -232,7 +232,7 @@
 		room({ id: "academy_girls_toilets", name: "Girls' Toilets", parent: "academy", tags: ["toilet", "sink"], links: ["academy_canteen"] });
 		R.alias("location", "academy_toilets", "academy_canteen"); // the old single toilets
 		// After school (from the end of lessons until the school shuts), these open off the entrance.
-		const afterSchool = { time: { from: "15:00", to: "17:00" } };
+		const afterSchool = { time: { from: "15:00", to: "17:00" }, text: "After school (15:00–17:00)" };
 		room({ id: "academy_library", name: "Library", parent: "academy", tags: ["school", "quiet"], innerMins: 2, entry: afterSchool });
 		room({ id: "academy_sports_hall", name: "Sports Hall", parent: "academy", tags: ["school"], innerMins: 3, entry: afterSchool });
 		room({ id: "academy_field", name: "Playing Field", parent: "academy", tags: ["school"], outdoor: true, innerMins: 3, entry: afterSchool });

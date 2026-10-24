@@ -34,7 +34,8 @@
 	 */
 	function parseHM(hm) {
 		const m = /^(\d{1,2}):(\d{2})$/.exec(String(hm));
-		if (!m || Number(m[1]) > 24 || Number(m[2]) > 59) throw new setup.GameError(`Bad time "${hm}" (expected HH:MM)`);
+		// "24:00" is allowed (the end of the day, for ranges like 17:00–24:00); "24:30" isn't.
+		if (!m || Number(m[2]) > 59 || Number(m[1]) > 24 || (Number(m[1]) === 24 && Number(m[2]) > 0)) throw new setup.GameError(`Bad time "${hm}" (expected HH:MM)`);
 		return Number(m[1]) * 60 + Number(m[2]);
 	}
 

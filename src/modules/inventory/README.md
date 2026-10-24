@@ -23,7 +23,7 @@ Items, and the places they're kept.
 `$inv = { seq, places: { [storageId]: [{ uid, item, qty, usesLeft? }] } }`
 
 ## API (`setup.inventory`)
-`accessible()`, `stackable(def)`, `addUniqueRule(fn)`, `entries(place)`, `count(item, places?)`, `add(item, qty, place, { force })`, `remove(item, qty, places?)`, `move(uid, to, qty?)`, `moveAll(uid, to)` (ignores room; used when moving house), `use(uid)`, `useUp(item)`, `usesLeft(entry)`, `find(uid)`, `space(place)`, `refuses(place, item, qty)`
+`accessible()`, `allPlaces()` (every place holding anything, reachable or not; other modules use this instead of reading `$inv`), `stackable(def)`, `addUniqueRule(fn)`, `entries(place)`, `count(item, places?)`, `add(item, qty, place, { force })`, `remove(item, qty, places?)`, `move(uid, to, qty?)`, `moveAll(uid, to)` (ignores room; used when moving house), `use(uid)`, `useUp(item)`, `usesLeft(entry)`, `find(uid)`, `space(place)`, `refuses(place, item, qty)`
 
 ## Conditions and effects
 - `{ has: "item" }` / `{ has: { item, qty, place? } }` — within reach

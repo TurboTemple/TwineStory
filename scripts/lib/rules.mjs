@@ -258,3 +258,30 @@ export function checkStoryMacros(passages, setup, hasPassage) {
 	}
 	return errors;
 }
+
+/** What gives the player a way on from a story screen. */
+const WAY_ON = [/<<view\s+["']event-end["']\s*>>/, /<<choice\b/, /<<button\b/, /<<link\b/, /\[\[/, /<<goto\b/];
+
+/**
+ * Every event passage (a storylet's, or one a <<choice>> leads to) needs a
+ * way on: <<view "event-end">> (Continue), a <<choice>>, a button or a link.
+ * Otherwise the player is stuck on that screen with nothing to tap.
+ * @param {{ name: string, text: string, file: string }[]} passages
+ * @param {object} setup  A booted engine.
+ * @returns {string[]}
+ */
+export function checkWaysOn(passages, setup) {
+	const errors = [];
+	const byName = new Map(passages.map((p) => [p.name, p]));
+	const needWay = new Set(setup.registry.all("storylet").map((s) => s.passage));
+	for (const p of passages) {
+		for (const m of p.text.matchAll(/<<choice\s+(?:"[^"]*"|'[^']*')\s+["']([^"']+)["']/g)) needWay.add(m[1]);
+	}
+	for (const name of needWay) {
+		const p = byName.get(name);
+		if (p && !WAY_ON.some((re) => re.test(p.text))) {
+			errors.push(`${p.file}: passage "${name}" has no way on: end it with <<view "event-end">> (a Continue button) or add a <<choice>>`);
+		}
+	}
+	return errors;
+}

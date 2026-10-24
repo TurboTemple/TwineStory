@@ -6,6 +6,8 @@
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-people.js (every character sheet and schedule)
+ *   src/content/mooresville/stories/story-*.js (the key story characters)
+ *   src/story/mooresville/people.twee (what you see when you tap someone: Npc_<id>)
  * Every field, condition, effect and event is listed in src/modules/npcs/README.md.
  */
 (function () {

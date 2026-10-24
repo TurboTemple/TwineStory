@@ -20,7 +20,8 @@
  *         school:homeworkSet { subject, due }
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
- *   src/content/mooresville/town-school.js (subjects, timetable, term dates)
+ *   src/content/mooresville/town-school.js (subjects, timetable, lunch, term dates)
+ *   src/story/mooresville/actions.twee (each lesson's flavour text: Act_lesson_<subject>)
  * Every field, condition, effect and event is listed in src/modules/education/README.md.
  */
 (function () {

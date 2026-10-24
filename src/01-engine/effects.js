@@ -20,6 +20,8 @@
  *     goto:        passage | null      a passage to show afterwards
  *     interrupted: false | reason      stop the rest (and whatever's running)
  *     mins:        number              extra minutes queued by { time: n }
+ *     picture?:    name                an outcome's own picture on the action
+ *                                       screen ({ picture: "rough" }, actions module)
  *   }
  * `time` effects don't move the clock straight away: they add up, and the
  * clock advances once after the whole list.
@@ -124,6 +126,7 @@
 				into.toasts.push(...from.toasts);
 				into.goto = from.goto ?? into.goto;
 				into.interrupted = into.interrupted || from.interrupted;
+				into.picture = from.picture ?? into.picture; // an outcome's own picture ({ picture })
 				return into;
 			},
 
