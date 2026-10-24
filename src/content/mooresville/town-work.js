@@ -33,7 +33,7 @@
  *        ▼
  *   "supervisor" (50+): supervisor event, then sometimes supervisor events
  *
- *   Handing in your notice (Me page) ─► "quit".
+ *   Handing in your notice (the Profile tab) ─► "quit".
  *
  *   A shift is one tap: 2 hours, worked whenever the café is open, as many
  *   as you like (decided by the user). Every shift ends with a random
@@ -173,6 +173,8 @@
 		 *                   it's a random outcome: { random: [{ weight, then }] }
 		 *                   picks one branch, `weight` = how likely it is.
 		 *                   { note: "…" } adds a line to the shift summary.
+ *                   { picture: "rough" } shows that outcome's own picture on
+ *                   the shift screen (assets/media/job/<job>/rough.*).
 		 *                   weightIf: [{ when: CONDITION, add: n }] makes a
 		 *                   branch likelier (or, with a minus, less likely)
 		 *                   while the condition is true.
@@ -207,7 +209,8 @@
 						{
 							weight: 2,
 							weightIf: [{ when: { stat: { id: "energy", max: 30 } }, add: -1 }], // less likely when tired
-							then: [{ note: "A good shift: everything clicked." }, { skill: { barista: 1 } }, { stat: { mood: 3 } }],
+							// { picture: "good" }: the shift's action screen shows assets/media/job/grind_barista/good.* if there is one.
+							then: [{ note: "A good shift: everything clicked." }, { skill: { barista: 1 } }, { stat: { mood: 3 } }, { picture: "good" }],
 						},
 						// A rough shift.
 						{
@@ -216,7 +219,7 @@
 								{ when: { stat: { id: "energy", max: 30 } }, add: 2 }, // tired
 								{ when: { stat: { id: "stress", min: 70 } }, add: 2 }, // stressed
 							],
-							then: [{ note: "A rough shift: you muddled orders all afternoon." }, { skill: { barista: -0.5 } }, { stat: { stress: 5 } }],
+							then: [{ note: "A rough shift: you muddled orders all afternoon." }, { skill: { barista: -0.5 } }, { stat: { stress: 5 } }, { picture: "rough" }],
 						},
 						// A big tip.
 						{

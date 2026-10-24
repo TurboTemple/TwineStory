@@ -66,6 +66,17 @@
 			effects: [{ storyline: { id: "gym_teacher", to: "start" } }],
 		});
 
+		// Something you can do with Mr Grant himself: it shows on his screen when
+		// you tap him (with: "mark"), not in the Sports Hall's list.
+		R.define("action", {
+			id: "ask_mark_volleyball",
+			label: "Ask about the volleyball team",
+			with: "mark",
+			mins: 5,
+			showIf: { storyline: { id: "gym_teacher" } }, // once you've signed up
+			effects: [{ rel: { friendship: 2 } }],
+		});
+
 		// The class itself. DESIGN: when it runs (Tuesdays and Thursdays after school for now).
 		R.define("action", {
 			id: "volleyball_class",

@@ -196,7 +196,7 @@
 				};
 			};
 
-			// The body section of the "Me" screen.
+			// The body section of the Profile tab.
 			setup.character.addMeSection("body", 20, (box) => {
 				const groups = new Map();
 				for (const def of body.defs()) groups.set(def.group, [...(groups.get(def.group) ?? []), def]);

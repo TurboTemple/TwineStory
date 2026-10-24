@@ -21,6 +21,13 @@
  *         npc         the person the effects are about (for { rel: … });
  *                     defaults to whoever the event or conversation was with
  *
+ *   <<oneof>>The water's lovely and hot.
+ *   <<or>>The hot water runs out halfway through.
+ *   <<or>>You sing in the shower. Badly.
+ *   <</oneof>>
+ *       Shows one of the parts, picked at random each time (it stays the
+ *       same if the same screen is shown again at the same moment).
+ *
  *   <<name "jess_marlow">>         a person's name ("Jess Marlow")
  *   <<first "jess_marlow">>        their first name ("Jess")
  *   <<name>>                       the player's name
@@ -170,6 +177,20 @@
 						const conds = this.payload.map((p) => (p.name === "otherwise" ? null : writing.args(p.args.raw, p.name)[0] ?? true));
 						const i = writing.pick(conds);
 						if (i >= 0) sc.wiki(this.output, this.payload[i].contents);
+					});
+				},
+			});
+
+			// <<oneof>> … <<or>> … <</oneof>>: one part at random. Seeded by the
+			// passage, the text and the time, so re-showing the screen doesn't change it.
+			sc.addMacro("oneof", {
+				skipArgs: true,
+				tags: ["or"],
+				handler() {
+					guard("oneof", this, () => {
+						const parts = this.payload.map((p) => p.contents);
+						const key = `oneof:${sc.passage()}:${setup.rng.hash(parts.join("|"))}:${setup.time.now()}`;
+						sc.wiki(this.output, setup.rng.seeded(key).pick(parts));
 					});
 				},
 			});

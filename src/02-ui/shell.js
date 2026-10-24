@@ -13,7 +13,8 @@
  * opened from the top bar. Sections are registered, so modules can add more.
  *
  * The sidebar has two tabs: Overview (the sections below) and Profile (the
- * full character profile: body, clothes, detailed stats, money, effects).
+ * full character profile: body, clothes, detailed stats, money, effects;
+ * the one place for all of that).
  */
 (function () {
 	"use strict";
@@ -150,7 +151,6 @@
 					close();
 					flow.go(passage);
 				});
-				if (setup.sc.hasPassage("Character_Me") && setup.vars().pc) nav.append(go("Me", "Character_Me"));
 				if (has("inventory") && setup.vars().inv) nav.append(go("Bag", "Inventory_Bag"));
 				for (const b of menuButtons) {
 					const spec = b.fn();
@@ -179,7 +179,7 @@
 				box.append(nav);
 			});
 
-			/* ---- Profile sections (sidebar Profile tab and the Me page) ------ */
+			/* ---- Profile sections (the sidebar's Profile tab) ---------------- */
 
 			/** Who or what a modifier comes from, for display. */
 			const sourceName = (src) => {

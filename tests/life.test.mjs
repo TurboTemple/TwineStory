@@ -145,3 +145,48 @@ test("tapping someone shows them and what you can do (no character sheet); sheet
 	assert.equal(played.at(-1), "Npcs_Sheet");
 	assert.equal(setup.npcs.sheetBack, "Phone_Home");
 });
+
+test("people-specific actions show with that person, not in the place's list, and come back to them", () => {
+	const { setup, played } = bootTown();
+	setup.time.advance(setup.time.at(2, "15:20") - setup.time.now());
+	setup.world.moveTo("academy_sports_hall");
+	setup.storylines.moveTo("gym_teacher", "start", { quiet: true });
+	assert.ok(!setup.actions.available().some((a) => a.def.id === "ask_mark_volleyball"), "not in the Sports Hall's list");
+	assert.deepEqual(plain(setup.actions.withNpc("mark").map((a) => a.def.id)), ["ask_mark_volleyball"]);
+	assert.deepEqual(plain(setup.actions.withNpc("priya_shah")), [], "only with Mr Grant");
+	const before = setup.rel.get("mark", "friendship");
+	setup.flow.perform(() => setup.actions.do("ask_mark_volleyball", { npc: "mark" }));
+	assert.ok(setup.rel.get("mark", "friendship") > before, "the effects are about him");
+	assert.equal(played.at(-1), "Actions_Scene");
+	setup.flow.continue();
+	assert.equal(played.at(-1), "Npcs_Meet");
+	assert.throws(() => setup.actions.do("ask_mark_volleyball"), /isn't offered/, "needs the person");
+});
+
+test("an outcome's own picture: { picture } in the effects", () => {
+	const { setup } = bootTown();
+	const r = setup.effects.newResult();
+	setup.effects.run([{ picture: "rough" }], {}, r);
+	assert.equal(r.picture, "rough");
+});
+
+test("the phone's Recent app remembers the last things that happened (capped)", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("home_bathroom");
+	setup.flow.perform(() => setup.actions.do("use_toilet"));
+	const recent = setup.vars().journal.recent;
+	assert.equal(recent.at(-1).title, "Go for a wee");
+	assert.match(recent.at(-1).lines[0], /Go for a wee took/);
+	for (let i = 0; i < 30; i++) setup.flow.perform(() => setup.actions.do("wash_hands"));
+	assert.equal(setup.vars().journal.recent.length, 20);
+});
+
+test("phone apps sit in groups; the writing checklist knows every picture spot", () => {
+	const { setup } = bootTown();
+	const groups = [...new Set(setup.phone.apps().map((a) => a.group))];
+	assert.deepEqual(plain(groups), ["People", "Plans", "Out and about", "Money and history"]);
+	const spots = setup.debugTools.pictureSpots();
+	assert.ok(spots.some((s) => s.folder === "assets/media/action/" && s.file === "shower"));
+	assert.ok(spots.some((s) => s.folder === "assets/media/npc/priya_shah/" && s.file === "here"));
+	assert.ok(spots.some((s) => s.folder === "assets/media/item/chocolate_bar/" && s.file === "use"));
+});

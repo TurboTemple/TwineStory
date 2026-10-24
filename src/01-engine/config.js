@@ -35,7 +35,7 @@
 	 * (A brand-new module doesn't need a bump: save.js adds its slice.)
 	 * @type {number}
 	 */
-	setup.SCHEMA_VERSION = 9;
+	setup.SCHEMA_VERSION = 10;
 
 	/** Static game configuration. */
 	setup.config = {

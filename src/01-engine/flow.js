@@ -132,6 +132,8 @@
 				illustration = null;
 				if (target !== flow.home) setup.vars().meta.returnTo = back;
 				pending = null;
+				// For listeners that keep a history (the phone's Recent app). They mustn't navigate.
+				setup.bus?.emit("flow:done", { result: last, passage: target, illustration: shown });
 				setup.sc.play(target);
 				return out;
 			},

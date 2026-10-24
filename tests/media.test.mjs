@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { buildManifest, manifestScript } from "../scripts/lib/media.mjs";
+import { buildManifest, findPlaceholders, manifestScript } from "../scripts/lib/media.mjs";
+import { parseTwee } from "../scripts/lib/twee.mjs";
 import { bootTown, plain } from "./helpers.mjs";
 
 test("the manifest finds media by folder and name, preferring video, then GIF, then images", () => {
@@ -71,4 +72,12 @@ test("NPCs have an appearance, checked against the body parts", () => {
 	assert.equal(setup.npcs.get("dr_okafor").body.hair_colour, "black");
 	// Key story characters' looks are left for the user to write.
 	for (const n of setup.registry.all("npc").filter((x) => !x.tags.includes("story"))) assert.ok(Object.keys(n.body).length > 0, n.id);
+});
+
+test("the build lists passages still saying [… edit here], with their files", () => {
+	const root = fs.mkdtempSync(path.join(os.tmpdir(), "todo-"));
+	fs.mkdirSync(path.join(root, "src/story"), { recursive: true });
+	fs.writeFileSync(path.join(root, "src/story/a.twee"), ":: Act_one\n[One edit here]\n\n:: Act_two\nAll written.\n");
+	assert.deepEqual(findPlaceholders(root, parseTwee), { Act_one: "src/story/a.twee" });
+	assert.match(manifestScript({}, { Act_one: "src/story/a.twee" }), /setup.__placeholders = \{[\s\S]*Act_one/);
 });

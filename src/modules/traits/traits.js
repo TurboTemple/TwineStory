@@ -209,7 +209,7 @@
 				box.append(ui.el("ul", { class: "chips" }, ...list.map((d) => ui.el("li", { class: `chip chip-${tone(d)}`, text: d.label, attrs: { title: d.desc || null } }))));
 			});
 
-			// Profile tab and Me page: each trait, what it does, what it needs.
+			// Profile tab: each trait, what it does, what it needs.
 			setup.character.addMeSection("traits", 62, (box) => {
 				const list = traits.list().filter((d) => !d.hidden);
 				box.append(ui.el("h2", { text: "Traits" }));

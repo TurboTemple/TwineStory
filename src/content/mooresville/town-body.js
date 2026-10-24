@@ -27,7 +27,7 @@
  * ---------------------------------------------------------------------------
  *  FIELDS
  * ---------------------------------------------------------------------------
- *   id, label, desc   the part, its name, and a note shown on the Me page
+ *   id, label, desc   the part, its name, and a note shown in the sidebar's Profile tab
  *   start             the default on the new game screen
  *   creation: true    the player picks it on the new game screen (all parts here)
  *   order, group      position, and the heading it's listed under ("Looks")

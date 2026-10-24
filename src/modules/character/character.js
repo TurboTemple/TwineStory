@@ -76,13 +76,13 @@
 			};
 			setup.character = character;
 
-			/* ---- The "Me" screen --------------------------------------------- */
+			/* ---- The profile (sidebar Profile tab) ---------------------------- */
 
 			/** @type {{name: string, order: number, fn: Function}[]} */
 			const meSections = [];
 
 			/**
-			 * Add a section to the Me screen (body, clothes, …). Lower order first.
+			 * Add a section to the profile (sidebar Profile tab: body, clothes, …). Lower order first.
 			 * @param {string} name @param {number} order @param {(box: HTMLElement) => void} fn
 			 */
 			character.addMeSection = (name, order, fn) => {
@@ -92,7 +92,7 @@
 
 			/**
 			 * Draw the full profile (portrait, then every Me section) into a box.
-			 * Used by the Me page and the sidebar's Profile tab.
+			 * Shown in the sidebar's Profile tab.
 			 */
 			character.renderMe = (box) => {
 				box.classList.add("m-character", "profile");
@@ -112,11 +112,6 @@
 					if (part.childNodes.length) box.append(part);
 				}
 			};
-
-			ui.view("me", (box) => {
-				character.renderMe(box);
-				box.append(ui.button("Back", () => flow.go(flow.home)));
-			});
 
 			/* ---- New game screen -------------------------------------------- */
 

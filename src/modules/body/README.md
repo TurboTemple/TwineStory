@@ -8,7 +8,7 @@ The PC's body, built from separate **parts**, so parts can be added, removed or 
 - `kind: "choice"` (eye colour, bust, build) with `options`.
 - `change`: how it changes by itself each day: `"none"`, or `"grow"` (+`perDay`). Add more with `setup.body.registerChangeHook(name, (def, value, days) => newValue)`.
 - `creation: true`: chosen on the new game screen.
-- `group`: heading on the Me page ("Body", "Looks").
+- `group`: heading in the sidebar's Profile tab ("Body", "Looks").
 
 ## State
 `$body = { parts: { [id]: value } }`

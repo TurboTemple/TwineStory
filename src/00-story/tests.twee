@@ -3,6 +3,7 @@
 <<if setup.config.debug>>
 Checks and tools for testing the game. These pages only work in debug mode.
 
+* [[Writing checklist (text to write, pictures to add)|Debug_Checklist]]
 * [[Debug tools (go anywhere, skip time, money, stats, events)|Debug_Tools]]
 * [[Setup checks|Test_Phase0]]
 
