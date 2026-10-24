@@ -17,7 +17,7 @@
  * ---------------------------------------------------------------------------
  *  HOW RENTING WORKS
  * ---------------------------------------------------------------------------
- *   At Keys & Co Lettings (High Street) every residence with `listed: true`
+ *   At Keys & Co Estate Agents (Business District) every residence with `listed: true`
  *   is shown with its rent and deposit. Renting one pays the deposit and the
  *   first rent, and you move in: everything in your wardrobe, cupboards and
  *   furniture moves with you (by `storage` role). The rent bill then charges

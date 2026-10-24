@@ -44,6 +44,7 @@
  *                 "smart"       two or more smart things = "Smartly dressed"
  *                 "cosy", "sportswear", "evening"   switch on effects (part 4)
  *                 "sleepwear"   you can't go out in it
+ *                 "swimwear"    lets you into the sea at the beach
  *   stats       stat changes while you wear it (see `mod` in town-kit.js)
  *   slots       where it's worn (it replaces whatever was there); a dress
  *               uses ["top", "bottom"]
@@ -443,6 +444,87 @@
 			shops: ["urban_thread"],
 			stats: [mod.add("mood", 1)],
 			slots: ["accessory"],
+		});
+
+		// ---- Swimwear (the Surf Shack, at the beach) ----
+		// Worn in place of underwear, so you're not dressed to go out in it
+		// alone: change in the beach changing area.
+		item({
+			id: "black_swimsuit",
+			name: "Black swimsuit",
+			price: 20,
+			kind: "clothing",
+			shops: ["surf_shack"],
+			attributes: ["swimwear"],
+			stats: [mod.add("mood", 1)],
+			slots: ["under_top", "under_bottom"],
+		});
+		item({
+			id: "bikini",
+			name: "Patterned bikini",
+			price: 50,
+			kind: "clothing",
+			shops: ["surf_shack"],
+			attributes: ["swimwear"],
+			stats: [mod.add("mood", 2)],
+			slots: ["under_top", "under_bottom"],
+		});
+		item({
+			id: "swim_shorts",
+			name: "Swim shorts",
+			price: 10,
+			kind: "clothing",
+			shops: ["surf_shack"],
+			attributes: ["swimwear"],
+			slots: ["under_bottom"],
+		});
+		item({
+			id: "flip_flops",
+			name: "Flip-flops",
+			price: 10,
+			kind: "clothing",
+			shops: ["surf_shack"],
+			slots: ["feet"],
+		});
+
+		// ---- Lingerie (Scarlet's, in South Town) ----
+		item({
+			id: "red_lingerie",
+			name: "Red lace lingerie set",
+			price: 50,
+			kind: "clothing",
+			shops: ["scarlets"],
+			stats: [mod.add("mood", 2)],
+			slots: ["under_top", "under_bottom"],
+		});
+		item({
+			id: "silk_lingerie",
+			name: "Black silk lingerie set",
+			price: 100,
+			kind: "clothing",
+			shops: ["scarlets"],
+			stats: [mod.add("mood", 4)],
+			slots: ["under_top", "under_bottom"],
+		});
+		item({
+			id: "stockings",
+			name: "Lace-top stockings",
+			price: 20,
+			kind: "clothing",
+			shops: ["scarlets"],
+			attributes: ["evening"],
+			stats: [mod.add("mood", 1)],
+			slots: ["legs"],
+		});
+		item({
+			id: "satin_robe",
+			name: "Satin robe",
+			price: 50,
+			kind: "clothing",
+			shops: ["scarlets"],
+			attributes: ["sleepwear", "cosy"],
+			stats: [mod.add("mood", 2)],
+			slots: ["top", "bottom"],
 		});
 
 		/* ======================================================================

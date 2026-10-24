@@ -65,5 +65,20 @@
 			at: "arcade_urban_thread",
 			desc: "High-street basics, sportswear and coats.",
 		});
+
+		shop({
+			id: "surf_shack",
+			name: "The Surf Shack",
+			at: "surf_shack",
+			desc: "Swimwear, flip-flops, sun cream and ice lollies, under a roof of hanging bodyboards.",
+		});
+
+		shop({
+			id: "scarlets",
+			name: "Scarlet's",
+			at: "scarlets",
+			desc: "Lingerie and nightwear at the front; everything else behind the bead curtain.",
+			conditions: { ageAtLeast: 18 },
+		});
 	});
 })();

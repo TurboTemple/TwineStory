@@ -310,6 +310,45 @@
 			good: null,
 		});
 
+		timed({
+			id: "neon_stamp",
+			label: "Club Neon stamp",
+			desc: "A smudged neon star on the back of your hand: you've paid to get into Club Neon tonight.",
+			mins: 360,
+			modifiers: [],
+			good: null,
+		});
+		timed({
+			id: "sun_cream",
+			label: "Sun cream on",
+			desc: "Protected from the sun for a few hours.",
+			mins: 180,
+			modifiers: [],
+			good: null,
+		});
+		timed({
+			id: "sun_kissed",
+			label: "Sun-kissed",
+			desc: "A warm glow from an afternoon in the sun.",
+			mins: 480,
+			modifiers: [mod.add("mood", 4), mod.add("beauty", 3)],
+		});
+		timed({
+			id: "sea_fresh",
+			label: "Salty and refreshed",
+			desc: "Tingling all over from the cold sea.",
+			mins: 120,
+			modifiers: [mod.add("mood", 5), mod.add("stress", -5), mod.add("energy", 4)],
+		});
+		R.define("statusEffect", {
+			id: "sunburnt",
+			label: "Sunburnt",
+			desc: "Pink, hot and sore. Sun cream next time.",
+			mins: 1440, // a day
+			modifiers: [mod.add("mood", -5), mod.add("beauty", -5)],
+			good: false,
+		});
+
 		// Tipsy stacks: each drink adds a level (Tipsy → Merry → Drunk → …),
 		// and each level wears off on its own after 90 minutes.
 		R.define("statusEffect", {
@@ -353,6 +392,17 @@
 				mod.speed("hygiene", 0.5),
 				mod.perHour("stress", -2),
 			],
+		});
+		doing({ id: "sunbathing", label: "Sunbathing", modifiers: [mod.perHour("stress", -6), mod.perHour("mood", 3), mod.perHour("drink", -4)] });
+		doing({
+			id: "dancing",
+			label: "Dancing",
+			modifiers: [mod.perHour("mood", 6), mod.perHour("stress", -8), mod.perHour("energy", -12), mod.perHour("drink", -8), mod.perHour("hygiene", -10)],
+		});
+		doing({
+			id: "swimming",
+			label: "Swimming",
+			modifiers: [mod.perHour("stress", -10), mod.perHour("mood", 4), mod.perHour("energy", -20), mod.perHour("food", -8)],
 		});
 		doing({ id: "relaxing", label: "Relaxing", modifiers: [mod.perHour("stress", -6), mod.perHour("mood", 3)] });
 		doing({ id: "watching_tv", label: "Watching TV", modifiers: [mod.perHour("stress", -4), mod.perHour("mood", 3)] });

@@ -252,5 +252,24 @@
 			shops: ["freshway"],
 			stackable: false,
 		});
+		item({
+			id: "sun_cream",
+			name: "Sun cream",
+			desc: "Factor 30. Put it on before you sunbathe, or you'll burn.",
+			price: 3,
+			uses: 5,
+			kind: "toiletries",
+			shops: ["surf_shack", "freshway"],
+			stackable: false,
+			use: { label: "Put on", mins: 3, effects: [{ status: "sun_cream" }] },
+		});
+		item({
+			id: "ice_lolly",
+			name: "Ice lolly",
+			price: 1,
+			kind: "food",
+			shops: ["surf_shack"],
+			use: { label: "Eat", mins: 3, effects: [{ stat: { food: 4, drink: 4, mood: 3 } }] },
+		});
 	});
 })();

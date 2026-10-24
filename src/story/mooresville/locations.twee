@@ -64,7 +64,7 @@ The boys' toilets: cold, echoey and covered in graffiti about people who left ye
 The girls' toilets: a queue for the one working mirror, and graffiti about people who left years ago.
 
 :: Loc_high_street
-Mooresville High Street is the heart of town: a mix of old shopfronts and chain stores, with the Route 7 bus stop and a taxi rank outside the bank. The Daily Grind, The Red Lion and Threadline are all close by.
+Mooresville High Street is the heart of town: a mix of old shopfronts and chain stores, with stops for the Route 7 and Route 3 buses and a taxi rank by the old post office. The Daily Grind, The Red Lion and Threadline are all close by.
 <<switch setup.text.period()>>
 <<case "morning">>Delivery vans are unloading and shops are pulling up their shutters.
 <<case "afternoon">>The pavements are busy with shoppers and people on their lunch breaks.
@@ -151,7 +151,16 @@ The Arcade Cinema has six screens, a popcorn counter and posters for this week's
 Busy shopping-centre toilets with a long line of sinks and a cleaner who's seen it all.
 
 :: Loc_riverside_park
-Riverside Park follows the River Moore through the middle of town, with wide lawns, old willows and a boathouse kiosk near the bridge.
+Riverside Park follows the River Moore through the middle of town, with wide lawns, old willows, a bandstand nobody plays in any more and a boathouse kiosk near the bridge. The Route 3 bus stops at the gates.
+<<switch setup.text.period()>>
+<<case "morning">>Joggers and dog walkers have the place to themselves, and the grass is still wet with dew.
+<<case "afternoon">>People are dotted across the lawns: picnics, kickabouts, someone asleep under a newspaper.
+<<case "evening">>The light goes golden over the water, and couples drift along the paths.
+<<default>>The lamps along the paths make small islands of light, with a lot of dark in between.
+<</switch>>
+
+:: Loc_riverside_toilets
+Concrete park toilets with a sign about opening hours and a hand dryer that gives up halfway.
 
 :: Loc_riverside_path
 A gravel path runs along the water's edge, past rowing boats and the occasional heron. There are benches every few hundred metres.
@@ -178,7 +187,7 @@ A narrow bathroom with a shower over the bath and an extractor fan that sounds l
 A galley kitchen: two hobs, a microwave and a fridge that hums all night.
 
 :: Loc_keys_lettings
-A bright little office on the High Street, its window full of photos of flats. Someone behind the desk looks up and smiles.
+A glass-fronted office on the corner of Sovereign Square, its window full of photos of flats and houses with prices that make you wince. Someone behind the desk looks up and smiles.
 
 :: Loc_community_centre
 A low brick building near the Academy, its noticeboard covered in flyers for clubs, classes and lost cats.
@@ -194,3 +203,89 @@ Behind a quiet door between two shops on the High Street, with a brass plaque re
 
 :: Loc_calm_waters_room
 A dim, calm room with a deep reclining chair, heavy curtains and a clock that ticks softly.
+
+:: Loc_business_district
+Sovereign Square is all glass towers and clipped hedges, with a fountain in the middle and a Route 3 stop on the corner. Keys & Co Estate Agents, Northern Crown Bank and the long, low hangars of Grumman Productions all open off it, and there's a cash machine in the wall that works day and night.
+<<switch setup.text.period()>>
+<<case "morning">>Suits and lanyards pour across the square, coffee cups in hand, nobody looking up.
+<<case "afternoon">>Office workers eat lunch on the edge of the fountain, scrolling their phones.
+<<case "evening">>The towers empty out. A few lit windows, a cleaner pushing a trolley, the hiss of the fountain.
+<<default>>The square is deserted. The fountain has been switched off, and the cash machine glows in the dark.
+<</switch>>
+
+:: Loc_crown_bank
+Northern Crown Bank: marble floors, a row of glass-fronted counters and a queue that moves one polite step at a time. Pens on little chains, leaflets about mortgages, and the hush of a place that deals with money.
+
+:: Loc_grumman_studios
+The reception of Grumman Productions is louder than you'd expect: posters for films you half remember, a framed award nobody dusts, and crew in black T-shirts hurrying through with cables and coffee. A desk, a sofa for visitors, and a sign on the far door: QUIET WHEN THE RED LIGHT IS ON.
+
+:: Loc_grumman_casting
+A cramped office with a camera on a tripod, a single chair in front of a white wall, and a cork board covered in headshots. A list on the door reads "Extras: leave your details".
+
+:: Loc_grumman_stage
+A huge, dark hangar. Most of it is empty concrete; in one corner, a set is lit as bright as day: a living room with three walls and no ceiling. Cables snake everywhere.
+
+:: Loc_grumman_dressing
+A corridor of small dressing rooms: mirrors ringed with bulbs, clothes rails, and a shower that takes a full minute to run hot.
+
+:: Loc_south_town
+South Town is the old docks: brick warehouses turned into bars, a few shuttered shops, and a Route 3 stop by the harbour wall. The purple sign of Club Neon hangs over the street, Scarlet's has its windows tastefully frosted, and the Golden Grill's light never seems to go off.
+<<switch setup.text.period()>>
+<<case "morning">>It's quiet: shutters down, a street sweeper, gulls going through the bins.
+<<case "afternoon">>A few people drift between the bars and the bookies. The harbour smells of diesel and salt.
+<<case "evening">>The neon signs flicker on one by one, and music starts leaking out of doorways.
+<<default>>The street belongs to the night: taxis, shouting, laughter, and the Golden Grill's queue.
+<</switch>>
+
+:: Loc_club_neon
+A heavy black door under a buzzing purple sign. Inside, the cloakroom hatch and a little desk where you pay and get your hand stamped. The bass from the dance floor makes the walls hum.
+<<when { status: "neon_stamp" }>>The stamp on your hand glows under the black light.<</when>>
+
+:: Loc_neon_dance_floor
+A dark room packed with bodies, lights sweeping overhead and the bass coming up through the floor. The DJ booth glows at the far end.
+
+:: Loc_neon_bar
+A long bar lit from underneath in violet, three deep with people waving cards. The bar staff move fast and hear almost nothing.
+
+:: Loc_neon_vip
+A raised booth behind a velvet rope: leather seats, a table of bottles, and a view down over the dance floor.
+
+:: Loc_neon_smoking
+A fenced-in yard out the back, strung with fairy lights. People shout conversations over the muffled music and their own breath steams in the air.
+
+:: Loc_neon_toilets
+Mirrors crowded with people fixing their make-up, a queue that's half gossip, and a floor you'd rather not look at.
+
+:: Loc_scarlets
+Scarlet's is warmer and brighter inside than its frosted windows suggest: rails of lingerie and silky nightwear at the front, soft music, and a bead curtain to the back room. The woman at the counter gives you a friendly, completely unbothered nod.
+
+:: Loc_scarlets_fitting
+A small cubicle with a velvet curtain, a hook and a very flattering mirror.
+
+:: Loc_golden_grill
+A bright, narrow takeaway with a spinning doner in the window, a fridge of cans, and a counter that's been wiped a thousand times. The menu board is mostly photos.
+<<if setup.text.period() is "night">>Half of Club Neon seems to be in here, eating chips with their fingers.<</if>>
+
+:: Loc_beach
+The promenade runs along the top of the sea wall: railings, benches, a Route 3 stop and a row of beach huts painted in faded candy colours. Steps lead down to the sand. The changing area is by the steps, the Surf Shack is next to it, and the old pier stretches out over the water.
+<<switch setup.text.period()>>
+<<case "morning">>Dog walkers and a few hardy swimmers have the beach to themselves.
+<<case "afternoon">>The smell of chips and suncream drifts along the promenade.
+<<case "evening">>The sun goes down over the water, and the pier lights come on one by one.
+<<default>>The sea is a black hush beyond the railings, and the pier is dark.
+<</switch>>
+
+:: Loc_beach_sand
+A long sweep of pale sand between the sea wall and the waterline, dotted with windbreaks, sandcastles and a lifeguard's chair.
+
+:: Loc_beach_sea
+The sea: cold, grey-green and always moving. The waves break in long white lines, and the shore slopes gently enough to wade out.
+
+:: Loc_beach_changing
+A row of wooden cubicles with half-doors, a cold outdoor shower for rinsing off the sand, and a couple of toilets. Everything smells of wet towels.
+
+:: Loc_beach_pier
+The old pier creaks underfoot. Halfway along there's an amusement arcade full of flashing slot machines; at the end, a fish and chip kiosk and benches looking out to sea.
+
+:: Loc_surf_shack
+A wooden hut with bodyboards hanging from the roof, racks of swimwear and flip-flops, and a freezer of ice lollies by the door.

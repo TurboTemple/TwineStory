@@ -204,6 +204,12 @@ test("walking only reaches neighbouring places", () => {
 	assert.deepEqual(opts(setup, "walk"), [["home", 1, 0], ["corner_shop", 3, 0], ["elm_park_green", 6, 0], ["academy", 18, 0], ["high_street", 25, 0]]);
 });
 
+test("Route 3 runs from the High Street through the park, the Business District and South Town to the beach", () => {
+	const { setup } = bootTown();
+	setup.world.moveTo("high_street");
+	assert.deepEqual(opts(setup, "bus3"), [["riverside_park", 4, 2], ["business_district", 8, 2], ["south_town", 14, 2], ["beach", 19, 2]]);
+});
+
 test("Route 7 only runs from its stops, through each stop on the way", () => {
 	const { setup } = bootTown();
 	setup.world.moveTo("corner_shop");
@@ -218,7 +224,8 @@ test("taxis go to hubs, only for trips longer than a 10-minute walk", () => {
 	const { setup } = bootTown();
 	setup.world.moveTo("elm_road");
 	// High Street: 25 min walk → 8 min taxi, £3 + 8 × 50p = £7. Arcade: 35 → 11 min, £8.50 → £9.
-	assert.deepEqual(opts(setup, "taxi"), [["high_street", 8, 7], ["arcade", 11, 9]]);
+	// The new hubs: Riverside Park (37-min walk), the Business District (35), South Town (47), the beach (57).
+	assert.deepEqual(opts(setup, "taxi"), [["high_street", 8, 7], ["arcade", 11, 9], ["riverside_park", 12, 9], ["business_district", 11, 9], ["south_town", 15, 11], ["beach", 18, 12]]);
 	setup.world.moveTo("corner_shop");
 	assert.ok(!opts(setup, "taxi").some(([to]) => to === "elm_road"), "Elm Road is only a 3-minute walk");
 });

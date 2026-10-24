@@ -12,6 +12,10 @@
  *   6. Ways to travel (walk, bus, taxi)
  *   7. Your money accounts (cash and bank card) and how much you start with
  *
+ * Bus hubs: Elm Road, the Academy, the High Street and the Arcade (Route 7);
+ * the High Street, Riverside Park, the Business District, South Town and
+ * the beach (Route 3).
+ *
  * The text you read at each place lives in src/story/mooresville/locations.twee
  * (a passage called "Loc_<id>" for each place and room).
  *
@@ -95,6 +99,9 @@
 		district({ id: "town_centre", name: "Town Centre", desc: "Shops, cafés and pubs around the old high street." });
 		district({ id: "westgate", name: "Westgate", desc: "The newer side of town, built around the shopping centre." });
 		district({ id: "riverside", name: "Riverside", desc: "Green space along the River Moore." });
+		district({ id: "business", name: "Business District", desc: "Glass office blocks, the bank and the film studio, busy on weekdays and empty at night." });
+		district({ id: "south_town", name: "South Town", desc: "The old docks: late-night bars, the nightclub and shops you wouldn't take your gran to." });
+		district({ id: "seafront", name: "The Seafront", desc: "Sand, a pier and a promenade at the south edge of town." });
 
 		/* ======================================================================
 		 *  2. Atmosphere
@@ -169,6 +176,45 @@
 				"Piped music and the squeak of trainers on polished floors.",
 				"A child is having a meltdown outside the toy shop.",
 				{ text: "The concourse is packed with people escaping the rain.", when: wet },
+			],
+			riverside_park: [
+				"A jogger thuds past, earphones in.",
+				"Someone is trying, and failing, to fly a kite.",
+				{ text: "The lawns are dotted with picnic blankets.", when: { all: [sunny, { time: { from: "11:00", to: "18:00" } }] } },
+				{ text: "The paths are puddled and nearly empty.", when: wet },
+				{ text: "The lamps along the paths make small islands of light.", when: evening },
+			],
+			business_district: [
+				"Office workers stride past, lanyards swinging.",
+				"The fountain in the square splashes away to nobody in particular.",
+				{ text: "A tide of people in suits flows out of the station.", when: { all: [morning, { weekday: DAYS.WEEKDAYS }] } },
+				{ text: "The towers are dark except for a cleaner's trolley on the fourth floor.", when: evening },
+				{ text: "Umbrellas jostle across the square.", when: wet },
+			],
+			south_town: [
+				"Gulls argue on the roof of an old warehouse.",
+				"Bass thuds faintly from somewhere down the street.",
+				{ text: "Neon signs buzz pink and blue in the wet street.", when: { all: [evening, wet] } },
+				{ text: "A queue snakes along the pavement outside Club Neon.", when: { all: [evening, { weekday: [4, 5, 6] }] } },
+				{ text: "The street is half asleep; most shutters are still down.", when: morning },
+			],
+			neon_dance_floor: [
+				"The bass is so loud you feel it in your ribs.",
+				"Lights sweep the crowd in slow purple arcs.",
+				{ text: "The room has a definite sway to it. Or maybe that's you.", when: { status: "tipsy" } },
+			],
+			beach: [
+				"Gulls wheel over the promenade, eyeing everyone's chips.",
+				"The smell of salt and suncream drifts up from the sand.",
+				{ text: "The beach is packed: windbreaks, buckets and shrieking children.", when: { all: [sunny, { weather: { tempMin: 18 } }] } },
+				{ text: "Grey waves slap the sea wall, and the promenade is almost empty.", when: wet },
+				{ text: "The wind off the sea cuts straight through you.", when: cold },
+				{ text: "The pier lights glitter on the dark water.", when: evening },
+			],
+			beach_sand: [
+				"A dog races in and out of the waves, barking at each one.",
+				{ text: "The sand is almost too hot to walk on.", when: { all: [sunny, { weather: { tempMin: 20 } }] } },
+				{ text: "The damp sand is firm and cold underfoot.", when: wet },
 			],
 			academy_form_room: [
 				"Someone has drawn a surprisingly good cartoon of Mr Hale on the whiteboard.",
@@ -365,9 +411,22 @@
 
 		/* ---- Riverside --------------------------------------------------------- */
 
-		place({ id: "riverside_park", name: "Riverside Park", district: "riverside", outdoor: true, tags: ["park"] });
+		// The town's main park, and a Route 3 bus stop. Go for a walk, exercise
+		// and people-watching are on the park itself (town-actions.js).
+		place({
+			id: "riverside_park",
+			name: "Riverside Park",
+			district: "riverside",
+			outdoor: true,
+			tags: ["park", "hub", "bus_stop", "seating"],
+			crowd: [
+				{ when: { all: [{ weekday: DAYS.WEEKEND }, { time: { from: "10:00", to: "18:00" } }] }, level: "busy", text: "Families, dog walkers and footballers everywhere." },
+				{ when: { time: { from: "21:00", to: "06:00" } }, level: "quiet", text: "There's nobody about, and the dark between the lamps feels very dark." },
+			],
+		});
 		room({ id: "riverside_path", name: "River Path", parent: "riverside_park", outdoor: true, tags: ["seating"], innerMins: 3 });
 		room({ id: "riverside_kiosk", name: "Boathouse Kiosk", parent: "riverside_park", outdoor: true, innerMins: 4, hours: [hours.daily("10:00", "17:00")] });
+		room({ id: "riverside_toilets", name: "Public Toilets", parent: "riverside_park", tags: ["toilet", "sink"], innerMins: 2, hours: [hours.daily("07:00", "20:00")] });
 
 		// A block of flats. The flat itself is only open to you while you rent
 		// it (town-home.js); the hallway is shared.
@@ -391,15 +450,142 @@
 		R.alias("location", "calm_waters_waiting", "calm_waters"); // old room, now the place itself
 		room({ id: "calm_waters_room", name: "Therapy Room", parent: "calm_waters", tags: ["seating"] });
 
-		/* ---- Letting agent (High Street) -------------------------------------- */
+		/* ---- Business District ------------------------------------------------- */
 
+		// The square at the centre, with the Route 3 stop and a cash machine.
+		place({
+			id: "business_district",
+			name: "Business District",
+			district: "business",
+			outdoor: true,
+			tags: ["street", "hub", "bus_stop", "seating", "cash_machine"],
+			crowd: [
+				{ when: { weekday: DAYS.WEEKDAYS, time: { from: "07:30", to: "09:30" } }, level: "busy", text: "The morning rush: everyone is late for something." },
+				{ when: { weekday: DAYS.WEEKDAYS, time: { from: "12:00", to: "14:00" } }, level: "busy", text: "Office workers eat meal deals round the fountain." },
+				{ when: { any: [{ weekday: DAYS.WEEKEND }, { time: { from: "19:00", to: "07:00" } }] }, level: "quiet", text: "The square is almost deserted." },
+			],
+		});
+
+		// The estate agent (it used to be on the High Street; same id, so
+		// saves and Dawn's rentals carry on). Lists places to rent (town-home.js).
 		place({
 			id: "keys_lettings",
-			name: "Keys & Co Lettings",
-			district: "town_centre",
-			tags: ["letting_agent"], // lists places to rent (town-home.js)
+			name: "Keys & Co Estate Agents",
+			district: "business",
+			tags: ["letting_agent"],
 			hours: [hours.on(DAYS.MON_SAT, "09:00", "17:30")],
 		});
+
+		// Grumman Productions: a working film studio. Visitors get as far as
+		// reception and the casting office; the sound stage and dressing rooms
+		// are for cast and crew (the flag "grumman_pass", for your stories to set).
+		const crewOnly = { flag: "grumman_pass", text: "Cast and crew only (you need a studio pass)" };
+		place({
+			id: "grumman_studios",
+			name: "Grumman Productions Film Studio",
+			district: "business",
+			tags: ["studio", "seating"],
+			links: ["grumman_casting", "grumman_stage"],
+			hours: [hours.on(DAYS.WEEKDAYS, "08:00", "19:00"), hours.on(DAYS.SAT, "10:00", "16:00")],
+		});
+		room({ id: "grumman_casting", name: "Casting Office", parent: "grumman_studios", tags: ["studio", "seating"] });
+		room({ id: "grumman_stage", name: "Sound Stage", parent: "grumman_studios", tags: ["studio"], entry: crewOnly, innerMins: 2, links: ["grumman_studios", "grumman_dressing"] });
+		room({ id: "grumman_dressing", name: "Dressing Rooms", parent: "grumman_studios", tags: ["studio", "changing", "toilet", "sink", "shower"], entry: crewOnly, links: ["grumman_stage"] });
+
+		place({
+			id: "crown_bank",
+			name: "Northern Crown Bank",
+			district: "business",
+			tags: ["bank", "seating"],
+			hours: [hours.on(DAYS.WEEKDAYS, "09:00", "17:00"), hours.on(DAYS.SAT, "09:00", "13:00")],
+		});
+
+		/* ---- South Town --------------------------------------------------------- */
+
+		place({
+			id: "south_town",
+			name: "South Town",
+			district: "south_town",
+			outdoor: true,
+			tags: ["street", "hub", "bus_stop"],
+			crowd: [
+				{ when: { weekday: [5, 6], time: { from: "22:00", to: "24:00" } }, level: "busy", text: "The street is loud with people heading out." },
+				{ when: { weekday: [6, 0], time: { from: "00:00", to: "03:30" } }, level: "busy", text: "Clubbers spill out onto the pavement, shouting for taxis." },
+				{ when: { time: { from: "06:00", to: "11:00" } }, level: "quiet", text: "It's quiet: a street sweeper and a few bleary delivery drivers." },
+			],
+		});
+
+		// Club Neon: Thursday to Saturday nights, 22:00 till 03:00. Pay at the
+		// door (you get a hand stamp), then the dance floor and bar are yours.
+		// Hours after midnight count on the next day, hence the two lines.
+		const clubNights = [hours.on([4, 5, 6], "22:00", "24:00"), hours.on([5, 6, 0], "00:00", "03:00")];
+		const stamped = { status: "neon_stamp", text: "Pay at the door first" };
+		const noSportswear = { when: { not: { wearing: { attribute: "sportswear" } } }, text: "No sportswear: the bouncers turn trainers and trackies away" };
+		place({
+			id: "club_neon",
+			name: "Club Neon",
+			district: "south_town",
+			tags: ["club"],
+			hours: clubNights,
+			links: ["neon_dance_floor", "neon_bar"],
+		});
+		room({ id: "neon_dance_floor", name: "Dance Floor", parent: "club_neon", tags: ["club"], entry: stamped, dressCode: noSportswear, links: ["club_neon", "neon_bar", "neon_vip", "neon_toilets"] });
+		room({ id: "neon_bar", name: "The Bar", parent: "club_neon", tags: ["club"], entry: stamped, dressCode: noSportswear, links: ["club_neon", "neon_dance_floor", "neon_smoking", "neon_toilets"] });
+		// The VIP booth: for your stories to open (the flag "neon_vip").
+		room({ id: "neon_vip", name: "VIP Booth", parent: "club_neon", tags: ["club", "seating"], entry: { flag: "neon_vip", text: "Guest list only" }, links: ["neon_dance_floor"] });
+		room({ id: "neon_smoking", name: "Smoking Area", parent: "club_neon", tags: ["club", "seating"], outdoor: true, links: ["neon_bar"] });
+		room({ id: "neon_toilets", name: "Toilets", parent: "club_neon", tags: ["toilet", "sink"], links: ["neon_dance_floor", "neon_bar"] });
+
+		// Scarlet's: the adult shop. Over-18s only (the PC is 18).
+		place({
+			id: "scarlets",
+			name: "Scarlet's Adult Store",
+			district: "south_town",
+			tags: ["shop", "adult"],
+			entry: { ageAtLeast: 18, text: "Over-18s only" },
+			hours: [hours.on(DAYS.MON_SAT, "10:00", "22:00"), hours.on(DAYS.SUN, "12:00", "18:00")],
+		});
+		room({ id: "scarlets_fitting", name: "Changing Cubicle", parent: "scarlets", tags: ["fitting_room", "changing"] });
+
+		place({
+			id: "golden_grill",
+			name: "Golden Grill Kebabs",
+			district: "south_town",
+			tags: ["takeaway", "seating"],
+			hours: [hours.daily("17:00", "04:00")],
+			crowd: [{ when: { time: { from: "02:00", to: "04:00" } }, level: "busy", text: "The after-club queue is out of the door." }],
+		});
+
+		/* ---- The Seafront --------------------------------------------------------- */
+
+		// The promenade, with the Route 3 stop. Steps lead down to the sand,
+		// and the sea is beyond it (swimwear only: change in the changing area).
+		place({
+			id: "beach",
+			name: "Mooresville Beach",
+			district: "seafront",
+			outdoor: true,
+			tags: ["street", "hub", "bus_stop", "seating"],
+			links: ["beach_sand", "beach_changing", "beach_pier", "surf_shack"],
+			crowd: [
+				{ when: { all: [{ weather: { kind: "sunny", tempMin: 18 } }, { time: { from: "10:00", to: "18:00" } }] }, level: "busy", text: "It's heaving: you can barely see the sand for towels." },
+				{ when: { any: [{ weather: { wet: true } }, { time: { from: "20:00", to: "07:00" } }] }, level: "quiet", text: "Hardly anyone about but the gulls." },
+			],
+		});
+		room({ id: "beach_sand", name: "The Sand", parent: "beach", outdoor: true, tags: ["beach", "seating"], innerMins: 2, links: ["beach", "beach_sea", "beach_changing"] });
+		room({
+			id: "beach_sea",
+			name: "The Sea",
+			parent: "beach",
+			outdoor: true,
+			tags: ["beach"],
+			innerMins: 2,
+			links: ["beach_sand"],
+			dressCode: { when: { wearing: { attribute: "swimwear" } }, text: "Swimwear only (change in the changing area)" },
+		});
+		room({ id: "beach_changing", name: "Changing Area", parent: "beach", tags: ["beach", "changing", "shower", "toilet", "sink"], links: ["beach", "beach_sand"], hours: [hours.daily("07:00", "21:00")] });
+		room({ id: "beach_pier", name: "The Pier", parent: "beach", outdoor: true, tags: ["seating"], innerMins: 3, hours: [hours.daily("10:00", "22:00")] });
+		room({ id: "surf_shack", name: "The Surf Shack", parent: "beach", tags: ["shop"], hours: [hours.daily("09:00", "18:00")] });
 
 		/* ======================================================================
 		 *  4. Walking routes
@@ -428,12 +614,21 @@
 		walk({ from: "high_street", to: "riverside_park", mins: 12 });
 		walk({ from: "arcade", to: "riverside_park", mins: 15 });
 		walk({ from: "riverside_park", to: "riverside_court", mins: 4 });
-		walk({ from: "high_street", to: "keys_lettings", mins: 2 });
+		walk({ from: "high_street", to: "business_district", mins: 10 });
+		walk({ from: "riverside_park", to: "business_district", mins: 8 });
+		walk({ from: "business_district", to: "keys_lettings", mins: 2 });
+		walk({ from: "business_district", to: "grumman_studios", mins: 4 });
+		walk({ from: "business_district", to: "crown_bank", mins: 1 });
+		walk({ from: "business_district", to: "south_town", mins: 12 });
+		walk({ from: "south_town", to: "club_neon", mins: 2 });
+		walk({ from: "south_town", to: "scarlets", mins: 2 });
+		walk({ from: "south_town", to: "golden_grill", mins: 1 });
+		walk({ from: "south_town", to: "beach", mins: 10 });
 		walk({ from: "high_street", to: "calm_waters", mins: 3 });
 		walk({ from: "academy", to: "community_centre", mins: 5 });
 
 		/* ======================================================================
-		 *  5. The Route 7 bus
+		 *  5. The buses (Route 7 and Route 3)
 		 * ======================================================================
 		 *
 		 * Stops in order along the route, with minutes between each pair.
@@ -445,6 +640,14 @@
 		bus7({ from: "elm_road", to: "academy", mins: 6 });
 		bus7({ from: "academy", to: "high_street", mins: 7 });
 		bus7({ from: "high_street", to: "arcade", mins: 4 });
+
+		// Route 3, the coast line: High Street to the beach.
+		const bus3 = ({ from, to, mins }) => R.define("route", { id: `bus3_${from}_${to}`, network: "bus3", from, to, mins });
+
+		bus3({ from: "high_street", to: "riverside_park", mins: 4 });
+		bus3({ from: "riverside_park", to: "business_district", mins: 4 });
+		bus3({ from: "business_district", to: "south_town", mins: 6 });
+		bus3({ from: "south_town", to: "beach", mins: 5 });
 
 		/* ======================================================================
 		 *  6. Ways to travel
@@ -485,9 +688,20 @@
 		});
 
 		R.define("travelMode", {
+			id: "bus3",
+			label: "Bus (Route 3)",
+			order: 2,
+			conditions: dressed,
+			network: "bus3",
+			multiHop: true,
+			cost: "flat",
+			fare: { flat: 2 }, // £2 for any trip, like Route 7
+		});
+
+		R.define("travelMode", {
 			id: "taxi",
 			label: "Taxi",
-			order: 2,
+			order: 3,
 			conditions: dressed,
 			multiHop: true,
 			destTag: "hub",
