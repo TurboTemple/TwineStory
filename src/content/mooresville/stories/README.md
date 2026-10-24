@@ -5,7 +5,7 @@ One file per storyline. Each file holds everything for that story: its character
 | File | Storyline (`id`) | Character(s) | Where | Starts when | Progression counts |
 |---|---|---|---|---|---|
 | `story-hypnotherapist.js` | The Hypnotherapist (`hypnotherapist`) | Dennis, 71 | Calm Waters Hypnotherapy, off the High Street (weekdays 10:00–18:00) | your first session; sessions unlock when your parents send you, after you've been out past the 10pm curfew more than three times | sessions, the first included |
-| `story-cosplay-club.js` | The Cosplay Club (`cosplay_club`) | John 21, Arvel 22, Micheal 23 | Northfield Community Centre, Main Hall (Tue & Thu 18:30–21:00, Sat 12:00–17:00) | you go to the club, after one of them invites you at school (a random event) | meetings, the first included |
+| `story-cosplay-club.js` | The Cosplay Club (`cosplay_club`) | John 21, Arvel 22, Micheal 23 | Northfield Community Centre, Main Hall (Tue & Thu 18:30–21:00, Sat 12:00–17:00) | you go to the club, after one of them invites you at school lunch (a random event) | meetings, the first included |
 | `story-gym-teacher.js` | The Gym Teacher (`gym_teacher`) | Mark Grant ("Mr Grant"), 52 | Mooresville Academy, Sports Hall (weekdays 08:30–16:30) | you sign up for his volleyball class | classes (Tue & Thu 15:15–16:15) |
 | `story-coffee-shop.js` | The Coffee Shop Owner (`coffee_shop`) | Lenny, 63, owner of The Daily Grind | The Daily Grind, Seating Area (Mon–Sat 08:00–14:00) | you get the job at the café | shifts worked |
 | `story-mmo-clan.js` | The MMO Clan (`mmo_clan`) | xXWolfHowlXx, 22 | online: the computer in your bedroom | you first play online | evenings playing with the clan |

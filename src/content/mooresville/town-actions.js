@@ -386,11 +386,11 @@
 		act({
 			id: "ask_reception",
 			label: "Ask about appointments",
-			at: "wellbeing_reception",
+			at: "wellbeing",
 			mins: 3,
 			effects: [{ note: "Tom says Dr Okafor sees people in the therapy room, weekdays 09:00–17:00." }],
 		});
-		act({ id: "read_leaflets", label: "Read the leaflets", at: "wellbeing_waiting", mins: 5, effects: [{ stat: { stress: -1 } }] });
+		act({ id: "read_leaflets", label: "Read the leaflets", at: "wellbeing", mins: 5, effects: [{ stat: { stress: -1 } }] });
 		act({
 			id: "therapy_session",
 			label: "Therapy session",
@@ -459,7 +459,7 @@
 		 *  The Arcade Shopping Centre
 		 * ====================================================================== */
 
-		act({ id: "window_shop", label: "Window-shop", at: "arcade_concourse", mins: 30, whileDoing: "browsing" });
+		act({ id: "window_shop", label: "Window-shop", at: "arcade", mins: 30, whileDoing: "browsing" });
 		act({
 			id: "food_court_burger",
 			label: "Buy a burger meal",

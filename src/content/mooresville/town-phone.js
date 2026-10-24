@@ -12,6 +12,7 @@
  *                 "app-bank"      balances and recent spending
  *                 "app-map"       every place, and whether it's open now
  *                 "app-taxi"      book a taxi (travel modes with viaPhone: true)
+ *                 "app-timetable" the school week (lessons and lunch, town-school.js)
  *                 "app-alarm"     set a daily alarm that wakes you up
  *                 "app-email"     emails ({ message: { from, text, via: "email" } })
  *                 "app-diary"     every storyline you've started and its
@@ -36,5 +37,6 @@
 		app({ id: "alarm", label: "Alarm", icon: "⏰", order: 4, view: "app-alarm" });
 		app({ id: "email", label: "Email", icon: "✉️", order: 1, view: "app-email", badge: "unread_email" });
 		app({ id: "diary", label: "Diary", icon: "📔", order: 5, view: "app-diary" });
+		app({ id: "timetable", label: "Timetable", icon: "📚", order: 5, view: "app-timetable" }); // the school week
 	});
 })();

@@ -2,15 +2,20 @@
  * education — school: terms, the timetable, lessons, homework, and what
  * happens when you skip.
  *
- * A school has terms (dates), school days, periods (lesson times) and a
- * timetable from a named hook (default "weekly": a grid in the data). In a
- * lesson's time you can attend it from the lesson room; a lesson you didn't
- * attend counts as skipped the next day. Subjects can set homework when you
+ * A school has terms (dates), school days, periods (lesson times), breaks
+ * (lunch) and a timetable from a named hook (default "weekly": a grid in the
+ * data). The school day: at the school's entrance, "Attend school" takes you
+ * to the lesson room; each lesson is one tap, one after another; a break
+ * takes you to its room (the canteen) until "Back to class"; after the last
+ * lesson you're back at the entrance. A lesson you didn't attend counts as
+ * skipped the next day. Subjects can set homework when you
  * have a lesson, due a few days later; homework actions complete it.
  * Skipped lessons and late homework add up as "trouble" until something
  * (e.g. your form tutor's word with you) clears it.
  *
- * Events: school:lesson { school, subject, period, late },
+ * Events: school:dayStart { school }, school:break { school, break },
+ *         school:dayEnd { school, early },
+ *         school:lesson { school, subject, period, late },
  *         school:missed { school, day, lessons }, school:homeworkLate { subject },
  *         school:homeworkSet { subject, due }
  *
@@ -22,13 +27,18 @@
 	"use strict";
 
 	const KEEP_DAYS = 10;
+	const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 	(setup.__modules ??= []).push({
 		id: "education",
-		version: 1,
+		version: 2,
 		deps: ["world", "character"],
 		state: "school",
-		defaultState: () => ({ attended: {}, homework: [], trouble: { lessons: 0, homework: 0 }, totals: { attended: 0, skipped: 0, homeworkDone: 0, homeworkLate: 0 }, nextHw: 1 }),
+		defaultState: () => ({ attended: {}, homework: [], trouble: { lessons: 0, homework: 0 }, totals: { attended: 0, skipped: 0, homeworkDone: 0, homeworkLate: 0 }, nextHw: 1, today: null }),
+		migrations: {
+			// The school day (`today`); homework in subjects that no longer exist is dropped.
+			2: (slice) => ({ ...slice, today: null, homework: slice.homework.filter((h) => setup.registry.has("subject", h.subject)) }),
+		},
 
 		install({ registry, cond, effects, time, bus, ui, fmt }) {
 			registry.defineType("subject", {
@@ -38,11 +48,12 @@
 			});
 			registry.defineType("school", {
 				required: ["label", "room", "periods"],
-				defaults: { days: [1, 2, 3, 4, 5], terms: [], keyDates: [], timetable: "weekly", week: {}, status: null, lateMins: 5, lastEntryMins: 15, earlyMins: 5, homeworkDue: "08:40" },
-				refs: { room: "location", status: "statusEffect" },
+				defaults: { days: [1, 2, 3, 4, 5], terms: [], keyDates: [], timetable: "weekly", week: {}, breaks: [], status: null, lateMins: 5, lastEntryMins: 15, earlyMins: 5, homeworkDue: "08:40" },
+				refs: { room: "location", status: "statusEffect", "breaks[].at": "location" },
 				check(def) {
 					const errs = [];
-					for (const p of def.periods) if (!p.from || !p.to || time.parseHM(p.to) <= time.parseHM(p.from)) errs.push(`period ${p.from}–${p.to} must end after it starts`);
+					for (const p of [...def.periods, ...def.breaks]) if (!p.from || !p.to || time.parseHM(p.to) <= time.parseHM(p.from)) errs.push(`${p.label ?? "period"} ${p.from}–${p.to} must end after it starts`);
+					for (const b of def.breaks) if (!b.id || !b.label || !b.at) errs.push("each break needs an id, a label and a room (at)");
 					for (const tm of def.terms) {
 						try {
 							if (time.dayOf(tm.to) < time.dayOf(tm.from)) errs.push(`term ${tm.from}–${tm.to} ends before it starts`);
@@ -109,16 +120,128 @@
 					return edu.lessonsOn(id, time.day(t)).find((l) => l.to > t && !edu.attended(id, time.day(t), l.period)) ?? null;
 				},
 
+				/** @returns {object|null} The next lesson today you can still go to (not attended, not too late). */
+				nextJoinable(id, t = time.now()) {
+					const s = registry.get("school", id);
+					return edu.lessonsOn(id, time.day(t)).find((l) => t <= l.to - s.lastEntryMins && !edu.attended(id, time.day(t), l.period)) ?? null;
+				},
+
 				/** @returns {boolean} Whether a lesson is in progress (being attended). */
 				inLesson: () => running !== null,
 
+				/* ---- The school day ------------------------------------------- */
+
+				/** @returns {{school: string, day: number, breaks: string[]}|null} Today's school day, if you're in one. */
+				today() {
+					const d = S().today;
+					return d && d.day === time.day(time.now()) ? d : null;
+				},
+
+				/** @returns {string} The place you go in and out by (the lesson room's site). */
+				entrance: (id) => setup.world.site(registry.get("school", id).room),
+
+				/** @returns {string[]} The rooms of a school day: the lesson room, each break's room and the rooms off it. */
+				insideRooms(id) {
+					const s = registry.get("school", id);
+					const out = new Set([s.room]);
+					for (const b of s.breaks) {
+						out.add(b.at);
+						for (const n of setup.world.neighbours(b.at)) out.add(n);
+					}
+					return [...out];
+				},
+
+				/** @returns {object[]} Today's breaks with their times: { id, label, at, from, to }. */
+				breaksOn(id, day) {
+					if (!edu.schoolDay(id, day)) return [];
+					return registry.get("school", id).breaks.map((b) => ({ ...b, from: time.at(day, b.from), to: time.at(day, b.to) }));
+				},
+
 				/**
-				 * Attend the current lesson to its end.
+				 * What comes next in today's school day.
+				 * @returns {{kind: "lesson", lesson: object}|{kind: "break", brk: object}|{kind: "end"}}
+				 */
+				nextStep(id, t = time.now()) {
+					const l = edu.nextJoinable(id, t);
+					const taken = edu.today()?.breaks ?? [];
+					const brk = edu.breaksOn(id, time.day(t)).find((b) => !taken.includes(b.id) && t < b.to && (!l || b.to <= l.from));
+					if (brk) return { kind: "break", brk };
+					return l ? { kind: "lesson", lesson: l } : { kind: "end" };
+				},
+
+				/** @returns {string[]} Why the school day can't start now (empty = it can). */
+				startBlockers(id) {
+					const day = time.day(time.now());
+					if (!edu.schoolDay(id, day)) return [edu.inTerm(id, day) ? "No school today" : "It's the holidays"];
+					if (!setup.world.isOpen(edu.entrance(id))) return ["The school is shut"];
+					if (!edu.nextJoinable(id)) return ["School's finished for today"];
+					return [];
+				},
+
+				/**
+				 * "Attend school": go to the lesson room for the day's lessons.
+				 * @returns {object} Result
+				 */
+				startDay(id) {
+					const why = edu.startBlockers(id);
+					if (why.length) throw new setup.GameError(`Can't start the school day: ${why.join("; ")}`);
+					S().today = { school: id, day: time.day(time.now()), breaks: [] };
+					setup.world.moveTo(registry.get("school", id).room);
+					const result = effects.newResult();
+					bus.emit("school:dayStart", { school: id, ctx: { school: id }, result });
+					return result;
+				},
+
+				/**
+				 * Go on a break (e.g. lunch): wait for it to start if it's early, then
+				 * go to its room. Emits school:break, for events at lunch.
+				 * @returns {object} Result
+				 */
+				takeBreak(id, breakId) {
+					const b = edu.breaksOn(id, time.day(time.now())).find((x) => x.id === breakId);
+					if (!b) throw new setup.GameError(`No break "${breakId}" at ${id} today`);
+					const result = effects.newResult();
+					edu.today()?.breaks.push(b.id);
+					if (time.now() < b.from) time.advance(b.from - time.now(), { reason: "school:wait" });
+					setup.world.moveTo(b.at);
+					result.changes.push({ kind: "school", text: `${b.label} until ${fmt.time(b.to)}.` });
+					bus.emit("school:break", { school: id, break: b.id, ctx: { school: id }, result });
+					return result;
+				},
+
+				/**
+				 * After a break: back to the lesson room and straight into the next lesson.
+				 * @returns {object} Result
+				 */
+				backToClass(id) {
+					setup.world.moveTo(registry.get("school", id).room);
+					return edu.nextJoinable(id) ? edu.attend(id) : edu.endDay(id);
+				},
+
+				/**
+				 * End the school day and go back out to the entrance. Leaving
+				 * early just means the lessons left are skipped.
+				 * @returns {object} Result
+				 */
+				endDay(id) {
+					const early = edu.nextJoinable(id) !== null;
+					S().today = null;
+					setup.world.moveTo(edu.entrance(id));
+					const result = effects.newResult();
+					result.changes.push({ kind: "school", text: early ? "You leave school early." : "School's out." });
+					bus.emit("school:dayEnd", { school: id, early, ctx: { school: id }, result });
+					return result;
+				},
+
+				/**
+				 * Attend the current lesson to its end (in a school day: the next
+				 * lesson you can still go to, waiting for it to start).
 				 * @returns {object} Result
 				 */
 				attend(id) {
 					const s = registry.get("school", id);
-					const l = edu.lessonNow(id);
+					const inDay = edu.today()?.school === id;
+					const l = inDay ? edu.nextJoinable(id) : edu.lessonNow(id);
 					if (!l) throw new setup.GameError(`No lesson to go to at ${id} right now`);
 					const subj = registry.get("subject", l.subject);
 					const result = effects.newResult();
@@ -140,6 +263,12 @@
 					result.changes.push({ kind: "school", text: `${subj.label}${subj.teacher ? ` with ${subj.teacher}` : ""}: ${fmt.duration(elapsed)}${late ? " (you were late)" : ""}.` });
 					edu.setHomework(l.subject, result, id);
 					bus.emit("school:lesson", { school: id, subject: l.subject, period: l.period, late, ctx: { school: id, subject: l.subject }, result });
+					// The bell: straight on to the break, or out at the end of the day.
+					if (inDay) {
+						const next = edu.nextStep(id);
+						const more = next.kind === "break" ? edu.takeBreak(id, next.brk.id) : next.kind === "end" ? edu.endDay(id) : null;
+						if (more) result.changes.push(...more.changes);
+					}
 					return result;
 				},
 
@@ -184,6 +313,9 @@
 
 				/** @returns {object} Running totals. */
 				totals: () => S().totals,
+
+				/** @returns {string|null} The subject in a period on a day, from the timetable (term or not). */
+				timetableAt: (s, day, i) => timetables.get(s.timetable)(s, day, i),
 
 				/** Register a timetable hook: (school, day, periodIndex) => subject id | null. */
 				registerTimetable: (name, fn) => timetables.set(name, fn),
@@ -261,22 +393,87 @@
 				return `${fmt.time(l.from)}–${fmt.time(l.to)} ${subj.label}${subj.teacher ? ` (${subj.teacher})` : ""}`;
 			};
 
-			setup.world.addHereSection("lessons", 27, (box, here) => {
+			const subjectText = (subject) => {
+				const subj = registry.get("subject", subject);
+				return `${subj.label}${subj.teacher ? ` with ${subj.teacher}` : ""}`;
+			};
+
+			// Today's lessons and breaks in time order, ticked off as you go.
+			const dayList = (s, day) => {
+				const ul = ui.el("ul", { class: "school-day" });
+				const rows = [
+					...edu.lessonsOn(s.id, day).map((l) => ({ t: l.from, text: subjectText(l.subject), done: edu.attended(s.id, day, l.period), gone: l.to <= time.now() })),
+					...edu.breaksOn(s.id, day).map((b) => ({ t: b.from, text: b.label, done: (edu.today()?.breaks ?? []).includes(b.id), gone: b.to <= time.now(), isBreak: true })),
+				].sort((a, b) => a.t - b.t);
+				for (const r of rows) {
+					const mark = r.done ? "✓" : r.gone && !r.isBreak ? "✗" : "·";
+					ul.append(ui.el("li", { class: r.done ? "done" : r.gone ? "gone" : "" }, ui.el("span", { class: "cal-time", text: `${fmt.time(r.t)} ` }), `${r.text} ${mark}`));
+				}
+				return ul;
+			};
+
+			setup.world.addHereSection("school", 15, (box, here) => {
 				for (const s of edu.schools()) {
-					if (!setup.world.within(here.id, s.room) && setup.world.site(here.id) !== setup.world.site(s.room)) continue;
-					const today = edu.lessonsOn(s.id, time.day(time.now()));
-					if (!today.length) continue;
-					box.append(ui.el("h2", { text: "Lessons" }));
-					const now = edu.lessonNow(s.id);
-					if (now && here.id === s.room) {
-						const subj = registry.get("subject", now.subject);
-						box.append(ui.action(`Go to ${subj.label} (until ${fmt.time(now.to)})`, () => edu.attend(s.id), { class: "btn-primary" }));
+					const day = time.day(time.now());
+					// At the entrance: "Attend school".
+					if (here.id === edu.entrance(s.id)) {
+						box.append(ui.el("h2", { text: "School" }));
+						const why = edu.startBlockers(s.id);
+						if (why.length) box.append(ui.el("p", { class: "note", text: why.join("; ") + "." }));
+						else {
+							const lessons = edu.lessonsOn(s.id, day);
+							box.append(ui.action("Attend school", () => edu.startDay(s.id), { class: "btn-primary" }));
+							box.append(ui.el("p", { class: "note", text: `Today: ${lessons.map((l) => registry.get("subject", l.subject).label).join(", ")} (${fmt.time(lessons[0].from)}–${fmt.time(lessons.at(-1).to)}).` }));
+						}
+						continue;
 					}
-					else if (now) box.append(ui.el("p", { class: "note", text: `${registry.get("subject", now.subject).label} is on now in ${registry.get("location", s.room).name}.` }));
+					if (!edu.insideRooms(s.id).includes(here.id)) continue;
+					const today = edu.today();
+					// Inside, but not in a school day (e.g. after loading an old save).
+					if (today?.school !== s.id) {
+						box.append(ui.action("Leave school", () => edu.endDay(s.id)));
+						continue;
+					}
+					const next = edu.nextStep(s.id);
+					if (here.id === s.room) {
+						box.append(ui.el("h2", { text: "Today's lessons" }), dayList(s, day));
+						if (next.kind === "lesson") box.append(ui.action(`${registry.get("subject", next.lesson.subject).label} · ${fmt.time(next.lesson.from)}–${fmt.time(next.lesson.to)}`, () => edu.attend(s.id), { class: "btn-primary" }));
+						else if (next.kind === "break") box.append(ui.action(`${next.brk.label} · until ${fmt.time(next.brk.to)}`, () => edu.takeBreak(s.id, next.brk.id), { class: "btn-primary" }));
+						else box.append(ui.action("School's out", () => edu.endDay(s.id), { class: "btn-primary" }));
+					}
 					else {
-						const next = edu.nextLesson(s.id);
-						box.append(ui.el("p", { class: "note", text: next ? `Next: ${lessonText(next)}.` : "No more lessons today." }));
+						// On a break (the canteen, the toilets off it).
+						const brk = edu.breaksOn(s.id, day).find((b) => today.breaks.includes(b.id) && time.now() < b.to);
+						box.append(ui.el("h2", { text: brk?.label ?? "Break" }));
+						if (brk) box.append(ui.el("p", { class: "note", text: `Until ${fmt.time(brk.to)}.` }));
+						const l = edu.nextJoinable(s.id);
+						box.append(ui.action(l ? `Back to class · ${registry.get("subject", l.subject).label} at ${fmt.time(l.from)}` : "Back to class", () => edu.backToClass(s.id), { class: "btn-primary" }));
 					}
+					if (next.kind !== "end") box.append(ui.action("Leave school", () => edu.endDay(s.id)));
+				}
+			});
+
+			// The phone's Timetable app: the week, one line per day.
+			ui.view("app-timetable", (box) => {
+				const today = time.day(time.now());
+				for (const s of edu.schools()) {
+					box.append(ui.el("h2", { text: s.label }));
+					if (!edu.inTerm(s.id, today)) box.append(ui.el("p", { class: "note", text: "It's the holidays." }));
+					// The days of the week this (or the next school) week falls on.
+					const monday = today - ((time.weekday(time.at(today, "12:00")) + 6) % 7);
+					const ul = ui.el("ul", { class: "timetable" });
+					for (let d = monday; d < monday + 7; d++) {
+						const wd = time.weekday(time.at(d, "12:00"));
+						if (!s.days.includes(wd)) continue;
+						const rows = [
+							...s.periods.map((p, i) => ({ at: p.from, text: registry.tryGet("subject", edu.timetableAt(s, d, i))?.label })),
+							...s.breaks.map((b) => ({ at: b.from, text: b.label })),
+						].filter((r) => r.text).sort((a, b) => time.parseHM(a.at) - time.parseHM(b.at));
+						ul.append(ui.el("li", { class: d === today ? "today" : "" },
+							ui.el("strong", { text: `${DAY_NAMES[wd]}${d === today ? " (today)" : ""}` }),
+							ui.el("p", { text: rows.map((r) => `${r.at} ${r.text}`).join(" · ") })));
+					}
+					box.append(ul);
 				}
 			});
 

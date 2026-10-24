@@ -74,7 +74,7 @@ test("all students in form 12B are 18; every NPC appears somewhere", () => {
 	for (const n of setup.registry.all("npc").filter((x) => !x.online)) assert.ok(n.schedule.length > 0, `${n.id} has no schedule`);
 });
 
-test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
+test("a school day: wee, shower, breakfast, bus to school, five lessons and lunch", () => {
 	const { setup } = bootTown();
 	const S = setup;
 	// Thursday 3 September, the first day of term.
@@ -98,20 +98,57 @@ test("a school day: wee, shower, breakfast, bus to school, a lesson", () => {
 	const bus = S.travel.go("academy", "bus7");
 	assert.equal(bus.ok, true);
 	assert.equal(S.money.balance("cash"), 35 - 2);
-	go("academy_form_room");
-	assert.equal(S.fmt.time(S.time.now()), "07:43", "school isn't open until 07:45");
-	assert.equal(S.world.loc(), "academy");
+	const E = S.education;
+	assert.equal(S.fmt.time(S.time.now()), "07:43");
+	assert.deepEqual(plain(E.startBlockers("academy")), ["The school is shut"], "it opens at 07:45");
+	assert.deepEqual(plain(S.world.nearby().map((n) => n.ok)), [false, false, false], "the library, sports hall and field are for after school");
 	S.actions.do("wait_around", { mins: 60 });
-	go("academy_form_room");
+	// Attend school: registration in the form room, then the lessons one by one.
+	E.startDay("academy");
 	assert.equal(S.world.loc(), "academy_form_room");
+	assert.deepEqual(plain(S.world.nearby()), [], "no wandering off mid-lesson");
 	assert.ok(S.npcs.peopleAt("academy_form_room").includes("mr_hale"));
-	S.time.advance(S.time.at(2, "08:56") - S.time.now());
-	assert.equal(S.education.lessonNow("academy").subject, "history");
-	S.education.attend("academy");
+	assert.equal(E.nextStep("academy").lesson.subject, "ict", "Thursday starts with ICT");
+	E.attend("academy");
 	assert.equal(S.fmt.time(S.time.now()), "10:00");
-	assert.equal(S.education.totals().attended, 1);
-	assert.equal(S.education.homework()[0].subject, "history", "history sets homework");
-	assert.equal(S.npcs.hasMet("priya_shah"), true, "met classmates on the way in");
+	assert.equal(E.homework()[0].subject, "ict", "ICT sets homework");
+	assert.equal(S.npcs.hasMet("priya_shah"), true, "met classmates in the form room");
+	E.attend("academy");
+	E.attend("academy");
+	// The bell: lunch in the canteen, with students and teachers.
+	assert.equal(S.fmt.time(S.time.now()), "12:00");
+	assert.equal(S.world.loc(), "academy_canteen");
+	const people = plain(S.npcs.peopleAt("academy_canteen"));
+	assert.ok(people.includes("priya_shah") && people.includes("mr_hale") && people.includes("mark"));
+	assert.deepEqual(plain(S.world.nearby().map((n) => n.def.id)), ["academy_boys_toilets", "academy_girls_toilets"]);
+	go("academy_girls_toilets");
+	go("academy_canteen");
+	// Back to class: straight into the next lesson.
+	E.backToClass("academy");
+	assert.equal(S.fmt.time(S.time.now()), "14:00");
+	assert.equal(S.world.loc(), "academy_form_room");
+	const out = E.attend("academy");
+	assert.match(out.changes.at(-1).text, /School's out/);
+	assert.equal(S.world.loc(), "academy", "back out at the entrance");
+	assert.equal(E.totals().attended, 5);
+	assert.equal(E.today(), null);
+	assert.deepEqual(plain(E.startBlockers("academy")), ["School's finished for today"]);
+});
+
+test("leaving school early skips the lessons left; you can't start on a Saturday", () => {
+	const { setup } = bootTown();
+	const E = setup.education;
+	setup.time.advance(setup.time.at(2, "08:30") - setup.time.now());
+	setup.world.moveTo("academy");
+	E.startDay("academy");
+	E.attend("academy");
+	const r = E.endDay("academy");
+	assert.match(r.changes[0].text, /leave school early/);
+	assert.equal(setup.world.loc(), "academy");
+	setup.time.advance(setup.time.at(3, "07:00") - setup.time.now());
+	assert.equal(E.trouble().lessons, 4, "four lessons skipped on Thursday");
+	setup.time.advance(setup.time.at(4, "09:00") - setup.time.now());
+	assert.ok(E.startBlockers("academy").length, "no school on Saturday");
 });
 
 test("a night at the pub: drinks get you tipsy and fill your bladder", () => {
@@ -265,7 +302,7 @@ test("a locked action lists what it needs", () => {
 	assert.equal(setup.world.nearby().every((n) => !n.ok), true, "closed at the weekend");
 	setup.time.advance(setup.time.at(6, "10:00") - setup.time.now()); // Monday
 	setup.world.moveTo("wellbeing_therapy");
-	setup.npcs.setOverride("dr_okafor", "wellbeing_reception");
+	setup.npcs.setOverride("dr_okafor", "wellbeing");
 	const a = setup.actions.available().find((x) => x.def.id === "therapy_session");
 	assert.equal(a.ok, false);
 	assert.deepEqual(plain(a.reasons), ["Dr Maya Okafor is here"]);

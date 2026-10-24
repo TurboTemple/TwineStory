@@ -24,6 +24,16 @@ function skipTo(setup, weekday, hm) {
 	time.advance(t - time.now());
 }
 
+// A school day up to lunch (three lessons, then the bell takes you to the canteen).
+function lunchtime(setup, weekday) {
+	skipTo(setup, weekday, "08:50");
+	setup.world.moveTo("academy");
+	setup.flow.perform(() => {
+		setup.education.startDay("academy");
+		for (let i = 0; i < 3; i++) setup.education.attend("academy");
+	});
+}
+
 test("Dennis: the first session starts The Hypnotherapist and counts; meeting him doesn't", () => {
 	const { setup, played } = town();
 	setup.effects.apply([{ flag: "hypnotherapy_unlocked" }]);
@@ -68,10 +78,10 @@ test("the cosplay club: invited at school by a random event, starts when you go"
 	setup.world.moveTo("community_hall");
 	assert.ok(!club(), "not offered before you're invited");
 	assert.ok(!setup.storylines.started("cosplay_club"), "meeting them doesn't start it");
-	// Force one invitation (it's random) and arrive at school.
+	// Force one invitation (it's random) and have lunch at school.
 	setup.events.force("cosplay_invite_arvel", true);
-	skipTo(setup, 3, "09:00");
-	setup.flow.perform(() => setup.world.moveTo("academy"));
+	lunchtime(setup, 4); // Thursday 3 September, the first day of term
+	assert.equal(setup.world.loc(), "academy_canteen");
 	assert.equal(played.at(-1), "Ev_cosplay_invite_arvel");
 	assert.ok(setup.npcs.hasMet("arvel"));
 	setup.events.force("cosplay_invite_arvel", null);
@@ -86,10 +96,7 @@ test("the cosplay club: invited at school by a random event, starts when you go"
 
 test("the invitation happens once, whichever member asks", () => {
 	const { setup } = town();
-	for (let i = 0; i < 60; i++) {
-		skipTo(setup, 1 + (i % 5), "09:00");
-		setup.flow.perform(() => setup.world.moveTo("academy"));
-	}
+	for (let i = 0; i < 30; i++) lunchtime(setup, 1 + (i % 5)); // six weeks of lunches
 	const seen = ["john", "arvel", "micheal"].reduce((n, w) => n + setup.events.seen(`cosplay_invite_${w}`), 0);
 	assert.equal(seen, 1);
 });

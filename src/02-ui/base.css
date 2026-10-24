@@ -84,7 +84,8 @@
 	cursor: not-allowed;
 }
 
-.btn-primary {
+.btn-primary,
+#passages .btn-primary {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--accent-text);

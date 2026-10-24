@@ -194,10 +194,11 @@ test("school: term days, skipping lessons, late homework, your tutor's word", ()
 	setup.time.advance(setup.time.at(6, "07:00") - setup.time.now());
 	assert.equal(E.trouble().homework, 1);
 	assert.equal(E.homework().length, 0);
-	// Monday: Mr Hale has a word when you walk into the form room.
+	// Monday: Mr Hale has a word at the start of the school day.
 	setup.world.moveTo("academy");
 	setup.time.advance(setup.time.at(6, "08:45") - setup.time.now());
-	setup.world.walkTo("academy_form_room");
+	setup.flow.perform(() => E.startDay("academy"));
+	assert.equal(setup.world.loc(), "academy_form_room");
 	assert.equal(setup.events.seen("tutor_word"), 1);
 	assert.equal(E.trouble().lessons, 0);
 	assert.equal(E.lastTrouble.homework, 1);
@@ -336,4 +337,22 @@ test("dress codes: the gym floor wants sportswear, café shifts want closed-toe 
 	setup.inventory.add("sliders");
 	setup.clothing.wear(setup.inventory.entries("bag").find((e) => e.item === "sliders").uid, { force: true });
 	assert.match(setup.jobs.canWork("grind_barista").reason, /Closed-toe shoes/);
+});
+
+test("old saves: homework in removed subjects is dropped (education migration 1 → 2)", () => {
+	const { setup } = town();
+	const old = { meta: { schemaVersion: 8, schema: { core: 1, education: 1 } }, time: { t: 0 }, sched: { jobs: [], seq: 0 }, school: { attended: {}, homework: [{ id: 1, subject: "history", set: 0, due: 10 }, { id: 2, subject: "maths", set: 0, due: 10 }], trouble: { lessons: 0, homework: 0 }, totals: {}, nextHw: 3 } };
+	setup.save.migrate(old);
+	assert.deepEqual(plain(old.school.homework.map((h) => h.subject)), ["maths"]);
+	assert.equal(old.school.today, null);
+});
+
+test("a saved room that was merged into another moves you there (clinic waiting rooms, the concourse)", () => {
+	const { setup } = town();
+	setup.character.setLoc("wellbeing_waiting");
+	assert.equal(setup.world.loc(), "wellbeing");
+	assert.equal(setup.character.loc(), "wellbeing", "fixed in the save too");
+	setup.world.moveTo("arcade");
+	assert.equal(setup.world.here().roomsLabel, "Shops");
+	assert.ok(setup.world.nearby().some((n) => n.def.id === "arcade_freshway"));
 });

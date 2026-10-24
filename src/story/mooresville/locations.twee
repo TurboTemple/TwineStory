@@ -39,7 +39,7 @@ A patch of open grass at the end of Elm Road, with a few old oak trees, a play a
 A small, slightly murky pond with a bench beside it. The ducks know exactly what a rustling bag means.
 
 :: Loc_academy
-Mooresville Academy: a big brick building from the sixties with a newer glass wing bolted on. Students mill round the front entrance, and signs point to the canteen, library, sports hall and the playing field.
+Mooresville Academy: a big brick building from the sixties with a newer glass wing bolted on. Students mill round the front entrance before the bell. After school, the library, the sports hall and the playing field stay open until five.
 <<if setup.time.weekday(setup.time.now()) is 0 or setup.time.weekday(setup.time.now()) is 6>>It's the weekend, and the place is locked up.<</if>>
 
 :: Loc_academy_form_room
@@ -57,8 +57,11 @@ A big echoing hall with lines painted all over the floor and basketball hoops at
 :: Loc_academy_field
 The playing field stretches out behind the school, muddy round the goalmouths. On a clear day you can see over the rooftops to the river.
 
-:: Loc_academy_toilets
-School toilets: cold, echoey and covered in graffiti about people who left years ago.
+:: Loc_academy_boys_toilets
+The boys' toilets: cold, echoey and covered in graffiti about people who left years ago.
+
+:: Loc_academy_girls_toilets
+The girls' toilets: a queue for the one working mirror, and graffiti about people who left years ago.
 
 :: Loc_high_street
 Mooresville High Street is the heart of town: a mix of old shopfronts and chain stores, with the Route 7 bus stop and a taxi rank outside the bank. The Daily Grind, The Red Lion and Threadline are all close by.
@@ -97,13 +100,7 @@ A walled garden with picnic benches, fairy lights strung overhead and a couple o
 The pub toilets: down a narrow corridor past the kitchen, with a hand dryer that roars like a jet engine.
 
 :: Loc_wellbeing
-The Mooresville Wellbeing Centre is a calm, modern building. Pale wood, soft lighting, and a lot of leaflets about mindfulness.
-
-:: Loc_wellbeing_reception
-A curved reception desk with a bowl of mints and a phone that never stops ringing. Tom looks up and smiles when you come in.
-
-:: Loc_wellbeing_waiting
-A waiting room with comfy chairs, a water cooler, and a rack of leaflets on everything from sleep to money worries. Quiet music plays.
+The Mooresville Wellbeing Centre's waiting room: pale wood, soft lighting, comfy chairs and a rack of leaflets on everything from sleep to money worries. Tom sits at the curved reception desk by the door, next to a bowl of mints and a phone that never stops ringing. The therapy room is through the door at the back.
 
 :: Loc_wellbeing_therapy
 A small, warm room with two armchairs, a box of tissues on the table and a window that looks onto a tree. Dr Okafor's notebook sits closed on her knee.
@@ -133,10 +130,7 @@ Rows of treadmills facing the windows, racks of weights, and the clang of someon
 Changing rooms with lockers, benches and a row of showers with excellent water pressure.
 
 :: Loc_arcade
-The Arcade Shopping Centre is a big glass-roofed mall: two floors of shops round a central concourse, with a food court and a cinema at the far end.
-
-:: Loc_arcade_concourse
-The main concourse is bright and busy, with escalators, a fountain and benches where people rest their shopping bags.
+The Arcade Shopping Centre is a big glass-roofed mall. The main concourse is bright and busy, with escalators, a fountain and benches where people rest their shopping bags, and every shop opens off it.
 
 :: Loc_arcade_food_court
 A ring of fast-food counters round a sea of plastic tables. It's noisy, it smells of everything at once, and it's always busy.
@@ -196,10 +190,7 @@ A big echoey hall with a stage at one end and stacks of plastic chairs along the
 Clean enough, with a hand dryer that roars.
 
 :: Loc_calm_waters
-A quiet door between two shops on the High Street, with a brass plaque: Calm Waters Hypnotherapy.
-
-:: Loc_calm_waters_waiting
-A small waiting room with soft chairs, a water cooler and a pile of old magazines.
+Behind a quiet door between two shops on the High Street, with a brass plaque reading Calm Waters Hypnotherapy, is a small waiting room: soft chairs, a water cooler and a pile of old magazines. The therapy room is through the door at the back.
 
 :: Loc_calm_waters_room
 A dim, calm room with a deep reclining chair, heavy curtains and a clock that ticks softly.

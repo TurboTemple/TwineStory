@@ -21,11 +21,11 @@
 		state: "world",
 		defaultState: () => ({ visited: {} }),
 
-		install({ registry, cond, effects, bus, time, ui, flow, fmt, save, config }) {
+		install({ registry, cond, effects, bus, time, ui, flow, fmt, text, save, config }) {
 			registry.defineType("district", { required: ["name"], defaults: { desc: "" } });
 			registry.defineType("location", {
 				required: ["name"],
-				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, dressCode: null, crowd: [], links: null, outdoor: false, ambient: [] },
+				defaults: { district: null, parent: null, innerMins: 1, tags: [], desc: "", passage: null, hours: null, entry: null, dressCode: null, crowd: [], links: null, roomsLabel: null, outdoor: false, ambient: [] },
 				refs: { district: "district", parent: "location", links: "location" },
 				passages: ["passage"],
 				conditions: ["entry", "dressCode.when", "crowd[].when", "ambient[].when"],
@@ -61,10 +61,17 @@
 
 			const world = {
 				/** @returns {string|null} Current location id. */
-				loc: () => setup.character.loc(),
+				loc() {
+					// A saved location that has since been merged into another
+					// (R.alias) moves to the new one.
+					const id = setup.character.loc();
+					const real = id ? registry.tryGet("location", id)?.id : null;
+					if (real && real !== id) setup.character.setLoc(real);
+					return real ?? id;
+				},
 
 				/** @returns {object|undefined} Current location definition. */
-				here: () => registry.tryGet("location", setup.character.loc()),
+				here: () => registry.tryGet("location", world.loc()),
 
 				/** @returns {object|null} The parent location, if any. */
 				parent: (id) => (L(id).parent ? L(L(id).parent) : null),
@@ -232,7 +239,7 @@
 				 *    10  description  picture, name, text, atmosphere     (world)
 				 *    20  people       who's here                          (npcs)
 				 *    25  areas        rooms you can walk to               (world)
-				 *    27  lessons      "Go to English"                     (education)
+				 *    15  school       "Attend school", the day's lessons  (education)
 				 *    28  work         "Work a shift"                      (jobs)
 				 *    28  shops        "Browse …"                          (shops)
 				 *    30  actions      "Things to do"                      (actions)
@@ -363,18 +370,20 @@
 			world.addHereSection("areas", 25, (box) => {
 				const list = world.nearby();
 				if (!list.length) return;
-				box.append(ui.el("h2", { text: "Around here" }));
+				box.append(ui.el("h2", { text: world.here()?.roomsLabel ?? "Around here" }));
 				const ul = ui.el("ul", { class: "areas chips" });
 				// Already said at the top of the page when the whole place is shut.
 				const closed = !world.isOpen(world.loc());
+				// Why rooms are locked, said once under the buttons: "Library, Sports Hall: Between 15:00 and 17:00".
+				const locked = new Map();
 				for (const n of list) {
 					const label = n.kind === "out" ? `Back to ${n.def.name}` : n.def.name;
-					const li = ui.el("li", {}, ui.action(label, () => world.walkTo(n.def.id), { disabled: !n.ok }));
-					const why = closed ? n.reasons.filter((r) => r !== "It's closed") : n.reasons;
-					if (!n.ok && why.length) li.append(ui.el("p", { class: "locked", text: why.join("; ") }));
-					ul.append(li);
+					ul.append(ui.el("li", {}, ui.action(label, () => world.walkTo(n.def.id), { disabled: !n.ok })));
+					const why = (closed ? n.reasons.filter((r) => r !== "It's closed") : n.reasons).join("; ");
+					if (!n.ok && why) locked.set(why, [...(locked.get(why) ?? []), n.def.name]);
 				}
 				box.append(ul);
+				for (const [why, names] of locked) box.append(ui.el("p", { class: "locked", text: `${text.list(names)}: ${why}` }));
 			});
 		},
 
