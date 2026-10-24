@@ -89,9 +89,8 @@
 				if (!result || typeof result !== "object") return null;
 				const lines = [...(result.changes ?? []).map((c) => c.text), ...(result.toasts ?? [])].filter(Boolean);
 				if (!lines.length) return null;
-				// The action's picture or clip, if it has one.
-				const pic = result.action && result.ok !== false ? setup.media.render("action", result.action, { class: "media-wide" }) : null;
-				return ui.el("div", { class: "result", attrs: { role: "status" } }, pic, ui.el("ul", {}, ...lines.map((l) => ui.el("li", { text: l }))));
+				// (An action's picture is on its action screen: setup.flow.illustrate.)
+				return ui.el("div", { class: "result", attrs: { role: "status" } }, ui.el("ul", {}, ...lines.map((l) => ui.el("li", { text: l }))));
 			},
 
 			/**

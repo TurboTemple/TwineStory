@@ -10,7 +10,11 @@
  * and it's used automatically; the build lists every file in a manifest
  * (scripts/media-manifest.mjs). Types and keys:
  *   location/<id>            a place or room (rooms fall back to their place)
- *   action/<id>              shown after doing the action
+ *   action/<id>              the action's action screen (after doing it)
+ *   subject/<id>             a lesson's action screen
+ *   job/<id>                 a work shift's action screen
+ *   interaction/<id>         talking to someone (action screen)
+ *   item/<id>/use            using an item from your bag (action screen)
  *   storylet/<id>            shown at the top of the event
  *   item/<id>                items in the bag, shops and wardrobe
  *   npc/<id>                 profile picture

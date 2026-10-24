@@ -18,6 +18,13 @@
  * ask at once (a shift event, then a promotion), the second waits in a
  * queue and appears when the player taps Continue.
  *
+ * Action screens: doing something (an action, a lesson, a shift, a chat)
+ * calls flow.illustrate({ … }) to show its picture and flavour text. It
+ * shows only if nothing at "result" priority or above asks for the screen
+ * (an event, a story moment, the daily summary); Continue then goes where
+ * the game would have gone anyway (Here, or e.g. the person you were
+ * talking to).
+ *
  * $meta.returnTo remembers where to go back to after an event, so
  * "Continue" returns to the right place.
  */
@@ -33,6 +40,9 @@
 		let queue = [];
 		let depth = 0;
 		let last = null;
+		/** The action screen asked for in this operation, and the one on screen now (not saved). */
+		let illustration = null;
+		let shown = null;
 
 		const flow = {
 			PRIORITY,
@@ -60,6 +70,23 @@
 				if (!pending || priority > pending.priority) pending = { passage, priority };
 			},
 
+			/** The passage that shows action screens (set by the actions module). */
+			illustrationPassage: null,
+
+			/**
+			 * Ask for an action screen when the current operation ends, unless
+			 * something more important wants the screen (see the header).
+			 * @param {{title: string, media?: {type: string, id: string}, passage?: string, placeholder?: string}} spec
+			 *   media: which picture (assets/media/<type>/<id>.<ext>);
+			 *   passage: the flavour-text passage; placeholder: shown if it doesn't exist.
+			 */
+			illustrate(spec) {
+				illustration = spec;
+			},
+
+			/** @returns {object|null} The action screen being shown. */
+			illustration: () => shown,
+
 			/** @returns {string[]} Event passages waiting to be shown. */
 			queued: () => [...queue],
 
@@ -80,6 +107,7 @@
 				if (depth > 0) return fn();
 				depth++;
 				pending = null;
+				illustration = null;
 				if (!opts.keepQueue) queue = [];
 				let out = null;
 				try {
@@ -93,8 +121,16 @@
 				}
 				last = out ?? null;
 				if (!pending && opts.keepQueue && queue.length) pending = { passage: queue.shift(), priority: PRIORITY.event };
-				const target = pending ? pending.passage : flow.home;
-				if (target !== flow.home) setup.vars().meta.returnTo = flow.home;
+				let target = pending ? pending.passage : flow.home;
+				let back = flow.home;
+				// The action screen, unless something more important asked for the screen.
+				if (illustration && flow.illustrationPassage && (!pending || pending.priority < PRIORITY.result)) {
+					back = target;
+					target = flow.illustrationPassage;
+				}
+				shown = target === flow.illustrationPassage ? illustration : null;
+				illustration = null;
+				if (target !== flow.home) setup.vars().meta.returnTo = back;
 				pending = null;
 				setup.sc.play(target);
 				return out;

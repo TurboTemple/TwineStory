@@ -513,3 +513,20 @@
 	margin: 0 0.5rem;
 	font-variant-numeric: tabular-nums;
 }
+
+/* ---- The action screen (after doing something) ------------------------ */
+
+.action-scene .scene-text {
+	margin: 0.75rem 0;
+}
+
+/* Debug mode only: where a picture would go. */
+.media-slot {
+	padding: 1.5rem 1rem;
+	border: 2px dashed var(--line);
+	border-radius: var(--radius);
+	color: var(--muted);
+	font-size: 0.85em;
+	text-align: center;
+	word-break: break-word;
+}

@@ -1,7 +1,7 @@
 // Weather, the daily summary, and ambient lines.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bootTown } from "./helpers.mjs";
+import { bootTown, plain } from "./helpers.mjs";
 
 function dress(setup, ids = ["white_tshirt", "blue_jeans", "trainers", "socks"]) {
 	for (const id of ids) {
@@ -57,9 +57,47 @@ test("sleeping past midnight shows the day's summary", () => {
 	assert.equal(played.at(-1), "Journal_Summary");
 	assert.equal(setup.journal.summaryDay, 0);
 	assert.match(setup.journal.summary(0).join(" "), /Money: \+£10\./);
-	// A nap that doesn't cross midnight doesn't.
+	// A nap that doesn't cross midnight doesn't: it gets the action screen.
 	setup.flow.perform(() => setup.actions.do("sleep", { mins: 60 }));
+	assert.equal(played.at(-1), "Actions_Scene");
+});
+
+test("the action screen: shown after an action, a lesson, a shift or a chat, unless an event takes over", () => {
+	const { setup, played } = bootTown();
+	setup.world.moveTo("home_bathroom");
+	setup.flow.perform(() => setup.actions.do("shower"));
+	assert.equal(played.at(-1), "Actions_Scene");
+	const s = setup.flow.illustration();
+	assert.equal(s.title, "Have a shower");
+	assert.deepEqual(plain(s.media), { type: "action", id: "shower" });
+	assert.equal(s.passage, "Act_shower");
+	// Continue goes back to where you were.
+	setup.flow.continue();
 	assert.equal(played.at(-1), "Here");
+	// Something more important (an event) wins, and there's no action screen.
+	setup.flow.perform(() => {
+		setup.actions.do("shower");
+		setup.flow.request("Ev_test", setup.flow.PRIORITY.event);
+	});
+	assert.equal(played.at(-1), "Ev_test");
+	assert.equal(setup.flow.illustration(), null);
+	// A chat: the screen first, then back to the person.
+	setup.time.advance(setup.time.at(2, "12:10") - setup.time.now());
+	setup.world.moveTo("academy_canteen");
+	setup.flow.perform(() => setup.rel.interact("priya_shah", "chat"));
+	assert.equal(played.at(-1), "Actions_Scene");
+	assert.deepEqual(plain(setup.flow.illustration().passage), ["Act_talk_chat_priya_shah", "Act_talk_chat"]);
+	setup.flow.continue();
+	assert.equal(played.at(-1), "Npcs_Sheet");
+	// A lesson (Friday starts with Maths).
+	setup.world.moveTo("home_bedroom");
+	setup.time.advance(setup.time.at(3, "08:40") - setup.time.now());
+	assert.equal(setup.fmt.time(setup.time.now()), "08:40");
+	setup.world.moveTo("academy");
+	setup.education.startDay("academy");
+	setup.flow.perform(() => setup.education.attend("academy"));
+	assert.equal(played.at(-1), "Actions_Scene");
+	assert.equal(setup.flow.illustration().passage, "Act_lesson_maths");
 });
 
 test("ambient lines react to the weather and time, and stay put for the hour", () => {

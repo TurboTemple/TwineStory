@@ -61,6 +61,12 @@ async function expectPassage(page, name, text, label) {
 	}
 }
 
+/** After doing something: its action screen (with `text`), then Continue. */
+async function scene(page, text, label) {
+	await expectPassage(page, "Actions_Scene", text, label);
+	await click(page, "Continue");
+}
+
 /** Text of the sidebar region. */
 const sidebar = (page) => page.textContent("#sidebar");
 
@@ -82,8 +88,11 @@ async function playTown(page, label) {
 	}
 	await click(page, "Bathroom");
 	await click(page, "Go for a wee");
+	await scene(page, /Go for a wee[\s\S]*Go for a wee edit here/, `${label}: action screen`);
 	await click(page, "Have a shower");
-	await expectPassage(page, "Here", /Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Bathroom/, `${label}: shower`);
+	await scene(page, /Have a shower edit here[\s\S]*Hygiene \+\d+[\s\S]*Now: Refreshed[\s\S]*Continue/, `${label}: shower`);
+	await expectPassage(page, "Here", /Bathroom/, `${label}: back from the shower`);
+	if ((await page.textContent("#passages")).includes("Hygiene +")) failures.push(`${label}: the result belongs on the action screen, not repeated on Here`);
 	if (!(await sidebar(page)).includes("Refreshed")) failures.push(`${label}: Refreshed effect not in sidebar`);
 	// Rooms open onto each other: bedroom → living room → the hallway (the front door).
 	await click(page, "Your Bedroom");
@@ -126,7 +135,7 @@ async function playTown(page, label) {
 	await click(page, "Done");
 	await page.evaluate(() => window.SugarCube.Engine.play("Inventory_Bag"));
 	await page.locator("#passages li", { hasText: "Chocolate bar" }).locator("button", { hasText: "Eat" }).click();
-	await expectPassage(page, "Here", /Eat: Chocolate bar/, `${label}: eat`);
+	await scene(page, /Eat: Chocolate bar edit here[\s\S]*Eat: Chocolate bar\./, `${label}: eat`);
 	await click(page, "Elm Road · 3 min");
 	// Keep the run predictable: no random bus delay.
 	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
@@ -155,7 +164,7 @@ async function playTherapy(page) {
 	await click(page, "Back");
 	await debugRow(page, "Block", "therapy_interrupted");
 	await click(page, "Therapy session");
-	await expectPassage(page, "Here", /Therapy session took 2 hours/, "full session");
+	await scene(page, /Picture: assets\/media\/action\/therapy_session[\s\S]*Therapy session took 2 hours/, "full session");
 	await debugRow(page, "Force", "therapy_interrupted");
 	await click(page, "Therapy session");
 	await expectPassage(page, "Ev_therapy_interrupted", /knock/, "interruption event");
@@ -187,18 +196,20 @@ async function playSchool(page) {
 	await expectPassage(page, "Ev_tutor_word", null, "tutor's word");
 	await click(page, "Continue");
 	await expectPassage(page, "Here", /Form Room 12B[\s\S]*Today's lessons/, "form room");
-	// The next lesson is the main button each time.
+	// The next lesson is the main button each time; each lesson has its action screen.
 	for (let i = 0; i < 3; i++) {
 		await page.locator("#passages .btn-primary").first().click();
-		await page.waitForTimeout(100);
+		await scene(page, i < 2 ? / with .* edit here/ : /edit here[\s\S]*Lunch until 13:00/, `lesson ${i + 1}`);
 	}
-	await expectPassage(page, "Here", /Lunch until 13:00[\s\S]*Canteen[\s\S]*Back to class/, "lunch");
+	await expectPassage(page, "Here", /Canteen[\s\S]*Lunch[\s\S]*Until 13:00[\s\S]*Back to class/, "lunch");
 	await click(page, "Boys' Toilets");
 	await expectPassage(page, "Here", /Boys' Toilets[\s\S]*Back to class/, "toilets at lunch");
 	await click(page, "Back to class");
+	await scene(page, /edit here/, "lesson 4");
 	await expectPassage(page, "Here", /Form Room 12B/, "after lunch");
 	await click(page, "· 14:00–15:00"); // the last lesson
-	await expectPassage(page, "Here", /School's out[\s\S]*School's finished for today/, "school's out");
+	await scene(page, /School's out/, "lesson 5");
+	await expectPassage(page, "Here", /School's finished for today/, "school's out");
 	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
 	await click(page, "Timetable");
 	await expectPassage(page, "Phone_Home", /Monday[\s\S]*09:00 Maths[\s\S]*12:00 Lunch/, "timetable app");

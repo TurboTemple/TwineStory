@@ -43,8 +43,9 @@
 				required: ["label", "at", "storyline", "workStages"],
 				defaults: {
 					desc: "", skill: null, skillPerShift: 0, pay: {}, payTo: null, shiftMins: 120,
-					effects: [], status: null, perHour: [], quitStage: null, dressCode: null, order: 0,
+					effects: [], status: null, perHour: [], quitStage: null, dressCode: null, order: 0, passage: null,
 				},
+				passages: ["passage"],
 				refs: { at: "location", storyline: "storyline", skill: "skill", status: "statusEffect" },
 				effects: ["effects", "perHour"],
 				conditions: ["dressCode.when"],
@@ -157,6 +158,7 @@
 					result.ok = true;
 					result.interrupted = interrupted || false;
 					bus.emit("job:shiftEnd", { job: id, mins: elapsed, pay });
+					setup.actions?.illustrate({ title: `Shift: ${j.label}`, media: { type: "job", id }, passage: j.passage ?? `Act_shift_${id}` });
 					return result;
 				},
 

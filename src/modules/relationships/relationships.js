@@ -39,8 +39,9 @@
 			registry.defineType("interaction", {
 				required: ["label"],
 				// showIf: when false, the interaction isn't listed at all (vs `conditions`, shown locked).
-				defaults: { desc: "", mins: 5, cooldown: 0, once: false, conditions: null, showIf: null, effects: [], npcs: null, npcTags: null, tags: [], hidden: false, order: 0 },
+				defaults: { desc: "", mins: 5, cooldown: 0, once: false, conditions: null, showIf: null, effects: [], npcs: null, npcTags: null, tags: [], hidden: false, order: 0, passage: null },
 				refs: { npcs: "npc" },
+				passages: ["passage"],
 				conditions: ["conditions", "showIf"],
 				effects: ["effects"],
 				check(def) {
@@ -154,6 +155,12 @@
 					result.changes.unshift({ kind: "talk", text: `${def.label} (${fmt.duration(def.mins)}).` });
 					bus.emit("rel:interact", { npc, interaction: iid });
 					flow.request("Npcs_Sheet");
+					// The action screen: one passage for this person, else one for everyone.
+					setup.actions?.illustrate({
+						title: `${def.label}: ${registry.get("npc", npc).name}`,
+						media: { type: "interaction", id: iid },
+						passage: def.passage ?? [`Act_talk_${iid}_${npc}`, `Act_talk_${iid}`],
+					});
 					return result;
 				},
 			};
