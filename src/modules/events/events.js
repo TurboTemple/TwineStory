@@ -256,8 +256,8 @@
 				const s = registry.all("storylet").find((x) => x.passage === here) ?? (events.current ? registry.get("storylet", events.current) : null);
 				const pic = s ? setup.media.render("storylet", s.id, { class: "media-wide" }) : null;
 				if (pic) box.append(pic);
-				// Debug mode: say where the picture goes, so it's easy to add one.
-				else if (s && config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/storylet/${s.id}.webp (or .gif, .mp4)` }));
+				// No picture yet: an empty frame (debug mode says which file to upload).
+				else if (s) box.append(setup.media.slot(`storylet/${s.id}`));
 			});
 
 			ui.view("event-end", (box) => {

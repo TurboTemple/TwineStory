@@ -33,7 +33,7 @@ Not shown (decided by the user): walking between rooms, walking round one area (
 
 **Outcome pictures:** the effect `{ picture: "rough" }` (e.g. in one `random` branch) makes the action screen show `assets/media/<type>/<id>/rough.*` instead, if that file exists (the café's rough shift: `job/grind_barista/rough`).
 
-A missing passage shows `[<title> edit here]`; in debug mode the screen also says where the picture and passage go. Every current one has a placeholder passage in `src/story/mooresville/actions.twee`. The passages are ordinary story passages: `<<when>>`, `<<name>>` and the pronoun macros all work.
+A missing passage shows `[<title> edit here]`. A missing picture shows an empty frame (`setup.media.slot`), always (decided by the user); in debug mode it says which file to upload, and the screen says where the passage goes. Every current one has a placeholder passage in `src/story/mooresville/actions.twee`. The passages are ordinary story passages: `<<when>>`, `<<name>>` and the pronoun macros all work.
 
 API: `setup.actions.illustrate({ title, media: { type, id, sub? }, passage })` asks for one (built on `setup.flow.illustrate`); `setup.flow.illustration()` is the one on screen. Passage `Actions_Scene`, view `action-scene`.
 

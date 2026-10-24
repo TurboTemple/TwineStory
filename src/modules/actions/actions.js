@@ -298,8 +298,8 @@
 					const subs = s.media ? [...(outcome ? [[s.media.sub, outcome].filter(Boolean).join("/")] : []), s.media.sub] : [];
 					const pic = subs.map((sub) => setup.media.render(s.media.type, s.media.id, { sub, class: "media-wide", alt: s.title })).find(Boolean);
 					if (pic) box.append(pic);
-					// Debug mode: say where the picture goes, so it's easy to add one.
-					else if (s.media && setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/${[s.media.type, s.media.id, subs[0]].filter(Boolean).join("/")}.webp (or .gif, .mp4)` }));
+					// No picture yet: an empty frame (debug mode says which file to upload).
+					else if (s.media) box.append(setup.media.slot([s.media.type, s.media.id, subs[0]].filter(Boolean).join("/")));
 					const text = ui.el("div", { class: "scene-text" });
 					// `passage` can be a list: the first one that exists is used.
 					const names = setup.util.toArray(s.passage);

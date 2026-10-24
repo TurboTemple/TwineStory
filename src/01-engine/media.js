@@ -111,6 +111,21 @@
 			 * neutral tile with the first letter of the name.
 			 * @param {string} type @param {string} id @param {string} name
 			 */
+			/**
+			 * The empty picture frame shown where a picture will go once one is
+			 * uploaded (action screens, events, people). Always shown (decided
+			 * by the user: every action has a picture placeholder); debug mode
+			 * also says which file to upload.
+			 * @param {string} file  e.g. "action/shower" (no extension)
+			 * @returns {HTMLElement}
+			 */
+			slot(file) {
+				return setup.ui.el("p", {
+					class: "media-slot",
+					text: setup.config.debug ? `Picture: assets/media/${file}.webp (or .gif, .mp4)` : "Picture goes here",
+				});
+			},
+
 			thumb(type, id, name, opts = {}) {
 				const el = media.render(type, id, { ...opts, class: `thumb ${opts.class ?? ""}`, alt: name });
 				if (el) return el;
