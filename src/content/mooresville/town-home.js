@@ -39,7 +39,7 @@
  *   listed: true     shown at letting agents
  *
  *  BILL FIELDS (part 3)
- *   label, amount    shown in the Me page and calendar; whole pounds
+ *   label, amount    shown in the Profile tab and calendar; whole pounds
  *   kind             "charge" (you pay) or "income" (you're paid)
  *   every            "day", "week" (on `weekday`, 0 = Sunday) or "month" (on `date`, 1–28)
  *   account          which account it uses (leave out: any for a charge, the first for income)

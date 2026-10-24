@@ -18,15 +18,19 @@
 	"use strict";
 
 	const KEEP_DAYS = 7;
+	/** How many recent things the phone's Recent app remembers. */
+	const KEEP_RECENT = 20;
 	const fresh = () => ({ earned: 0, spent: 0, lessons: 0, skipped: 0, shifts: 0, workMins: 0, met: [], levels: [], tiers: [], stages: [], traits: [], messages: 0 });
 
 	(setup.__modules ??= []).push({
 		id: "journal",
-		version: 2,
+		version: 3,
 		deps: [],
 		state: "journal",
-		defaultState: () => ({ days: {} }),
+		defaultState: () => ({ days: {}, recent: [] }),
 		migrations: {
+			// Version 3: the Recent list.
+			3: (slice) => ({ recent: [], ...slice }),
 			// Version 2: money changed from pence to whole pounds.
 			2: (slice) => {
 				for (const e of Object.values(slice.days ?? {})) {
@@ -40,6 +44,32 @@
 		install({ registry, time, bus, ui, flow, fmt, config }) {
 			const J = () => setup.vars().journal;
 			const summaries = new Map();
+
+			// Recent: every tap that changed something (an action screen's title and
+			// what happened), newest last, for the phone's Recent app.
+			bus.on("flow:done", ({ result, illustration }) => {
+				const lines = [...(result?.changes ?? []).map((c) => c.text), ...(result?.toasts ?? [])].filter(Boolean);
+				if (!lines.length || result?.ok === false) return;
+				const list = (J().recent ??= []);
+				list.push({ t: time.now(), title: illustration?.title ?? null, lines: lines.slice(0, 6) });
+				if (list.length > KEEP_RECENT) list.splice(0, list.length - KEEP_RECENT);
+			});
+
+			ui.view("app-recent", (box) => {
+				const list = [...(J().recent ?? [])].reverse();
+				if (!list.length) {
+					box.append(ui.el("p", { class: "note", text: "Nothing yet." }));
+					return;
+				}
+				const ul = ui.el("ul", { class: "recent" });
+				for (const r of list) {
+					ul.append(ui.el("li", {},
+						ui.el("p", { class: "note", text: `${fmt.date(r.t)} ${fmt.time(r.t)}` }),
+						r.title ? ui.el("strong", { text: r.title }) : null,
+						ui.el("ul", { class: "mods" }, ...r.lines.map((l) => ui.el("li", { text: l })))));
+				}
+				box.append(ul);
+			});
 
 			const journal = {
 				/** @returns {object} The log for a day (created if needed). */

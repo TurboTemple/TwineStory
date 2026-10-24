@@ -12,6 +12,7 @@ Things the PC can do that take time.
 - A negative `money` effect in `costs` is the price. It's shown on the button, and the action is locked if you can't afford it.
 - Tip: add a status in `costs` and remove it in `always` to change how stats move **while** the action runs (sleeping, relaxing, exercising).
 - **Locked actions** (decided by the user) show what they are, greyed out, with their requirements underneath ("Needs: …"). `hidden: true` hides one completely.
+- **People-specific actions:** `with: "mark"` (or a list), or `withTag: "student"` (a tag or role). They show on the screen you get when you tap that person, not in the place's list; their effects are about that person (`ctx.npc`, e.g. `{ rel: … }`), and afterwards you're back with them. `at` is optional for these (set it to limit where). `setup.actions.withNpc(npc)` lists them; `do(id, { npc })` does one.
 - `showIf`: a condition for the action to be listed at all (e.g. once its storyline has started). When it's listed, `conditions` grey it out as usual.
 
 ## The action screen
@@ -28,6 +29,8 @@ After doing something, the player sees an **action screen**: a picture, GIF or v
 | Getting changed | `assets/media/action/get_changed` | `Act_get_changed` |
 
 Not shown (decided by the user): walking between rooms, walking round one area (the same district), and shopping.
+
+**Outcome pictures:** the effect `{ picture: "rough" }` (e.g. in one `random` branch) makes the action screen show `assets/media/<type>/<id>/rough.*` instead, if that file exists (the café's rough shift: `job/grind_barista/rough`).
 
 A missing passage shows `[<title> edit here]`; in debug mode the screen also says where the picture and passage go. Every current one has a placeholder passage in `src/story/mooresville/actions.twee`. The passages are ordinary story passages: `<<when>>`, `<<name>>` and the pronoun macros all work.
 

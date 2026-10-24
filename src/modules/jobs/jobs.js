@@ -197,7 +197,7 @@
 					box.append(ui.el("h2", { text: "Work" }));
 					const can = jobs.canWork(j.id);
 					const pay = jobs.shiftPay(j.id);
-					box.append(ui.action(`Work a shift (${fmt.duration(j.shiftMins)}${pay ? `, ${fmt.money(pay)}` : ""})`, () => jobs.work(j.id), { class: "btn-primary", disabled: !can.ok }));
+					box.append(ui.action(`Work a shift · ${fmt.short(j.shiftMins)}${pay ? `, ${fmt.money(pay)}` : ""}`, () => jobs.work(j.id), { class: "btn-primary", disabled: !can.ok }));
 					if (!can.ok) box.append(ui.el("p", { class: "note", text: can.reason }));
 				}
 			});

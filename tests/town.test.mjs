@@ -59,7 +59,9 @@ test("every place and room has something to do, a shop, or somewhere to go", () 
 test("every action's effects run without errors", () => {
 	for (const def of bootTown().setup.registry.all("action")) {
 		const { setup } = bootTown();
-		const ctx = { action: def.id, interrupt() {} };
+		// People-specific actions run with their person (ctx.npc).
+		const npc = [def.with].flat()[0] ?? setup.registry.all("npc").find((n) => def.withTag && (n.tags.includes(def.withTag) || n.role === def.withTag))?.id;
+		const ctx = { action: def.id, interrupt() {}, ...(npc ? { npc } : {}) };
 		const r = setup.effects.newResult();
 		setup.effects.run([...def.costs, ...def.effects, ...def.perHour, ...def.always], ctx, r);
 	}

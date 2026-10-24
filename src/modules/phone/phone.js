@@ -30,7 +30,8 @@
 		install({ registry, cond, effects, time, bus, ui, flow, fmt, sched }) {
 			registry.defineType("app", {
 				required: ["label", "view"],
-				defaults: { icon: "•", order: 0, conditions: null, badge: null, desc: "" },
+				// group: the heading it sits under on the home screen ("People", "Plans"…).
+				defaults: { icon: "•", order: 0, conditions: null, badge: null, desc: "", group: null },
 				conditions: ["conditions"],
 				check: (def) => (ui.hasView(def.view) ? [] : [`unknown view "${def.view}"`]),
 			});
@@ -188,16 +189,26 @@
 				const app = phone.app ? registry.tryGet("app", phone.app) : null;
 				if (!app) {
 					box.append(ui.el("p", { class: "phone-clock", text: `${fmt.time(time.now())} · ${fmt.date(time.now())}` }));
-					const grid = ui.el("div", { class: "app-grid" });
-					for (const a of phone.apps()) {
-						const n = phone.badge(a);
-						grid.append(ui.el("button", {
-							class: "app-icon",
-							attrs: { type: "button", "aria-label": n ? `${a.label}, ${n} new` : a.label },
-							on: { click: () => phone.open(a.id) },
-						}, ui.el("span", { class: "app-glyph", text: a.icon, attrs: { "aria-hidden": "true" } }), ui.el("span", { class: "app-label", text: a.label }), n ? ui.el("span", { class: "app-badge", text: String(n) }) : null));
+					// Apps sit under their group's heading; groups come in the order of
+					// their first app. Apps with no group go in one grid at the end.
+					const groups = new Map();
+					for (const a of phone.apps()) groups.set(a.group, [...(groups.get(a.group) ?? []), a]);
+					const ungrouped = groups.get(null);
+					groups.delete(null);
+					if (ungrouped) groups.set(null, ungrouped);
+					for (const [group, apps] of groups) {
+						if (group) box.append(ui.el("h2", { class: "app-group", text: group }));
+						const grid = ui.el("div", { class: "app-grid" });
+						for (const a of apps) {
+							const n = phone.badge(a);
+							grid.append(ui.el("button", {
+								class: "app-icon",
+								attrs: { type: "button", "aria-label": n ? `${a.label}, ${n} new` : a.label },
+								on: { click: () => phone.open(a.id) },
+							}, ui.el("span", { class: "app-glyph", text: a.icon, attrs: { "aria-hidden": "true" } }), ui.el("span", { class: "app-label", text: a.label }), n ? ui.el("span", { class: "app-badge", text: String(n) }) : null));
+						}
+						box.append(grid);
 					}
-					box.append(grid);
 					box.append(ui.button("Put the phone away", () => flow.go(flow.home)));
 					return;
 				}

@@ -61,7 +61,7 @@ Take "Order a flat white" at The Daily Grind:
 - **Conditions and effects**: each module registers the words for its own data (`stat`, `wearing`, `npcHere`…), and content uses them.
 - **Screens**: modules add sections to shared screens instead of owning them:
   - `world.addHereSection` adds to the Here screen;
-  - `character.addMeSection` adds to the Me page and Profile tab;
+  - `character.addMeSection` adds to the sidebar's Profile tab (the one place for the full profile);
   - `npcs.addSheetSection` adds to a person's sheet;
   - `shell.addSection` adds to the sidebar.
 

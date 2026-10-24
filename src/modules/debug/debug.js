@@ -45,6 +45,71 @@
 				return ui.el("div", { class: "debug-row" }, ui.el("label", { text: label }), sel, ui.button(button, () => fn(sel.value)));
 			};
 
+			/* ---- Writing checklist ------------------------------------------ */
+
+			/**
+			 * Every spot a picture can go, as { folder, file, what }: places, actions,
+			 * lessons, shifts, chats, items (and using them), journeys, people (and
+			 * them out and about), events, effects and traits.
+			 */
+			debug.pictureSpots = () => {
+				const out = [];
+				const add = (type, id, what, sub) => {
+					const key = [type, id, sub].filter(Boolean).join("/");
+					out.push({ folder: `assets/media/${key.split("/").slice(0, -1).join("/")}/`, file: key.split("/").at(-1), what, has: !!setup.media.find(type, id, sub) });
+				};
+				// (A type is missing if its module isn't installed.)
+				const each = (type, fn) => registry.hasType(type) && registry.all(type).forEach(fn);
+				each("location", (d) => add("location", d.id, d.name));
+				each("action", (d) => add("action", d.id, d.label));
+				each("subject", (d) => add("subject", d.id, `${d.label} lesson`));
+				each("job", (d) => add("job", d.id, `${d.label} shift`));
+				each("interaction", (d) => add("interaction", d.id, d.label));
+				each("item", (d) => {
+					add("item", d.id, d.name);
+					if (d.use) add("item", d.id, `${d.use.label ?? "Use"}: ${d.name}`, "use");
+				});
+				each("travelMode", (d) => add("travelMode", d.id, d.label));
+				each("npc", (d) => {
+					add("npc", d.id, `${d.name} (profile picture)`);
+					if (!d.online) add("npc", d.id, `${d.name} (out and about)`, "here");
+				});
+				each("storylet", (d) => d.passage && add("storylet", d.id, d.passage));
+				each("statusEffect", (d) => !d.hidden && add("statusEffect", d.id, d.label));
+				each("trait", (d) => add("trait", d.id, d.label));
+				out.push({ folder: "assets/media/action/", file: "get_changed", what: "Getting changed", has: !!setup.media.byKey("action/get_changed") });
+				return out;
+			};
+
+			/** A collapsible group: "<title> (n)" then a list. */
+			const group = (title, rows) => ui.el("details", { class: "checklist" },
+				ui.el("summary", { text: `${title} (${rows.length})` }),
+				ui.el("ul", { class: "mods" }, ...rows.map((r) => ui.el("li", { text: r }))));
+
+			ui.view("debug-checklist", (box) => {
+				box.classList.add("m-debug");
+				if (!config.debug) {
+					box.append(ui.el("p", { text: "The checklist needs ?debug in the address." }));
+					return;
+				}
+				// Text still to write: built from the .twee files at build time.
+				const todo = setup.__placeholders ?? {};
+				const byFile = new Map();
+				for (const [name, file] of Object.entries(todo)) byFile.set(file, [...(byFile.get(file) ?? []), name]);
+				box.append(ui.el("h2", { text: `Text to write (${Object.keys(todo).length})` }));
+				box.append(ui.el("p", { class: "note", text: "Passages still saying [… edit here], by file. Open the file on GitHub and search for the name." }));
+				if (!byFile.size) box.append(ui.el("p", { text: "Nothing left. Everything has its own text." }));
+				for (const [file, names] of byFile) box.append(group(file, names));
+
+				// Pictures still to add.
+				const missing = debug.pictureSpots().filter((s) => !s.has);
+				const byFolder = new Map();
+				for (const s of missing) byFolder.set(s.folder, [...(byFolder.get(s.folder) ?? []), `${s.file} (${s.what})`]);
+				box.append(ui.el("h2", { text: `Pictures to add (${missing.length})` }));
+				box.append(ui.el("p", { class: "note", text: "Each is a file name to upload into that folder, as .webp, .gif or .mp4 (see assets/media/README.md). All of them are optional." }));
+				for (const [folder, rows] of byFolder) box.append(group(folder, rows));
+			});
+
 			ui.view("debug-tools", (box) => {
 				box.classList.add("m-debug");
 				if (!config.debug) {

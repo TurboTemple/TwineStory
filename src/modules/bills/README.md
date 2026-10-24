@@ -11,7 +11,7 @@ Money that comes and goes on a schedule: rent, pocket money, a phone contract.
 - `onPaid`, `onMissed`: effects. A charge you can't afford counts as missed: its count goes up, and resets when a payment goes through.
 
 ## How it works
-At midnight, every active bill due that day is settled once. A notice says what happened. Active bills are listed on the Me page ("Regular money") and in the phone's calendar.
+At midnight, every active bill due that day is settled once. A notice says what happened. Active bills are listed in the sidebar's Profile tab ("Regular money") and in the phone's calendar.
 
 ## State
 `$bills = { missed: { [id]: n }, last: { [id]: day } }`

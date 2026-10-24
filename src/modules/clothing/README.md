@@ -29,7 +29,7 @@ The wardrobe lists what you're wearing and what you could put on, each with a ti
 `{ wearing: "item" }` / `{ wearing: { attribute, min? } }` (at least `min` things with the attribute, default 1), `{ dressed: true }`
 
 ## UI
-"Get changed" on Here (where you can change) and on the Me page → `Clothing_Wardrobe`.
+"Get changed" on Here (where you can change) and in the sidebar's Profile tab → `Clothing_Wardrobe`.
 
 ## Open decisions
 - The price tiers and their mood boosts (£10 none, £20 +1, £50 +2, £100 +4), and which items are warm or smart.

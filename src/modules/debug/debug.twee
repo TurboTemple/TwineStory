@@ -1,3 +1,8 @@
 :: Debug_Tools [nobr]
 <h1>Debug tools</h1>
 <<view "debug-tools">>
+
+:: Debug_Checklist [nobr]
+<h1>Writing checklist</h1>
+<<view "debug-checklist">>
+<<button "Back to the game">><<run setup.flow.go("Here")>><</button>>

@@ -16,6 +16,7 @@ Put a file in the right folder with the right name and the game uses it automati
 | Using an item from your bag | `item/<id>/use` | `item/chocolate_bar/use.gif` |
 | A journey (walking across town, the bus, a taxi) | `travelMode/<mode>` | `travelMode/bus7.mp4` |
 | Getting changed | `action/get_changed` | `action/get_changed.gif` |
+| One outcome of an action (with `{ picture: "rough" }` in its effects) | `<type>/<id>/<picture>` | `job/grind_barista/rough.gif` |
 | An event | `storylet/<id>` | `storylet/therapy_interrupted.mp4` |
 | An item (food, clothes…) | `item/<id>` | `item/white_tshirt.webp` |
 | An NPC's profile picture | `npc/<id>` | `npc/dr_okafor.jpg` |

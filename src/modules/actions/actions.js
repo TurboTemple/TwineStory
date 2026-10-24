@@ -40,8 +40,14 @@
 					// storyline has started); `conditions` then grey it out.
 					hidden: false,
 					showIf: null,
+					// People-specific: offered on the screen you get when you tap
+					// someone, instead of the place's list. `with`: person id(s);
+					// `withTag`: anyone with this tag or role. `at` (if set) still
+					// limits where.
+					with: null,
+					withTag: null,
 				},
-				refs: { at: "location" },
+				refs: { at: "location", with: "npc" },
 				passages: ["passage"],
 				conditions: ["conditions", "showIf"],
 				effects: ["costs", "effects", "perHour", "always"],
@@ -51,7 +57,7 @@
 					if (!ok(def.mins)) errs.push("mins must be a whole number ≥ 0");
 					const hm = (d) => typeof d === "string" && /^\d{1,2}:\d{2}$/.test(d);
 					if (def.durations && !def.durations.every((d) => (ok(d) && d > 0) || hm(d))) errs.push('durations must be whole minutes > 0 or "HH:MM" (until that time)');
-					if (!setup.util.toArray(def.at).length && !def.atTag) errs.push("needs `at` (location ids) or `atTag`");
+					if (!setup.util.toArray(def.at).length && !def.atTag && !def.with && !def.withTag) errs.push("needs `at` (location ids), `atTag`, `with` or `withTag`");
 					if (!def.checkpoints.every((c) => ok(c) && c > 0)) errs.push("checkpoints must be whole numbers > 0");
 					return errs;
 				},
@@ -64,17 +70,31 @@
 				if (running && running.def.perHour.length) effects.run(running.def.perHour, running.ctx, running.result);
 			});
 
-			const ctxFor = (def) => ({ action: def.id, loc: setup.world.loc(), t: time.now(), reason: `action:${def.id}` });
+			const ctxFor = (def, npc = null) => ({ action: def.id, loc: setup.world.loc(), t: time.now(), reason: `action:${def.id}`, ...(npc ? { npc } : {}) });
+
+			/** A people-specific action (`with` / `withTag`)? */
+			const personal = (def) => def.with != null || def.withTag != null;
+			/** Is it for this person? */
+			const forNpc = (def, npc) => {
+				const n = registry.tryGet("npc", npc);
+				if (!n) return false;
+				if (def.with != null && setup.util.toArray(def.with).includes(npc)) return true;
+				return def.withTag != null && (n.tags.includes(def.withTag) || n.role === def.withTag);
+			};
 
 			/** Total pounds an action's costs take (negative `money` effects). */
 			const priceOf = (def) => def.costs.reduce((sum, c) => sum + (c.money && c.money.amount < 0 ? -c.money.amount : 0), 0);
 			const moneyOn = () => setup.modules.has("money") && setup.money.enabled();
 
 			/** Is the action offered where the PC is? */
-			const offeredHere = (def) => {
+			const atHere = (def) => {
 				const here = setup.world.here();
 				return Boolean(here) && (setup.util.toArray(def.at).includes(here.id) || (def.atTag != null && here.tags.includes(def.atTag)));
 			};
+			/** Offered in the place's list? (People-specific ones are on the person's screen instead.) */
+			const offeredHere = (def) => !personal(def) && atHere(def);
+			/** Offered with this person, here? */
+			const offeredWith = (def, npc) => personal(def) && forNpc(def, npc) && (!setup.util.toArray(def.at).length && def.atTag == null ? true : atHere(def));
 
 			/**
 			 * Every reason an action can't be done now: not open (unless the
@@ -118,14 +138,33 @@
 						.filter((a) => a.ok || !a.def.hidden);
 				},
 
+				/**
+				 * People-specific actions for someone who's here (shown on the
+				 * screen you get when you tap them).
+				 * @param {string} npc
+				 * @returns {{def: object, ok: boolean, reasons: string[]}[]}
+				 */
+				withNpc(npc) {
+					if (!setup.world.here()) return [];
+					return registry.all("action")
+						.filter((def) => offeredWith(def, npc))
+						.filter((def) => def.showIf == null || cond.test(def.showIf, ctxFor(def, npc)))
+						.map((def) => {
+							const reasons = blockers(def, ctxFor(def, npc));
+							return { def, ok: !reasons.length, reasons, price: priceOf(def) };
+						})
+						.filter((a) => a.ok || !a.def.hidden);
+				},
+
 				/** @returns {boolean} Whether an action is running. */
 				isRunning: () => running !== null,
 
 				/**
 				 * Do an action.
 				 * @param {string} id
-				 * @param {{mins?: number|string}} [opts]  mins picks one of `durations`
-				 *   (a number of minutes, or "HH:MM" for "until then").
+				 * @param {{mins?: number|string, npc?: string}} [opts]  mins picks one of `durations`
+				 *   (a number of minutes, or "HH:MM" for "until then"); npc: who a
+				 *   people-specific action is with.
 				 * @returns {object} Result, plus { ok, action, elapsed }.
 				 */
 				do(id, opts = {}) {
@@ -136,10 +175,12 @@
 					// (e.g. exhausted: actionTime 1.25). Chosen durations stay as chosen.
 					const factor = !def.durations && setup.modules.has("status") ? setup.status.factor("actionTime") : 1;
 					const mins = Math.round(minsFor(opts.mins ?? def.mins) * factor);
-					const ctx = ctxFor(def);
+					const ctx = ctxFor(def, opts.npc);
 					const result = Object.assign(effects.newResult(), { ok: false, action: id, elapsed: 0 });
 
-					if (!offeredHere(def)) throw new setup.GameError(`"${id}" isn't offered at ${setup.world.loc()}`);
+					if (personal(def) ? !(opts.npc && offeredWith(def, opts.npc) && setup.npcs?.whereIs(opts.npc) === setup.world.loc()) : !offeredHere(def)) {
+						throw new setup.GameError(`"${id}" isn't offered ${opts.npc ? `with ${opts.npc} ` : ""}at ${setup.world.loc()}`);
+					}
 					const why = blockers(def, ctx);
 					if (why.length) {
 						result.changes.push({ kind: "blocked", text: `${def.label}: not possible right now (${why.join("; ")}).` });
@@ -191,6 +232,8 @@
 					}
 					bus.emit("action:end", { action: id, elapsed: result.elapsed, interrupted: result.interrupted, result, ctx });
 					actions.illustrate({ title: def.label, media: { type: "action", id }, passage: def.passage ?? `Act_${id}` });
+					// With someone: back to them afterwards.
+					if (opts.npc) flow.request("Npcs_Meet");
 					return result;
 				},
 
@@ -211,16 +254,29 @@
 
 			/* ---- The action screen -------------------------------------------- */
 
+			// { picture: "busy" } — the action screen shows a different picture for
+			// this outcome: assets/media/<type>/<id>/busy.* (e.g. action/shower/cold),
+			// falling back to the usual one. Use it in a `random` branch or an `if`.
+			effects.register("picture", {
+				apply(spec, ctx, result) {
+					result.picture = String(spec);
+				},
+				describe: (spec) => `Shows the "${spec}" picture`,
+			});
+
 			flow.illustrationPassage = "Actions_Scene";
 			ui.view("action-scene", (box) => {
 				box.classList.add("m-actions", "action-scene");
 				const s = flow.illustration();
 				if (s) {
 					box.append(ui.el("h1", { text: s.title }));
-					const pic = s.media ? setup.media.render(s.media.type, s.media.id, { sub: s.media.sub, class: "media-wide", alt: s.title }) : null;
+					// An outcome's own picture ({ picture: "…" } in the effects) first, then the usual one.
+					const outcome = flow.lastResult()?.picture;
+					const subs = s.media ? [...(outcome ? [[s.media.sub, outcome].filter(Boolean).join("/")] : []), s.media.sub] : [];
+					const pic = subs.map((sub) => setup.media.render(s.media.type, s.media.id, { sub, class: "media-wide", alt: s.title })).find(Boolean);
 					if (pic) box.append(pic);
 					// Debug mode: say where the picture goes, so it's easy to add one.
-					else if (s.media && setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/${[s.media.type, s.media.id, s.media.sub].filter(Boolean).join("/")}.webp (or .gif, .mp4)` }));
+					else if (s.media && setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/${[s.media.type, s.media.id, subs[0]].filter(Boolean).join("/")}.webp (or .gif, .mp4)` }));
 					const text = ui.el("div", { class: "scene-text" });
 					// `passage` can be a list: the first one that exists is used.
 					const names = setup.util.toArray(s.passage);
@@ -253,8 +309,8 @@
 
 			/* ---- UI --------------------------------------------------------- */
 
-			setup.world.addHereSection("actions", 30, (box) => {
-				const list = actions.available();
+			/** The "Things to do" list (the place's, or someone's with `npc`). */
+			const renderList = (box, list, npc = null) => {
 				if (!list.length) return;
 				box.append(ui.el("h2", { text: "Things to do" }));
 				const ul = ui.el("ul", { class: "m-actions" });
@@ -277,17 +333,25 @@
 						// A choice of how long (sleep, waiting): the name once, then short chips.
 						li.classList.add("choose-length");
 						li.append(ui.el("span", { class: "action-name", text: `${def.label}${price ? ` (${fmt.money(price)})` : ""}:` }));
-						for (const d of def.durations) li.append(ui.action(len(d), () => actions.do(def.id, { mins: d }), { class: "btn-chip" }));
+						for (const d of def.durations) li.append(ui.action(len(d), () => actions.do(def.id, { mins: d, npc }), { class: "btn-chip" }));
 					}
 					else {
 						const meta = [len(def.mins), price ? fmt.money(price) : null].filter(Boolean).join(", ");
-						li.append(ui.action(meta ? `${def.label} · ${meta}` : def.label, () => actions.do(def.id)));
+						li.append(ui.action(meta ? `${def.label} · ${meta}` : def.label, () => actions.do(def.id, { npc })));
 					}
 					if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
 					ul.append(li);
 				}
 				box.append(ul);
-			});
+			};
+
+			setup.world.addHereSection("actions", 30, (box) => renderList(box, actions.available()));
+			actions.renderList = renderList;
+		},
+
+		ready() {
+			// People-specific actions on the screen you get when you tap someone (after Talk).
+			if (setup.modules.has("npcs")) setup.npcs.addMeetSection("actions", 30, (box, npc) => setup.actions.renderList(box, setup.actions.withNpc(npc), npc));
 		},
 	});
 })();

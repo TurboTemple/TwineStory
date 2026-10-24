@@ -210,6 +210,7 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ moveTo: "home_bedroom" }` | put the player somewhere |
 | `{ time: 10 }` | 10 more minutes pass |
 | `{ note: "Text" }` | a line in the summary box |
+| `{ picture: "rough" }` | the action screen shows that outcome's own picture (`assets/media/<type>/<id>/rough.*`, e.g. `job/grind_barista/rough.gif`), if there is one |
 | `{ goto: "Ev_my_scene" }` | show that passage next (e.g. a Talk option that opens a scene) |
 | `{ interrupt: "reason" }` | stop what you're doing (sleep, an action, a journey) |
 | `{ flag: "met_the_mayor" }`, `{ counter: { name: "x", add: 1 } }` | set your own flags and counters |
@@ -252,10 +253,14 @@ Everything you do (an action like a shower or waiting, a lesson, a work shift, t
 - **The picture:** upload it to `assets/media/` (see the README there): `action/shower.gif`, `subject/maths.webp`, `job/grind_barista.mp4`, `interaction/chat.gif`, `item/chocolate_bar/use.gif`, `travelMode/bus7.mp4`, `action/get_changed.gif`. In debug mode the screen shows the exact file name it's looking for.
 - **A new action** gets its screen automatically. Add an `Act_<id>` passage for its text (until then it says `[<name> edit here]`).
 - The text can change with `<<when>>` like any other passage, e.g. different lines when you're tired.
+- **Varied text:** `<<oneof>>The water's lovely.<<or>>The hot water runs out.<<or>>You sing. Badly.<</oneof>>` shows one of the lines, picked at random each time.
+- **A picture per outcome:** add `{ picture: "rough" }` to an outcome's effects (e.g. one `random` branch) and upload `job/grind_barista/rough.gif`: that outcome shows its own picture.
 
 ## Tapping someone
 
-Tapping a name under "People here" goes up to that person: their picture, your flavour text, the things you can do with them (Talk…) and **Leave**. Character sheets (age, appearance, how you get on) are in the phone's **People** app.
+Tapping a name under "People here" goes up to that person: their picture, your flavour text, the things you can do with them (Talk, and actions just for them) and **Leave**. Character sheets (age, appearance, how you get on) are in the phone's **People** app.
+
+- **Something to do with one person:** an action with `with: "mark"` (or `withTag: "student"` for everyone with that tag or role) shows on their screen instead of the place's list, e.g. "Ask about the volleyball team" in `stories/story-gym-teacher.js`. Its effects are about them (`{ rel: { friendship: 2 } }`).
 
 - **The text:** `src/story/mooresville/people.twee`, one passage per person (`Npc_priya_shah`…), each saying `[<name> edit here]`. Use `<<when>>` to change it by time, place or how well you know them.
 - **The picture:** `assets/media/npc/<id>/here.gif` (or .webp, .mp4). Without one, their profile picture `npc/<id>.webp` shows.
@@ -369,5 +374,6 @@ The build fails (red cross, nothing is published) if:
 Open the game with `?debug` on the end: https://turbotemple.github.io/TwineStory/?debug
 
 - Red banners at the top list any problems.
+- **Menu → Debug → Writing checklist** lists every passage still saying `[… edit here]` (by file) and every picture you could add (by folder), so you can see what's left.
 - **Menu → Debug → Debug tools** lets you jump anywhere, skip time, add money, set stats, skills and relationships, give or take away traits, jump a storyline to a stage, force or block events, and see the week's weather.
 - If something looks wrong, take a screenshot and send it to Claude.

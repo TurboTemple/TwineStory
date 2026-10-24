@@ -316,7 +316,7 @@
 				box.append(ui.button("Back", () => flow.go(flow.home)));
 			});
 
-			// What you're wearing, on the Me screen.
+			// What you're wearing, in the Profile tab.
 			setup.character.addMeSection("clothes", 30, (box) => {
 				box.append(ui.el("h2", { text: "Wearing" }));
 				const items = clothing.wornItems();

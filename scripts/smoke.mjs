@@ -113,13 +113,10 @@ async function playTown(page, label) {
 	await click(page, "Change");
 	await scene(page, /Getting changed edit here[\s\S]*Put on: [\s\S]*Took off: Pyjamas[\s\S]*Getting changed took 5 minutes/, `${label}: changed`);
 	await expectPassage(page, "Here", /Your Bedroom/, `${label}: back after changing`);
-	// The Me page shows your body and clothes.
-	await page.evaluate(() => window.SugarCube.Engine.play("Character_Me"));
-	await expectPassage(page, "Character_Me", /Height:\s*average[\s\S]*Hair:\s*shoulder-length[\s\S]*Wearing[\s\S]*White T-shirt/, `${label}: me page`);
-	await click(page, "Back");
-	// The sidebar's Profile tab: detailed stats and what effects do.
+	// The sidebar's Profile tab (the one place for it): body, clothes, detailed stats and what effects do.
 	await page.evaluate(() => window.SugarCube.setup.shell.setTab("profile"));
 	const prof = await sidebar(page);
+	if (!/Height:\s*average[\s\S]*Hair:\s*shoulder-length[\s\S]*Wearing[\s\S]*White T-shirt/.test(prof)) failures.push(`${label}: Profile tab is missing your body and clothes`);
 	for (const bit of ["Stats in detail", "Underlying", "Refreshed", "What it does", "White T-shirt", "Total", "Traits"]) {
 		if (!prof.includes(bit)) failures.push(`${label}: Profile tab is missing "${bit}"`);
 	}
@@ -232,6 +229,31 @@ async function playSchool(page) {
 	await click(page, "Home screen");
 }
 
+/** Debug mode: the writing checklist, the phone's Recent app and app groups, and <<oneof>>. */
+async function playExtras(page) {
+	await page.evaluate(() => window.SugarCube.setup.flow.go("Debug_Checklist"));
+	await expectPassage(page, "Debug_Checklist", /Text to write \(\d+\)[\s\S]*src\/story\/mooresville\/actions\.twee[\s\S]*Pictures to add \(\d+\)[\s\S]*assets\/media\/action\//, "writing checklist");
+	await click(page, "Back to the game");
+	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
+	await expectPassage(page, "Phone_Home", /People[\s\S]*Messages[\s\S]*Plans[\s\S]*Diary[\s\S]*Out and about[\s\S]*Map[\s\S]*Money and history[\s\S]*Recent/, "phone app groups");
+	await click(page, "Recent");
+	await expectPassage(page, "Phone_Home", /School's out/, "recent history");
+	await click(page, "Home screen");
+	await click(page, "Put the phone away");
+	const picks = await page.evaluate(() => {
+		const out = new Set();
+		for (let i = 0; i < 20; i++) {
+			const d = document.createElement("div");
+			window.SugarCube.setup.sc.wiki(d, "<<oneof>>A<<or>>B<<or>>C<</oneof>>");
+			out.add(d.textContent);
+			window.SugarCube.setup.time.advance(1, { reason: "test" });
+		}
+		return [...out];
+	});
+	if (!picks.length || picks.some((p) => !["A", "B", "C"].includes(p))) failures.push(`<<oneof>> gave ${JSON.stringify(picks)}`);
+	if (picks.length < 2) failures.push("<<oneof>> never varied");
+}
+
 /** Debug mode: get the café job, work the first shift, read Jess's text, sleep. */
 async function playJob(page) {
 	const skipTo = (day, hm) => page.evaluate(([d, h]) => {
@@ -247,7 +269,7 @@ async function playJob(page) {
 	// Getting the job also starts Lenny's story: its start screen comes next.
 	await expectPassage(page, "Ev_coffee_shop_start", /The Coffee Shop Owner edit here/, "Lenny's start screen");
 	await click(page, "Continue");
-	await click(page, "Work a shift (2 hours, £20)");
+	await click(page, "Work a shift · 2 hr, £20");
 	await expectPassage(page, "Ev_grind_first_day", /First day/, "first day");
 	await click(page, "Continue");
 	await expectPassage(page, "Here", /You worked a shift: 2 hours[\s\S]*Paid £20\./, "after the first shift");
@@ -323,6 +345,7 @@ async function playChoice(page) {
 	await playJob(page);
 	await playChoice(page);
 	await playSchool(page);
+	await playExtras(page);
 	failures.push(...errors.map((e) => `debug: ${e}`));
 	await page.close();
 }
