@@ -296,9 +296,189 @@
 			age: 41,
 			pronouns: "she/her",
 			role: "letting agent",
-			desc: "Runs Keys & Co Lettings. Brisk, organised, and keeps a very close eye on who's paid their rent.",
+			desc: "Runs Keys & Co Estate Agents in the Business District. Brisk, organised, and keeps a very close eye on who's paid their rent.",
 			body: { height: "average", weight: "average", hair_colour: "auburn", hair_length: "shoulder-length", eye_colour: "green", skin_tone: "fair" },
 			schedule: [{ at: "keys_lettings", from: "09:00", to: "17:30", days: DAYS.MON_SAT }],
+		});
+
+		/* ======================================================================
+		 *  Riverside Park
+		 * ====================================================================== */
+
+		npc({
+			id: "gavin_marsh",
+			name: "Gavin Marsh",
+			age: 33,
+			pronouns: "he/him",
+			role: "jogger",
+			desc: "Runs the same loop of the park every morning, rain or shine, and nods at everyone he passes.",
+			body: { height: "tall", weight: "slim", hair_colour: "dark brown", hair_length: "short", eye_colour: "brown", skin_tone: "dark brown" },
+			schedule: [
+				{ at: "riverside_park", from: "07:00", to: "08:30", days: DAYS.WEEKDAYS },
+				{ at: "riverside_path", from: "09:00", to: "10:30", days: DAYS.WEEKEND },
+			],
+		});
+
+		npc({
+			id: "edna_pike",
+			name: "Edna Pike",
+			age: 79,
+			pronouns: "she/her",
+			role: "park regular",
+			desc: "Sits on the same bench every afternoon with a flask of tea and opinions about everyone who walks by.",
+			body: { height: "short", weight: "average", hair_colour: "platinum", hair_length: "short", eye_colour: "blue", skin_tone: "very fair" },
+			schedule: [{ at: "riverside_park", from: "13:00", to: "16:00" }],
+		});
+
+		/* ======================================================================
+		 *  Business District
+		 * ====================================================================== */
+
+		npc({
+			id: "martin_ellery",
+			name: "Martin Ellery",
+			age: 45,
+			pronouns: "he/him",
+			role: "bank cashier",
+			desc: "Behind the counter at Northern Crown Bank. Neat tie, patient voice, has a leaflet for everything.",
+			body: { height: "average", weight: "average", hair_colour: "light brown", hair_length: "short", eye_colour: "grey", skin_tone: "fair" },
+			schedule: [
+				{ at: "crown_bank", from: "09:00", to: "17:00", days: DAYS.WEEKDAYS },
+				{ at: "crown_bank", from: "09:00", to: "13:00", days: DAYS.SAT },
+			],
+		});
+
+		npc({
+			id: "tessa_wade",
+			name: "Tessa Wade",
+			age: 29,
+			pronouns: "she/her",
+			role: "studio receptionist",
+			desc: "Runs the front desk at Grumman Productions. Knows who's filming what, and isn't telling.",
+			body: { height: "tall", weight: "slim", hair_colour: "black", hair_length: "long", eye_colour: "brown", skin_tone: "olive" },
+			schedule: [
+				{ at: "grumman_studios", from: "08:00", to: "19:00", days: DAYS.WEEKDAYS },
+				{ at: "grumman_studios", from: "10:00", to: "16:00", days: DAYS.SAT },
+			],
+		});
+
+		npc({
+			id: "nina_cross",
+			name: "Nina Cross",
+			age: 36,
+			pronouns: "she/her",
+			role: "casting director",
+			desc: "Casting director at Grumman Productions. Looks at you for exactly three seconds and knows what you'd be good for.",
+			body: { height: "average", weight: "slim", hair_colour: "blonde", hair_length: "chin-length", eye_colour: "green", skin_tone: "fair" },
+			schedule: [{ at: "grumman_casting", from: "09:30", to: "17:00", days: DAYS.WEEKDAYS }],
+		});
+
+		npc({
+			id: "victor_grumman",
+			name: "Victor Grumman",
+			age: 58,
+			pronouns: "he/him",
+			role: "film producer",
+			desc: "Owns Grumman Productions. Loud suits, louder laugh, and a habit of calling everyone 'kid'.",
+			body: { height: "average", weight: "chubby", hair_colour: "platinum", hair_length: "short", eye_colour: "blue", skin_tone: "light" },
+			schedule: [
+				{ at: "grumman_casting", from: "11:00", to: "12:30", days: DAYS.WEEKDAYS },
+				{ at: "grumman_stage", from: "13:00", to: "18:00", days: DAYS.WEEKDAYS },
+			],
+		});
+
+		/* ======================================================================
+		 *  South Town
+		 * ======================================================================
+		 *
+		 * Club nights run past midnight, and times after midnight count on the
+		 * next day: Thursday night is days [4] until 24:00, then [5] from 00:00.
+		 */
+
+		const clubNight = (at, from) => [
+			{ at, from, to: "24:00", days: [4, 5, 6] }, // Thu, Fri, Sat evening
+			{ at, from: "00:00", to: "03:00", days: [5, 6, 0] }, // …into the early hours
+		];
+
+		npc({
+			id: "marcus_doyle",
+			name: "Marcus Doyle",
+			age: 38,
+			pronouns: "he/him",
+			role: "bouncer",
+			desc: "Works the door at Club Neon. Built like a wardrobe, says very little, misses nothing.",
+			body: { height: "tall", weight: "fat", hair_colour: "black", hair_length: "buzzed", eye_colour: "brown", skin_tone: "dark brown" },
+			schedule: clubNight("club_neon", "22:00"),
+		});
+
+		npc({
+			id: "kira_novak",
+			name: "Kira Novak",
+			age: 27,
+			pronouns: "she/her",
+			role: "DJ",
+			desc: "Resident DJ at Club Neon. Headphones round her neck, glitter on her cheekbones, total control of the room.",
+			body: { height: "short", weight: "slim", hair_colour: "blue", hair_length: "shoulder-length", eye_colour: "hazel", skin_tone: "light" },
+			schedule: clubNight("neon_dance_floor", "23:00"),
+		});
+
+		npc({
+			id: "leon_hart",
+			name: "Leon Hart",
+			age: 25,
+			pronouns: "he/him",
+			role: "bartender",
+			desc: "Works the bar at Club Neon. Pours drinks with a showman's flick and remembers faces, if not names.",
+			body: { height: "tall", weight: "average", hair_colour: "light brown", hair_length: "chin-length", eye_colour: "green", skin_tone: "fair" },
+			schedule: clubNight("neon_bar", "22:00"),
+		});
+
+		npc({
+			id: "roxy_vale",
+			name: "Roxy Vale",
+			age: 34,
+			pronouns: "she/her",
+			role: "shop assistant",
+			desc: "Runs the counter at Scarlet's. Unshockable, funny, and very good at making nervous customers feel at ease.",
+			body: { height: "average", weight: "chubby", hair_colour: "auburn", hair_length: "long", eye_colour: "brown", skin_tone: "fair" },
+			schedule: [{ at: "scarlets", from: "12:00", to: "22:00", days: [2, 3, 4, 5, 6] }], // Tue–Sat
+		});
+
+		npc({
+			id: "mehmet_arslan",
+			name: "Mehmet Arslan",
+			age: 49,
+			pronouns: "he/him",
+			role: "takeaway owner",
+			desc: "Owns the Golden Grill. Has fed half of South Town at three in the morning and never lost his temper once.",
+			body: { height: "average", weight: "chubby", hair_colour: "black", hair_length: "short", eye_colour: "brown", skin_tone: "olive" },
+			schedule: [{ at: "golden_grill", from: "17:00", to: "04:00" }],
+		});
+
+		/* ======================================================================
+		 *  The Seafront
+		 * ====================================================================== */
+
+		npc({
+			id: "kai_mendes",
+			name: "Kai Mendes",
+			age: 24,
+			pronouns: "he/him",
+			role: "lifeguard",
+			desc: "Lifeguard on the beach: red shorts, a whistle and a permanent squint at the horizon.",
+			body: { height: "tall", weight: "slim", hair_colour: "dark brown", hair_length: "shoulder-length", eye_colour: "brown", skin_tone: "light brown" },
+			schedule: [{ at: "beach_sand", from: "10:00", to: "18:00" }],
+		});
+
+		npc({
+			id: "bev_tolley",
+			name: "Bev Tolley",
+			age: 61,
+			pronouns: "she/her",
+			role: "runs the Surf Shack",
+			desc: "Has run the Surf Shack for thirty summers. Calls everyone 'pet' and knows the tide times by heart.",
+			body: { height: "short", weight: "chubby", hair_colour: "platinum", hair_length: "shoulder-length", eye_colour: "blue", skin_tone: "fair" },
+			schedule: [{ at: "surf_shack", from: "09:00", to: "18:00" }],
 		});
 
 		/* ======================================================================

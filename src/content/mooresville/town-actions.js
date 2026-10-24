@@ -593,6 +593,204 @@
 			effects: [{ stat: { drink: 15, bladder: 8 } }],
 		});
 
+		// The park itself: a walk round, a workout on the grass, people-watching.
+		act({ id: "park_walk", label: "Go for a walk", at: "riverside_park", mins: 30, whileDoing: "walking" });
+		act({
+			id: "park_exercise",
+			label: "Exercise",
+			at: "riverside_park",
+			mins: 45,
+			whileDoing: "exercising",
+			// Free, unlike the gym, but you need to be in gym kit.
+			conditions: {
+				all: [
+					{ wearing: { attribute: "sportswear", min: 2 }, text: "Gym kit: trainers and a sporty top or bottoms" },
+					{ stat: { id: "energy", min: 20 } },
+				],
+			},
+			effects: [
+				{ status: "post_workout" },
+				{ body: { weight: -0.3 } },
+				{ habit: "exercise" },
+				{ storylineCount: { id: "fitness", key: "workouts" } }, // counts like a gym workout (town-fitness.js)
+			],
+		});
+		act({ id: "park_watch_people", label: "Watch people", at: "riverside_park", mins: 20, whileDoing: "relaxing" });
+
+		/* ======================================================================
+		 *  Business District
+		 * ======================================================================
+		 *
+		 * Moving money between cash and your bank card: the cash machine in the
+		 * square works day and night; the bank counter takes cash in.
+		 */
+
+		const withdraw = (n) =>
+			act({
+				id: `cash_machine_${n}`,
+				label: `Take out £${n}`,
+				at: "business_district",
+				mins: 2,
+				whenClosed: true,
+				conditions: { money: { account: "bank", min: n }, text: `£${n} in the bank` },
+				costs: [{ money: { amount: -n, account: "bank", reason: "Cash machine" } }],
+				effects: [{ money: { amount: n, account: "cash", reason: "Cash machine" } }],
+			});
+		withdraw(10);
+		withdraw(20);
+		withdraw(50);
+
+		act({
+			id: "bank_pay_in",
+			label: "Pay in £20 cash",
+			at: "crown_bank",
+			mins: 5,
+			conditions: { money: { account: "cash", min: 20 }, text: "£20 in cash" },
+			costs: [{ money: { amount: -20, account: "cash", reason: "Paid in at the bank" } }],
+			effects: [{ money: { amount: 20, account: "bank", reason: "Paid in at the bank" } }],
+		});
+		act({
+			id: "bank_ask_savings",
+			label: "Ask about a savings account",
+			at: "crown_bank",
+			mins: 10,
+			effects: [{ note: "Martin gives you a leaflet and a speech about compound interest." }],
+		});
+
+		act({ id: "square_fountain", label: "Sit by the fountain", at: "business_district", mins: 15, whileDoing: "relaxing" });
+
+		// The film studio: hooks for your stories. Leaving your details sets the
+		// flag "grumman_details" (once); the sound stage needs "grumman_pass".
+		act({ id: "grumman_casting_board", label: "Read the casting notices", at: "grumman_studios", mins: 5, effects: [{ stat: { mood: 1 } }] });
+		act({
+			id: "grumman_leave_details",
+			label: "Leave your details for extras work",
+			at: "grumman_casting",
+			mins: 15,
+			showIf: { not: { flag: "grumman_details" } },
+			effects: [{ flag: "grumman_details" }, { note: "Your name is on the extras list now." }],
+		});
+		act({ id: "grumman_watch_filming", label: "Watch them filming", at: "grumman_stage", mins: 30, effects: [{ stat: { mood: 3, stress: -2 } }] });
+
+		/* ======================================================================
+		 *  South Town
+		 * ====================================================================== */
+
+		// Club Neon: pay at the door, then dance and drink. £10 in (the film price tier).
+		act({
+			id: "neon_entry",
+			label: "Pay to get in",
+			at: "club_neon",
+			mins: 10, // the queue
+			price: 10,
+			showIf: { not: { status: "neon_stamp" } },
+			conditions: { ageAtLeast: 18 },
+			effects: [{ status: "neon_stamp" }],
+		});
+		act({ id: "neon_dance", label: "Dance", at: "neon_dance_floor", mins: 60, whileDoing: "dancing", conditions: { stat: { id: "energy", min: 15 } } });
+		act({
+			id: "neon_drink",
+			label: "Buy a drink",
+			at: "neon_bar",
+			mins: 10,
+			price: 5,
+			conditions: { ageAtLeast: 18 },
+			effects: [{ stat: { drink: 8, bladder: 12, mood: 3 } }, { status: "tipsy" }],
+		});
+		act({
+			id: "neon_shots",
+			label: "Do a round of shots",
+			at: "neon_bar",
+			mins: 5,
+			price: 8,
+			conditions: { ageAtLeast: 18 },
+			effects: [{ stat: { mood: 4 } }, { status: "tipsy" }, { status: "tipsy" }],
+		});
+		act({ id: "neon_water", label: "Ask for a glass of water", at: "neon_bar", mins: 5, effects: [{ stat: { drink: 15, bladder: 6 } }] });
+		act({ id: "neon_fresh_air", label: "Get some air", at: "neon_smoking", mins: 10, effects: [{ stat: { stress: -2, energy: 2 } }] });
+
+		act({ id: "scarlets_browse", label: "Browse discreetly", at: "scarlets", mins: 15, whileDoing: "browsing" });
+		act({ id: "scarlets_try_on", label: "Try something on", at: "scarlets_fitting", mins: 15, effects: [{ stat: { mood: 3 } }] });
+
+		act({
+			id: "grill_kebab",
+			label: "Buy a kebab",
+			at: "golden_grill",
+			mins: 10,
+			price: 8,
+			effects: [{ stat: { food: 50, drink: -5, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
+		});
+		act({
+			id: "grill_chips",
+			label: "Buy cheesy chips",
+			at: "golden_grill",
+			mins: 5,
+			price: 3,
+			effects: [{ stat: { food: 25, mood: 2 } }],
+		});
+
+		/* ======================================================================
+		 *  The Seafront
+		 * ======================================================================
+		 *
+		 * Sunbathing needs sun; without sun cream on, you burn. Swimming is in
+		 * the sea, in swimwear (the Surf Shack sells it: town-clothing.js).
+		 */
+
+		act({
+			id: "sunbathe",
+			label: "Sunbathe",
+			at: "beach_sand",
+			mins: 60,
+			whileDoing: "sunbathing",
+			conditions: { weather: { kind: "sunny" }, text: "Sunshine" },
+			effects: [
+				{ status: "sun_kissed" },
+				{ if: { cond: { not: { status: "sun_cream" } }, then: [{ status: "sunburnt" }, { note: "You forgot the sun cream. Ouch." }] } },
+			],
+		});
+		act({ id: "beach_walk", label: "Walk along the shore", at: "beach_sand", mins: 30, whileDoing: "walking" });
+		act({
+			id: "swim",
+			label: "Swim",
+			at: "beach_sea",
+			mins: 30,
+			whileDoing: "swimming",
+			conditions: { stat: { id: "energy", min: 20 } },
+			effects: [
+				{ status: "sea_fresh" },
+				{ habit: "exercise" },
+				{ stat: { hygiene: -10 } }, // salty and sandy: a shower in the changing area sorts it
+				// Cold water is more of a shock than a treat.
+				{ if: { cond: { weather: { tempMax: 12 } }, then: [{ stat: { mood: -6, energy: -5 } }, { note: "The water was freezing." }] } },
+			],
+		});
+		act({
+			id: "pier_slots",
+			label: "Play the slot machines",
+			at: "beach_pier",
+			mins: 15,
+			price: 1,
+			effects: [
+				{
+					random: [
+						{ weight: 7, then: [{ stat: { mood: 1 } }] },
+						{ weight: 2, then: [{ money: { amount: 2, account: "cash", reason: "Slot machine" } }, { stat: { mood: 3 } }, { picture: "win" }] },
+						{ weight: 1, then: [{ money: { amount: 10, account: "cash", reason: "Slot machine jackpot" } }, { stat: { mood: 8 } }, { picture: "jackpot" }] },
+					],
+				},
+			],
+		});
+		act({
+			id: "pier_fish_chips",
+			label: "Buy fish and chips",
+			at: "beach_pier",
+			mins: 20,
+			price: 8,
+			effects: [{ stat: { food: 50, mood: 4 } }, { status: "well_fed" }, { body: { weight: 0.3 } }],
+		});
+		act({ id: "pier_view", label: "Look out to sea", at: "beach_pier", mins: 15, whileDoing: "relaxing" });
+
 		/* ======================================================================
 		 *  Out and about
 		 * ====================================================================== */
@@ -606,6 +804,7 @@
 			at: [
 				"elm_road", "high_street", "elm_park_green", "riverside_park", "corner_shop", "academy",
 				"daily_grind", "red_lion", "wellbeing", "threadline", "pulsefit", "arcade", "snips",
+				"business_district", "south_town", "beach",
 			],
 		});
 	});

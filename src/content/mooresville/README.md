@@ -7,7 +7,7 @@ Each file starts with a guide: what's in it, how to add something, and what ever
 | File | What's in it |
 |---|---|
 | `town-kit.js` | Shorthand the other files use: day lists (`DAYS.WEEKDAYS`), opening hours, stat modifiers (`mod.add("mood", 2)`) |
-| `town-map.js` | Districts, places and their rooms, atmosphere lines, opening hours, walking routes, the Route 7 bus, taxis, money accounts |
+| `town-map.js` | Districts, places and their rooms, atmosphere lines, opening hours, walking routes, the Route 7 and Route 3 buses, taxis, money accounts |
 | `town-needs.js` | Stats (Health, Energy, Food, Drink, Bladder, Hygiene, Mood, Stress) and effects (Hungry, Tipsy, Caffeinated…) |
 | `town-traits.js` | Traits earned through habits (Caffeine addicted, Gym regular) |
 | `town-people.js` | Every person's character sheet, looks and weekly schedule |
@@ -38,7 +38,17 @@ Your House —1— Elm Road —3— Patel's Corner Shop
                                  |— 2 Threadline           — 4 Wellbeing Centre
                                  |— 3 Snips Hair Salon
                                  |— 6 PulseFit Gym         —10 The Arcade —15— Riverside Park
-                                 '—12 Riverside Park
+                                 |—12 Riverside Park (River Path, Boathouse Kiosk, Public Toilets) —4— Riverside Court
+                                 |         |8
+                                 '—10 Business District (Sovereign Square)
+                                           |— 1 Northern Crown Bank   — 2 Keys & Co Estate Agents
+                                           |— 4 Grumman Productions Film Studio (Casting Office; Sound Stage and Dressing Rooms: studio pass)
+                                           '—12 South Town
+                                                 |— 2 Club Neon (Dance Floor, Bar, VIP Booth, Smoking Area, Toilets)
+                                                 |— 2 Scarlet's Adult Store (over-18s; Changing Cubicle)
+                                                 |— 1 Golden Grill Kebabs
+                                                 '—10 Mooresville Beach (The Sand, The Sea, Changing Area, The Pier, The Surf Shack)
 Bus (Route 7, £2): Elm Road – Academy – High Street – Arcade
-Taxi (£3 + 50p a minute, rounded to whole pounds, for trips over a 10-minute walk): to Elm Road, High Street or the Arcade
+Bus (Route 3, £2): High Street – Riverside Park – Business District – South Town – Beach
+Taxi (£3 + 50p a minute, rounded to whole pounds, for trips over a 10-minute walk): to any hub (Elm Road, High Street, the Arcade, Riverside Park, the Business District, South Town, the beach)
 ```
