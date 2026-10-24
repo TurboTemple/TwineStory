@@ -88,7 +88,7 @@ test("the action screen: shown after an action, a lesson, a shift or a chat, unl
 	assert.equal(played.at(-1), "Actions_Scene");
 	assert.deepEqual(plain(setup.flow.illustration().passage), ["Act_talk_chat_priya_shah", "Act_talk_chat"]);
 	setup.flow.continue();
-	assert.equal(played.at(-1), "Npcs_Sheet");
+	assert.equal(played.at(-1), "Npcs_Meet", "back to them, not their character sheet");
 	// A lesson (Friday starts with Maths).
 	setup.world.moveTo("home_bedroom");
 	setup.time.advance(setup.time.at(3, "08:40") - setup.time.now());
@@ -131,4 +131,17 @@ test("journeys: walking between districts, the bus and taxis get an action scree
 	setup.flow.perform(() => setup.travel.go("elm_road", "walk"));
 	assert.equal(played.at(-1), "Actions_Scene", "the town centre to your street: another district");
 	assert.equal(setup.flow.illustration().title, "Walk to Elm Road");
+});
+
+test("tapping someone shows them and what you can do (no character sheet); sheets are in the phone's People app", () => {
+	const { setup, played } = bootTown();
+	setup.time.advance(setup.time.at(2, "12:10") - setup.time.now());
+	setup.world.moveTo("academy_canteen");
+	setup.npcs.approach("priya_shah");
+	assert.equal(played.at(-1), "Npcs_Meet");
+	assert.equal(setup.npcs.with, "priya_shah");
+	assert.ok(setup.registry.get("app", "people"), "the People app exists");
+	setup.npcs.openSheet("priya_shah", { back: "Phone_Home" });
+	assert.equal(played.at(-1), "Npcs_Sheet");
+	assert.equal(setup.npcs.sheetBack, "Phone_Home");
 });

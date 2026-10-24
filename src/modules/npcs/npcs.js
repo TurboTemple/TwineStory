@@ -51,6 +51,7 @@
 			const N = () => setup.vars().npcs;
 			/** Extra parts of the character sheet (relationship, Talk…). */
 			const sheetSections = [];
+			const meetSections = [];
 			let cache = { t: null, map: null };
 
 			const npcs = {
@@ -120,6 +121,32 @@
 				/** The NPC whose sheet is open (not saved). */
 				viewing: null,
 
+				/** Where the sheet's Back button goes (not saved). */
+				sheetBack: null,
+
+				/** The NPC you're with in the world (tapped in "People here"; not saved). */
+				with: null,
+
+				/**
+				 * Add a section to the screen you get when you tap someone in the
+				 * world (e.g. relationships adds "Talk"). Lower order first.
+				 * @param {string} name @param {number} order @param {(box: HTMLElement, id: string) => void} fn
+				 */
+				addMeetSection(name, order, fn) {
+					meetSections.push({ name, order, fn });
+					meetSections.sort((a, b) => a.order - b.order);
+				},
+
+				/**
+				 * Go up to someone who's here: their picture, flavour text (passage
+				 * "Npc_<id>", or the npc's `passage`) and what you can do with them.
+				 * No character sheet (that's on the phone).
+				 */
+				approach(id) {
+					npcs.with = id;
+					flow.go("Npcs_Meet");
+				},
+
 				/**
 				 * Add a section to NPC character sheets. Lower order first; the
 				 * sheet's own details are order 0.
@@ -130,9 +157,13 @@
 					sheetSections.sort((a, b) => a.order - b.order);
 				},
 
-				/** Open an NPC's character sheet. */
-				openSheet(id) {
+				/**
+				 * Open an NPC's character sheet (from the phone's People app).
+				 * @param {string} id @param {{back?: string}} [opts] back: the passage Back returns to
+				 */
+				openSheet(id, opts = {}) {
 					npcs.viewing = id;
+					npcs.sheetBack = opts.back ?? null;
 					flow.go("Npcs_Sheet");
 				},
 			};
@@ -202,7 +233,7 @@
 				const list = ui.el("ul", { class: "m-npcs people" });
 				for (const id of ids) {
 					const def = registry.get("npc", id);
-					list.append(ui.el("li", {}, ui.button(`${def.name}${def.role ? ` (${def.role})` : ""}`, () => npcs.openSheet(id))));
+					list.append(ui.el("li", {}, ui.button(`${def.name}${def.role ? ` (${def.role})` : ""}`, () => npcs.approach(id))));
 				}
 				box.append(list);
 			});
@@ -246,7 +277,6 @@
 						}
 						box.append(ul);
 					}
-					if (def.passage) ui.wiki(box, def.passage);
 					for (const sec of sheetSections) {
 						const part = ui.el("section", { class: `sheet-${sec.name}` });
 						try {
@@ -258,7 +288,42 @@
 						if (part.childNodes.length) box.append(part);
 					}
 				}
-				box.append(ui.button("Back", () => flow.go(flow.home)));
+				box.append(ui.button("Back", () => flow.go(npcs.sheetBack ?? flow.home)));
+			});
+
+			// Tapping someone in the world: their picture, your flavour text and
+			// what you can do with them (Talk…), then Leave.
+			ui.view("npc-meet", (box) => {
+				box.classList.add("m-npcs", "npc-meet");
+				const id = npcs.with;
+				const def = id ? registry.tryGet("npc", id) : null;
+				if (!def || npcs.whereIs(id) !== setup.world.loc()) {
+					box.append(ui.el("p", { class: "note", text: def ? `${def.name} isn't here any more.` : "No one's here." }));
+					box.append(ui.button("Back", () => flow.go(flow.home), { class: "btn-primary" }));
+					return;
+				}
+				box.append(ui.el("h1", { text: def.name }));
+				if (def.role) box.append(ui.el("p", { class: "crumbs", text: def.role }));
+				// The picture: assets/media/npc/<id>/here.* (a picture of them out and about), else their portrait.
+				const pic = setup.media.render("npc", id, { sub: "here", class: "media-wide", alt: def.name }) ?? setup.media.render("npc", id, { class: "media-wide", alt: def.name });
+				if (pic) box.append(pic);
+				else if (setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/npc/${id}/here.webp (or .gif, .mp4), or npc/${id}.webp` }));
+				const text = ui.el("div", { class: "scene-text" });
+				const passage = def.passage ?? `Npc_${id}`;
+				if (setup.sc.hasPassage(passage)) ui.wiki(text, passage);
+				else text.append(ui.el("p", { text: `[${def.name} edit here]` }));
+				box.append(text);
+				for (const sec of meetSections) {
+					const part = ui.el("section", { class: `meet-${sec.name}` });
+					try {
+						sec.fn(part, id);
+					}
+					catch (err) {
+						setup.reportError(err, `npc meet ${sec.name}`);
+					}
+					if (part.childNodes.length) box.append(part);
+				}
+				box.append(ui.button("Leave", () => flow.go(flow.home)));
 			});
 		},
 	});

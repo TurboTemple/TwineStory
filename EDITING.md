@@ -41,6 +41,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Event text for the job | `src/story/mooresville/work.twee` |
 | School subjects, timetable, lunch, term dates | `town-school.js` |
 | Flavour text for everything you do (action screens) | `src/story/mooresville/actions.twee` |
+| What you see when you tap someone (flavour text per person) | `src/story/mooresville/people.twee` (`Npc_<id>`) |
 | Events around town | `town-events.js` |
 | Event text | `src/story/mooresville/events.twee` |
 | Weather and the climate | `town-weather.js` |
@@ -251,6 +252,13 @@ Everything you do (an action like a shower or waiting, a lesson, a work shift, t
 - **The picture:** upload it to `assets/media/` (see the README there): `action/shower.gif`, `subject/maths.webp`, `job/grind_barista.mp4`, `interaction/chat.gif`, `item/chocolate_bar/use.gif`, `travelMode/bus7.mp4`, `action/get_changed.gif`. In debug mode the screen shows the exact file name it's looking for.
 - **A new action** gets its screen automatically. Add an `Act_<id>` passage for its text (until then it says `[<name> edit here]`).
 - The text can change with `<<when>>` like any other passage, e.g. different lines when you're tired.
+
+## Tapping someone
+
+Tapping a name under "People here" goes up to that person: their picture, your flavour text, the things you can do with them (Talk…) and **Leave**. Character sheets (age, appearance, how you get on) are in the phone's **People** app.
+
+- **The text:** `src/story/mooresville/people.twee`, one passage per person (`Npc_priya_shah`…), each saying `[<name> edit here]`. Use `<<when>>` to change it by time, place or how well you know them.
+- **The picture:** `assets/media/npc/<id>/here.gif` (or .webp, .mp4). Without one, their profile picture `npc/<id>.webp` shows.
 
 ## Writing text (`.twee` files)
 

@@ -154,7 +154,8 @@
 					}
 					result.changes.unshift({ kind: "talk", text: `${def.label} (${fmt.duration(def.mins)}).` });
 					bus.emit("rel:interact", { npc, interaction: iid });
-					flow.request("Npcs_Sheet");
+					// Back to them afterwards (after the action screen).
+					flow.request("Npcs_Meet");
 					// The action screen: one passage for this person, else one for everyone.
 					setup.actions?.illustrate({
 						title: `${def.label}: ${registry.get("npc", npc).name}`,
@@ -213,29 +214,33 @@
 				box.append(ui.el("h2", { text: "You and them" }), bars(npc));
 			});
 
-			setup.npcs.addSheetSection("talk", 20, (box, npc) => {
+			// Talk: on the screen you get when you tap someone who's here.
+			setup.npcs.addMeetSection("talk", 20, (box, npc) => {
 				if (setup.npcs.whereIs(npc) !== setup.world.loc()) return;
 				const list = rel.interactions(npc);
 				if (!list.length) return;
 				box.append(ui.el("h2", { text: "Talk" }));
 				const ul = ui.el("ul", { class: "m-actions" });
 				for (const { def, ok, reasons } of list) {
-					const li = ui.el("li", {}, ui.action(def.mins ? `${def.label} (${fmt.duration(def.mins)})` : def.label, () => rel.interact(npc, def.id), { disabled: !ok }));
-					if (!ok) li.append(ui.el("p", { class: "locked", text: reasons.join("; ") }));
+					const li = ui.el("li", {}, ui.action(def.mins ? `${def.label} · ${fmt.short(def.mins)}` : def.label, () => rel.interact(npc, def.id), { disabled: !ok, class: ok ? "" : "btn-locked" }));
+					if (!ok) li.append(ui.el("p", { class: "locked", text: `Needs: ${reasons.join("; ")}` }));
 					else if (def.desc) li.append(ui.el("p", { class: "note", text: def.desc }));
 					ul.append(li);
 				}
 				box.append(ul);
 			});
 
-			setup.character.addMeSection("people", 39, (box) => {
+			// The phone's People app: everyone you've met; each opens their character sheet.
+			ui.view("app-people", (box) => {
 				const met = registry.all("npc").filter((n) => setup.npcs.hasMet(n.id));
-				if (!met.length) return;
-				box.append(ui.el("h2", { text: "People you know" }));
+				if (!met.length) {
+					box.append(ui.el("p", { class: "note", text: "You haven't met anyone yet." }));
+					return;
+				}
 				const ul = ui.el("ul", { class: "people" });
 				for (const n of met) {
 					const tiers = rel.tracks().filter((t) => !t.hidden && rel.applies(n.id, t.id) && rel.get(n.id, t.id) > t.start).map((t) => rel.tier(n.id, t.id)?.label).filter(Boolean);
-					ul.append(ui.el("li", {}, ui.button(`${n.name}${tiers.length ? ` (${tiers.join(", ")})` : ""}`, () => setup.npcs.openSheet(n.id))));
+					ul.append(ui.el("li", {}, ui.button(`${n.name}${tiers.length ? ` (${tiers.join(", ")})` : ""}`, () => setup.npcs.openSheet(n.id, { back: "Phone_Home" }))));
 				}
 				box.append(ul);
 			});

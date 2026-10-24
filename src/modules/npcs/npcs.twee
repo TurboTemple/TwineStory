@@ -1,2 +1,5 @@
 :: Npcs_Sheet [nobr]
 <<view "npc-sheet">>
+
+:: Npcs_Meet [nobr]
+<<view "npc-meet">>
