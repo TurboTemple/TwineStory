@@ -42,6 +42,7 @@
  *  TAGS — what they switch on
  * ---------------------------------------------------------------------------
  *   toilet, sink, shower   → "Go for a wee", "Wash your hands", "Have a shower"
+ *   bath                   → "Have a bath"
  *   seating                → "Sit and relax"
  *   bed, sofa, tv, kitchen → sleeping, napping, TV, cooking (see town-actions.js)
  *   changing               → you can get changed here (bedroom, fitting rooms…)
@@ -247,7 +248,7 @@
 		// walk bedroom → living room → hallway to get out of the front door.
 		place({ id: "home", name: "Your House", district: "elm_park", tags: ["home"], links: ["home_living_room", "home_kitchen"] });
 		room({ id: "home_bedroom", name: "Your Bedroom", parent: "home", tags: ["home", "bed", "start", "changing", "computer"], links: ["home_bathroom", "home_living_room"] });
-		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "changing"], links: ["home_bedroom"] });
+		room({ id: "home_bathroom", name: "Bathroom", parent: "home", tags: ["home", "toilet", "sink", "shower", "bath", "changing"], links: ["home_bedroom"] });
 		room({ id: "home_kitchen", name: "Kitchen", parent: "home", tags: ["home", "kitchen"], links: ["home_living_room"] });
 		room({ id: "home_living_room", name: "Living Room", parent: "home", tags: ["home", "sofa", "tv"], links: ["home_bedroom", "home_kitchen"] });
 
@@ -434,7 +435,7 @@
 		place({ id: "riverside_court", name: "Riverside Court", district: "riverside", tags: ["flats"] });
 		room({ id: "flat_living", name: "Flat 4: Living Room", parent: "riverside_court", tags: ["home", "sofa"], entry: flatOnly, innerMins: 2 });
 		room({ id: "flat_bedroom", name: "Flat 4: Bedroom", parent: "flat_living", tags: ["home", "bed", "changing", "computer"] });
-		room({ id: "flat_bathroom", name: "Flat 4: Bathroom", parent: "flat_living", tags: ["home", "toilet", "sink", "shower", "changing"] });
+		room({ id: "flat_bathroom", name: "Flat 4: Bathroom", parent: "flat_living", tags: ["home", "toilet", "sink", "shower", "bath", "changing"] });
 		room({ id: "flat_kitchen", name: "Flat 4: Kitchen", parent: "flat_living", tags: ["home", "kitchen"] });
 
 		/* ---- Calm Waters Hypnotherapy (High Street; story-hypnotherapist.js) --- */
@@ -665,6 +666,7 @@
 		 *                "otherDistrict" (only between districts) or "never".
 		 *                Its text: passage Act_travel_<mode> (or Act_travel_<mode>_<place>
 		 *                for one destination); picture: assets/media/travelMode/<mode>.
+		 *   during       an effect that's on for the whole journey (walking: "on_foot")
 		 *   cost + fare  in whole pounds:
 		 *                "flat": one price (fare.flat)
 		 *                "meter": fare.base + fare.perMin for each minute of the
@@ -674,7 +676,9 @@
 		// Decided by the user: you need to be dressed to go out (see setup.config.clothing).
 		const dressed = { dressed: true };
 
-		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed, screen: "otherDistrict" }); // an action screen only between districts
+		// Walking uses a little energy and drink on the way (the "on_foot"
+		// effect, town-needs.js); the bus and taxis don't.
+		R.define("travelMode", { id: "walk", label: "Walk", order: 0, conditions: dressed, screen: "otherDistrict", during: "on_foot" }); // an action screen only between districts
 
 		R.define("travelMode", {
 			id: "bus7",

@@ -28,6 +28,7 @@ Active effects on the PC, shown in the sidebar's **Effects** list. They feed mod
 
 ## Conditions and effects
 - `{ status: "id" }` — it's active
+- `{ status: { id, min?, max? } }` — a stacking status at a level, e.g. `{ status: { id: "tipsy", min: 4 } }` ("Very drunk or worse", from its `stackLabels`)
 - `{ status: "id" }` / `{ status: { id, mins } }` — add it
 - `{ statusRemove: "id" }`
 

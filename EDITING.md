@@ -155,11 +155,13 @@ Mix it with other parts using `all`: `{ npcHere: "mark", all: [{ weekday: [2, 4]
 | `{ weekday: [1, 2, 3] }` | it's one of those days |
 | `{ stat: { id: "energy", min: 20, max: 80 } }` | a stat is in range |
 | `{ status: "tipsy" }` | an effect is on |
+| `{ status: { id: "tipsy", min: 4 } }` | a stacking effect at least at that level (Tipsy 1, Merry 2, Drunk 3, Very drunk 4, Wasted 5) |
 | `{ skill: { id: "barista", min: 20 } }` | a skill is at least that level |
 | `{ money: { min: 10 } }` | you have at least £10 |
 | `{ has: "groceries" }` or `{ has: { item: "groceries", qty: 2 } }` | you have it with you (bag, or storage where you are) |
 | `{ wearing: "rain_jacket" }` or `{ wearing: { attribute: "cosy" } }` | you're wearing it, or something with that attribute |
 | `{ wearing: { attribute: "smart", min: 2 } }` | at least 2 things you're wearing have that attribute |
+| `{ wearing: { slot: "outer" } }` | something is on in that slot (a coat or jacket); with `not:` it's "no coat on" |
 | `{ trait: "caffeine_addicted" }` | you have that trait |
 | `{ habit: { id: "coffee", days: 3, within: 7 } }` | you did that habit on 3 of the last 7 days |
 | `{ dressed: true }` | you're dressed to go out |
@@ -202,6 +204,7 @@ Used in `effects`, `costs`, `onEnter`. They run in order.
 | `{ status: "caffeinated" }` / `{ statusRemove: "caffeinated" }` | switch an effect on / off |
 | `{ status: { id: "calm", mins: 60 } }` | switch it on for a set time |
 | `{ money: { amount: 5 } }` | earn £5 (negative = pay); add `account: "cash"` to choose |
+| `{ moneyMove: { from: "cash", to: "bank" } }` | move all your cash into the bank (add `amount: 20` for a set amount) |
 | `{ habit: "coffee" }` | count today towards a habit (traits are earned from habits) |
 | `{ trait: "gym_regular" }` / `{ traitRemove: "gym_regular" }` | give / take away a trait |
 | `{ item: { id: "apple", qty: 1 } }` | get an item (negative = use one up) |
@@ -247,6 +250,9 @@ The game's core loop (decided by the user): **a story event → a task you repea
 ## Life around town
 
 - **Stats worked out from others.** Beauty has a `derive` list instead of a saved value: `{ add: 10 }`, `{ stat: "hygiene", times: 0.2 }`, `{ when: { status: "smartly_dressed" }, add: 10 }`. The Profile tab shows what's counting. Makeup still adds on top. Any stat can work this way.
+- **Cooldowns.** Give an action `cooldown: 240` and it can't be done again for 4 hours (it shows greyed out with "Not again for …"). Small treats (trying clothes on, feeding the ducks, the magazines) use this, with a small reward so they're worth coming back to.
+- **Exercise.** Every workout is a `workout({ … })` in `town-actions.js`: it needs gym kit and Energy 20+, gives the Post-workout glow, counts towards the exercise habit and Getting fit, and builds the body parts in its `works` (`arms`, `legs`, `stomach`, `bum`; `weight: -0.2` makes you slimmer). Personal training with Kyle puts you on his plan for a week, which multiplies every workout's gains (`TRAINER_BOOST`).
+- **Journeys.** A travel mode can have `during: "on_foot"`: an effect that's on for the whole journey (walking uses a little energy and drink; the bus and taxis don't).
 - **Things that run out.** Give an item `uses: 10`, and an action the effect `{ useUp: "item_id" }`. The bag shows how many goes are left.
 - **Dress codes.** On a place: `dressCode: { when: { wearing: { attribute: "sportswear", min: 2 } }, text: "Gym kit only…" }`. On a job, the same field covers working a shift.
 - **How busy it is.** On a place: `crowd: [{ when: { time: { from: "08:00", to: "18:00" } }, level: "busy", text: "Shoppers crowd the pavements." }]`. The first true line shows on the place, and `{ crowd: "busy" }` can be tested.

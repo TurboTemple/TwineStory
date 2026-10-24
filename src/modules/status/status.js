@@ -183,9 +183,25 @@
 			for (const ev of ["clothing:changed", "body:changed", "inventory:added", "inventory:removed", "world:enter"]) bus.on(ev, () => status.sync());
 
 			// { status: "id" } — that status is active.
+			// { status: { id, min?, max? } } — a stacking status at a level, e.g.
+			// { status: { id: "tipsy", min: 4 } } is "Very drunk" or worse.
 			cond.register("status", {
-				test: (spec) => setup.util.toArray(spec).some((id) => status.has(id)),
-				describe: (spec) => setup.util.toArray(spec).map((id) => registry.tryGet("statusEffect", id)?.label ?? id).join(" or "),
+				test: (spec) => {
+					if (spec && typeof spec === "object" && !Array.isArray(spec)) {
+						const n = status.stacks(spec.id);
+						return n > 0 && n >= (spec.min ?? 1) && (spec.max == null || n <= spec.max);
+					}
+					return setup.util.toArray(spec).some((id) => status.has(id));
+				},
+				describe: (spec) => {
+					if (spec && typeof spec === "object" && !Array.isArray(spec)) {
+						const def = registry.tryGet("statusEffect", spec.id);
+						const at = (n) => def?.stackLabels?.[n - 1] ?? `${def?.label ?? spec.id} level ${n}`;
+						if (spec.max != null) return `${at(spec.min ?? 1)} to ${at(spec.max)}`;
+						return `${at(spec.min ?? 1)} or worse`;
+					}
+					return setup.util.toArray(spec).map((id) => registry.tryGet("statusEffect", id)?.label ?? id).join(" or ");
+				},
 			});
 
 			// { status: "id" } or { status: { id, mins } } — add a status.

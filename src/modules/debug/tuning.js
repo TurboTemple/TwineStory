@@ -115,6 +115,7 @@
 					lines: (d) => [
 						line("Where", d.atTag ? `anywhere tagged "${d.atTag}"` : places(d.at)),
 						d.with || d.withTag ? `With: ${d.with ? label("npc", d.with) : `anyone tagged "${d.withTag}"`}` : null,
+						d.cooldown ? `Again after ${fmt.duration(d.cooldown)}` : null,
 						d.durations?.length ? `You choose: ${d.durations.map((m) => (typeof m === "string" ? `until ${m}` : fmt.short(m))).join(", ")}` : d.mins ? `Takes ${fmt.duration(d.mins)}` : null,
 						line("At the start", fx(d.costs)),
 						line("Does", fx(d.effects)),

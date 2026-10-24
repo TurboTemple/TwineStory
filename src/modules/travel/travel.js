@@ -50,9 +50,12 @@
 					// round the shops of one area) or "never".
 					screen: "always",
 					passage: null,
+					// during: "on_foot" — an effect that's on for the journey (how
+					// your stats change while you walk), taken off when you arrive.
+					during: null,
 				},
 				passages: ["passage"],
-				refs: { payWith: "account" },
+				refs: { payWith: "account", during: "statusEffect" },
 				conditions: ["conditions"],
 				check(def) {
 					const errs = [];
@@ -208,6 +211,8 @@
 						time.interrupt(interrupted);
 					};
 					running = { mode: modeId, from, to };
+					const during = mode.during && setup.modules.has("status") ? mode.during : null;
+					if (during) setup.status.add(during);
 					try {
 						bus.emit("travel:depart", { from, to, mode: modeId, mins: opt.mins, cost: opt.cost });
 						for (let i = 0; i < opt.legs.length; i++) {
@@ -226,6 +231,7 @@
 					}
 					finally {
 						running = null;
+						if (during) setup.status.remove(during);
 					}
 					// The interrupting event may already have moved the PC.
 					if (setup.world.loc() === from && reached !== from) setup.world.moveTo(reached);

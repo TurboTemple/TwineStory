@@ -3,7 +3,7 @@
 Things the PC can do that take time.
 
 ## Data
-`action` — `{ id, label, desc, at, atTag, whenClosed, mins, durations, checkpoints[], conditions, costs[], effects[], perHour[], always[], interruptible, passage, hidden, showIf, tags[] }`
+`action` — `{ id, label, desc, at, atTag, whenClosed, mins, durations, cooldown, checkpoints[], conditions, costs[], effects[], perHour[], always[], interruptible, passage, hidden, showIf, tags[] }`
 - `at`: location id(s) where it's offered. `atTag`: offered in every location with that tag (e.g. every `toilet`).
 - `whenClosed`: allowed while the place is closed (e.g. waiting outside). Otherwise a closed place locks its actions.
 - `mins`: how long it takes. `durations: [30, 60, "07:00"]` offers a choice instead; a `"HH:MM"` entry means "until then".
@@ -11,6 +11,7 @@ Things the PC can do that take time.
 - `costs` run first. `effects` run only if the action finishes uninterrupted. `perHour` runs on each hour boundary while it runs. `always` runs at the end either way.
 - A negative `money` effect in `costs` is the price. It's shown on the button, and the action is locked if you can't afford it.
 - Tip: add a status in `costs` and remove it in `always` to change how stats move **while** the action runs (sleeping, relaxing, exercising).
+- `cooldown: 240`: minutes before it can be done again. While it's cooling down it shows greyed out with "Not again for …". The time each was last done is saved in `$acts.last` (version 2 of this module).
 - **Locked actions** (decided by the user) show what they are, greyed out, with their requirements underneath ("Needs: …"). `hidden: true` hides one completely.
 - **People-specific actions:** `with: "mark"` (or a list), or `withTag: "student"` (a tag or role). They show on the screen you get when you tap that person, not in the place's list; their effects are about that person (`ctx.npc`, e.g. `{ rel: … }`), and afterwards you're back with them. `at` is optional for these (set it to limit where). `setup.actions.withNpc(npc)` lists them; `do(id, { npc })` does one.
 - `showIf`: a condition for the action to be listed at all (e.g. once its storyline has started). When it's listed, `conditions` grey it out as usual.

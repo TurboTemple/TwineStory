@@ -24,6 +24,7 @@ Moving between locations. **Travel always takes time, and may cost money.**
   | `time` / `cost` | names of the time and fare hooks |
   | `fare` | numbers for the fare hook: `{ flat }` or `{ base, perMin }` (pence) |
   | `payWith` | account ids allowed (default: any) |
+  | `during` | a status that's on for the whole journey and comes off when you arrive (walking: `"on_foot"`, a little energy and drink) |
 
 Journeys start from the site: if you're in a room, you walk out first (shown as "N minutes to get outside").
 

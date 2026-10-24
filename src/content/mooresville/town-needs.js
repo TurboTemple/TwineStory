@@ -311,6 +311,20 @@
 		});
 
 		timed({
+			id: "blow_dried",
+			label: "Salon-fresh hair",
+			desc: "A wash and blow-dry at Snips. A shower, bath or swim undoes it.",
+			mins: 720, // 12 hours
+			modifiers: [mod.add("beauty", 10), mod.add("mood", 2)],
+		});
+		timed({
+			id: "on_training_plan",
+			label: "On Kyle's training plan",
+			desc: "A week of Kyle's plan: every workout counts for more (town-actions.js, TRAINER_BOOST).",
+			mins: 10080, // 7 days
+			modifiers: [],
+		});
+		timed({
 			id: "neon_stamp",
 			label: "Club Neon stamp",
 			desc: "A smudged neon star on the back of your hand: you've paid to get into Club Neon tonight.",
@@ -393,6 +407,8 @@
 				mod.perHour("stress", -2),
 			],
 		});
+		// While you walk somewhere (the walking travel mode's `during`, town-map.js).
+		doing({ id: "on_foot", label: "Walking", modifiers: [mod.perHour("energy", -3), mod.perHour("drink", -2), mod.perHour("hygiene", -1)] });
 		doing({ id: "sunbathing", label: "Sunbathing", modifiers: [mod.perHour("stress", -6), mod.perHour("mood", 3), mod.perHour("drink", -4)] });
 		doing({
 			id: "dancing",

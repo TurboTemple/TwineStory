@@ -13,3 +13,45 @@ The woman on reception nods at you as you come in, like she knows you. You reali
 You catch yourself in the changing-room mirror and stop. You look different: stronger, steadier. The stairs at school haven't left you out of breath in weeks.
 
 <<view "event-end">>
+
+:: Ev_pt_start
+<<view "event-media">>
+[Training with Kyle edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_regular
+<<view "event-media">>
+[Training with Kyle: regular client edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_star
+<<view "event-media">>
+[Training with Kyle: star client edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_start_struggle
+<<view "event-media">>
+[Personal training: a struggle edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_start_tips
+<<view "event-media">>
+[Personal training: Kyle's tips edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_regular_push
+<<view "event-media">>
+[Personal training: Kyle pushes you edit here]
+
+<<view "event-end">>
+
+:: Ev_pt_regular_chat
+<<view "event-media">>
+[Personal training: a chat with Kyle edit here]
+
+<<view "event-end">>

@@ -19,6 +19,7 @@ Version 2 (this change) turns old saves' pence into whole pounds, rounding to th
 ## Conditions and effects
 - `{ money: { min?, max?, account? } }`
 - `{ money: { amount, account?, reason? } }`: positive earns, negative pays
+- `{ moneyMove: { from, to, amount?, reason? } }`: move money between your accounts (all of `from` if no amount)
 
 ## Events
 `money:paid`, `money:earned`

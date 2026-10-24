@@ -205,6 +205,7 @@ test("school: term days, skipping lessons, late homework, your tutor's word", ()
 	// Homework is finished by the homework action.
 	E.setHomework("english");
 	setup.world.moveTo("home_bedroom");
+	setup.stats.set("energy", 50); // too tired (under 10) and you can't focus
 	setup.actions.do("homework");
 	assert.equal(E.homework().length, 0);
 	assert.equal(E.totals().homeworkDone, 1);

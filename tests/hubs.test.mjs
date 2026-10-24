@@ -43,7 +43,7 @@ test("the park: a walk, exercise in gym kit, and people-watching", () => {
 	assert.ok(action(s, "park_exercise").ok, "sports top and trainers");
 	const before = s.storylines.count("fitness", "workouts");
 	s.actions.do("park_exercise");
-	assert.equal(s.storylines.count("fitness", "workouts"), before + 1, "counts towards Getting fit");
+	assert.equal(s.storylines.count("fitness", "workouts"), before + 0.75, "counts towards Getting fit (45 minutes)");
 });
 
 test("the cash machine moves money from your bank card to cash", () => {
