@@ -353,7 +353,7 @@
 			// Put on the starting outfit (taken from wherever it was put at the start).
 			for (const o of setup.registry.all("outfit").filter((x) => x.start)) {
 				for (const id of o.items) {
-					for (const place of Object.keys(setup.vars().inv.places)) {
+					for (const place of setup.inventory.allPlaces()) {
 						const e = setup.inventory.entries(place).find((x) => x.item === id);
 						if (e) {
 							setup.clothing.wear(e.uid, { force: true });

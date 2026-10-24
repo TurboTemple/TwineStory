@@ -182,7 +182,7 @@ test("hair grows over time, and Snips can cut and dye it", () => {
 	assert.equal(setup.body.get("hair_length"), 6);
 	setup.actions.do("dye_pink");
 	assert.equal(setup.body.get("hair_colour"), "pink");
-	assert.equal(setup.actions.available().find((a) => a.def.id === "dye_pink").ok, false, "already pink");
+	assert.ok(!setup.actions.available().some((a) => a.def.id === "dye_pink"), "not offered when you're already pink");
 });
 
 test("exercise and big meals nudge your weight", () => {

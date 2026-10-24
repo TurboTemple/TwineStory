@@ -18,6 +18,8 @@
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-actions.js (most actions; jobs, school and talk add their own)
+ *   src/content/mooresville/stories/story-*.js (each story's repeatable task)
+ *   src/story/mooresville/actions.twee (each action screen's flavour text: Act_<id>)
  * Every field, condition, effect and event is listed in src/modules/actions/README.md.
  */
 (function () {

@@ -84,7 +84,8 @@
 			at: "academy_sports_hall",
 			mins: 60,
 			showIf: { storyline: { id: "gym_teacher" } }, // once you've signed up
-			conditions: { npcHere: "mark", weekday: [2, 4], time: { from: "15:15", to: "16:15" } },
+			// `text`: what the locked button says after "Needs:" (instead of "On Tue, Thu; Between…").
+			conditions: { npcHere: "mark", all: [{ weekday: [2, 4], time: { from: "15:15", to: "16:15" }, text: "Class time: Tuesdays and Thursdays, 15:15–16:15" }] },
 			effects: [{ progression: "gym_teacher" }],
 		});
 	});

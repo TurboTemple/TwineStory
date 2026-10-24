@@ -22,18 +22,23 @@
  *   { not: c }        c must fail
  *   { op: spec }      a leaf operator registered by a module
  *   { a: 1, b: 2 }    several leaves in one object: all must pass
+ *   { …, text: "…" }  any of the above, plus the words a locked button
+ *                     shows after "Needs:" instead of the automatic ones:
+ *                     { flag: "hypnotherapy_unlocked", text: "Your parents to send you" }
  * A missing condition (undefined/null) passes.
  */
 (function () {
 	"use strict";
 
 	const COMBINATORS = new Set(["all", "any", "not"]);
+	/** Keys that aren't conditions at all: `text` is the wording for "Needs:". */
+	const META = new Set(["text"]);
 
 	function createCond() {
 		/** @type {Map<string, {test: Function, describe?: Function}>} */
 		const ops = new Map();
 
-		const leaves = (cond) => Object.keys(cond).filter((k) => !COMBINATORS.has(k));
+		const leaves = (cond) => Object.keys(cond).filter((k) => !COMBINATORS.has(k) && !META.has(k));
 
 		const cond = {
 			/**
@@ -42,7 +47,7 @@
 			 * @param {{ test: (spec: any, ctx: object) => boolean, describe?: (spec: any, ctx: object) => string }} def
 			 */
 			register(name, def) {
-				if (COMBINATORS.has(name)) throw new setup.GameError(`"${name}" is reserved`);
+				if (COMBINATORS.has(name) || META.has(name)) throw new setup.GameError(`"${name}" is reserved`);
 				if (ops.has(name)) throw new setup.GameError(`Condition "${name}" already registered`);
 				ops.set(name, def);
 			},
@@ -87,6 +92,8 @@
 				if (c == null || c === true) return [];
 				if (c === false) return [{ ok: false, text: "Not available" }];
 				if (Array.isArray(c)) return c.flatMap((x) => cond.explain(x, ctx));
+				// The writer's own words for the whole condition.
+				if (typeof c === "object" && typeof c.text === "string") return [{ ok: cond.test(c, ctx), text: c.text }];
 				const out = [];
 				if ("all" in c) out.push(...c.all.flatMap((x) => cond.explain(x, ctx)));
 				if ("any" in c) {

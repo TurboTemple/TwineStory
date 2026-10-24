@@ -161,7 +161,8 @@
 
 		const chore = (def) => R.define("action", {
 			...def,
-			conditions: { livesAt: "family_home", not: { status: "did_chores" } },
+			conditions: { livesAt: "family_home" },
+			showIf: { not: { status: "did_chores" } }, // gone once you've done one today
 			effects: [...def.effects, { status: "did_chores" }],
 		});
 		chore({

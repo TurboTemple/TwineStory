@@ -246,13 +246,18 @@
 			 */
 			events.addHeader = (fn) => headers.push(fn);
 
-			// The event's picture or clip: <<view "event-media">> at the top of an Ev_ passage.
+			// The event's picture or clip: assets/media/storylet/<id>.*, and the
+			// summary of the choice that led here. Every event passage gets it at
+			// the top automatically (see ready()); <<view "event-media">> places
+			// it somewhere else instead.
 			ui.view("event-media", (box) => {
 				for (const fn of headers) fn(box);
 				const here = setup.sc.passage();
 				const s = registry.all("storylet").find((x) => x.passage === here) ?? (events.current ? registry.get("storylet", events.current) : null);
 				const pic = s ? setup.media.render("storylet", s.id, { class: "media-wide" }) : null;
 				if (pic) box.append(pic);
+				// Debug mode: say where the picture goes, so it's easy to add one.
+				else if (s && config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/storylet/${s.id}.webp (or .gif, .mp4)` }));
 			});
 
 			ui.view("event-end", (box) => {
@@ -262,6 +267,21 @@
 
 		ready() {
 			setup.events.index();
+			// Every event passage shows its picture (and the choice summary) at the
+			// top, even if the writer didn't put <<view "event-media">> in it.
+			const eventPassages = new Set(setup.registry.all("storylet").map((s) => s.passage));
+			setup.sc.on(":passagerender", (ev) => {
+				const name = ev.passage?.name ?? setup.sc.passage(); // VERIFY: ev.passage is the Passage being rendered (2.37)
+				if (!eventPassages.has(name) || !ev.content || ev.content.querySelector(".view-event-media")) return;
+				const box = setup.ui.el("div", { class: "view view-event-media" });
+				try {
+					setup.ui.render("event-media", box);
+				}
+				catch (err) {
+					setup.reportError(err, "event media");
+				}
+				ev.content.prepend(box);
+			});
 		},
 
 		validate() {

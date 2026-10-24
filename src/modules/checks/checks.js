@@ -14,6 +14,7 @@
  * odds, e.g. to show them in a choice.
  *
  * WHERE TO USE IT: actions, events and <<choice>> effects (EDITING.md).
+ * WHERE TO EDIT THE ODDS: src/01-engine/config.js → checks.
  */
 (function () {
 	"use strict";

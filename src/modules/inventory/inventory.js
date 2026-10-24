@@ -96,6 +96,13 @@
 						.map((s) => s.id);
 				},
 
+				/**
+				 * Every place that holds (or has held) something, reachable or not:
+				 * for "do you own one anywhere?" (shops) and finding a starting outfit.
+				 * @returns {string[]}
+				 */
+				allPlaces: () => Object.keys(I().places),
+
 				/** @returns {object[]} Entries in a place: { uid, item, qty }. */
 				entries: (place) => P(place),
 

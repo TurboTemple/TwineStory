@@ -19,7 +19,7 @@ The storylet (event) framework and the rules for when events happen.
 | `maxPerDay` | per-storylet daily limit |
 | `once` | fires at most once per game |
 | `effects` | run when it fires; `{ interrupt: "reason" }` ends the activity or journey in progress |
-| `passage` | shown through the flow controller (prefix `Ev_`); end it with `<<view "event-end">>` |
+| `passage` | shown through the flow controller (prefix `Ev_`); end it with `<<view "event-end">>` (a Continue button) or `<<choice>>`s. Its picture (`assets/media/storylet/<id>.*`) and the summary of the choice that led there appear at the top automatically; put `<<view "event-media">>` somewhere in the passage to place them yourself. |
 
 ## Kinds
 - `story`: fires every time it's eligible, highest priority first.

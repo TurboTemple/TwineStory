@@ -218,6 +218,12 @@
 						}
 						if (s.check) errors.push(...s.check(def).map((e) => `${label}: ${e}`));
 					}
+					// Renamed or merged ids: the new one must exist, and the old one
+					// mustn't still be defined (it would never be reached).
+					for (const [oldId, newId] of t.aliases) {
+						if (!t.defs.has(newId)) errors.push(`${type} alias "${oldId}" points at missing ${type} "${newId}"`);
+						if (t.defs.has(oldId)) errors.push(`${type} "${oldId}" is both defined and an alias of "${newId}"`);
+					}
 				}
 				return errors;
 			},

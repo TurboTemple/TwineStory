@@ -27,6 +27,9 @@
  *
  * WHERE TO EDIT THE GAME CONTENT FOR THIS:
  *   src/content/mooresville/town-work.js → part 3a (the barista career)
+ *   src/content/mooresville/town-fitness.js ("Getting fit")
+ *   src/content/mooresville/stories/story-*.js (one per key character)
+ *   templates/storyline.js and .twee (a complete storyline to copy)
  * Every field, condition, effect and event is listed in src/modules/storylines/README.md.
  */
 (function () {
