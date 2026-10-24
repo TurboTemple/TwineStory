@@ -304,6 +304,8 @@
 					result.changes.push({ kind: "use", text: `${def.use.label ?? "Used"}: ${def.name}.` });
 					effects.run(def.use.effects ?? [], ctx, result);
 					bus.emit("inventory:used", { item: def.id });
+					// The action screen; its picture is assets/media/item/<id>/use.<ext>.
+					setup.actions?.illustrate({ title: `${def.use.label ?? "Use"}: ${def.name}`, media: { type: "item", id: def.id, sub: "use" }, passage: def.use.passage ?? `Act_use_${def.id}` });
 					return result;
 				},
 			};

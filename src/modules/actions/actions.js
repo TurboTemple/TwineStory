@@ -4,6 +4,13 @@
  * do(id): conditions → costs → advance time (split at checkpoints, with
  * per-hour effects) → effects → Result → events.
  *
+ * The action screen: after an action (and after a lesson, a shift or a
+ * chat, which use the same screen), the player sees its picture
+ * (assets/media/<type>/<id>.<ext>), its flavour text (the passage
+ * "Act_<id>", or the action's `passage`), what happened, and Continue. It
+ * only shows if nothing more important (an event, a story moment, the
+ * daily summary) wants the screen. actions.illustrate() asks for one.
+ *
  * Events:
  *   action:start      { action, ctx }
  *   action:checkpoint { action, elapsed, ctx, result, interrupt(reason) }
@@ -183,11 +190,54 @@
 						running = null;
 					}
 					bus.emit("action:end", { action: id, elapsed: result.elapsed, interrupted: result.interrupted, result, ctx });
-					if (def.passage) flow.request(def.passage, flow.PRIORITY.result);
+					actions.illustrate({ title: def.label, media: { type: "action", id }, passage: def.passage ?? `Act_${id}` });
 					return result;
+				},
+
+				/**
+				 * Ask for the action screen once the current tap is done: a picture,
+				 * flavour text, what happened, and Continue. Used by actions, lessons,
+				 * shifts and chats; anything else that's "doing something" can too.
+				 * @param {{title: string, media?: {type: string, id: string, sub?: string}, passage?: string|string[]}} spec
+				 *   media: the picture's folder and name (assets/media/<type>/<id>[/<sub>].webp|.gif|.mp4);
+				 *   passage: the flavour text, or a list (the first that exists); if
+				 *   none exists, "[<title> edit here]" shows.
+				 */
+				illustrate(spec) {
+					flow.illustrate(spec);
 				},
 			};
 			setup.actions = actions;
+
+			/* ---- The action screen -------------------------------------------- */
+
+			flow.illustrationPassage = "Actions_Scene";
+			ui.view("action-scene", (box) => {
+				box.classList.add("m-actions", "action-scene");
+				const s = flow.illustration();
+				if (s) {
+					box.append(ui.el("h1", { text: s.title }));
+					const pic = s.media ? setup.media.render(s.media.type, s.media.id, { sub: s.media.sub, class: "media-wide", alt: s.title }) : null;
+					if (pic) box.append(pic);
+					// Debug mode: say where the picture goes, so it's easy to add one.
+					else if (s.media && setup.config.debug) box.append(ui.el("p", { class: "media-slot", text: `Picture: assets/media/${[s.media.type, s.media.id, s.media.sub].filter(Boolean).join("/")}.webp (or .gif, .mp4)` }));
+					const text = ui.el("div", { class: "scene-text" });
+					// `passage` can be a list: the first one that exists is used.
+					const names = setup.util.toArray(s.passage);
+					const found = names.find((p) => setup.sc.hasPassage(p));
+					if (found) ui.wiki(text, found);
+					else text.append(ui.el("p", { text: `[${s.title} edit here]` }), ...(setup.config.debug && names.length ? [ui.el("p", { class: "note", text: `Write this in a passage called ${names.at(-1)}.` })] : []));
+					box.append(text);
+				}
+				const r = ui.result(flow.lastResult());
+				if (r) box.append(r);
+				const notes = ui.takeNotices();
+				if (notes.length) box.append(ui.el("div", { class: "result notices", attrs: { role: "status" } }, ui.el("ul", {}, ...notes.map((n) => ui.el("li", { text: n })))));
+				box.append(ui.button("Continue", () => {
+					flow.clearResult();
+					flow.continue();
+				}, { class: "btn-primary" }));
+			});
 
 			// { action: "id" } or { action: [ids] } — the action in context.
 			cond.register("action", {

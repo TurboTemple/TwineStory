@@ -9,7 +9,11 @@ Put a file in the right folder with the right name and the game uses it automati
 | What | Folder and file name | Example |
 |---|---|---|
 | A place or room | `location/<id>` | `location/red_lion.webp` |
-| An action (shown after you do it) | `action/<id>` | `action/make_tea.gif` |
+| An action (on its action screen) | `action/<id>` | `action/make_tea.gif` |
+| A lesson (on its action screen) | `subject/<subject>` | `subject/maths.webp` |
+| A work shift | `job/<job>` | `job/grind_barista.mp4` |
+| Talking to someone | `interaction/<id>` | `interaction/chat.gif` |
+| Using an item from your bag | `item/<id>/use` | `item/chocolate_bar/use.gif` |
 | An event | `storylet/<id>` | `storylet/therapy_interrupted.mp4` |
 | An item (food, clothes…) | `item/<id>` | `item/white_tshirt.webp` |
 | An NPC's profile picture | `npc/<id>` | `npc/dr_okafor.jpg` |
@@ -34,5 +38,5 @@ Put a file in the right folder with the right name and the game uses it automati
 
 ## Sizes (to keep the game fast on phones)
 
-- Places, actions and events: about 1200 × 700 pixels, under 300 KB (videos under 2 MB).
+- Places, actions (and lessons, shifts, talking, using items) and events: about 1200 × 700 pixels, under 300 KB (videos under 2 MB).
 - Items, people and body parts: square, about 400 × 400, under 100 KB.

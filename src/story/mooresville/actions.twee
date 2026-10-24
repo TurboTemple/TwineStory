@@ -1,0 +1,312 @@
+:: Act_lesson_maths
+[Maths with Mr Lloyd edit here]
+
+:: Act_lesson_english
+[English with Mrs Clarke edit here]
+
+:: Act_lesson_science
+[Science with Dr Fry edit here]
+
+:: Act_lesson_ict
+[ICT with Mr Hale edit here]
+
+:: Act_lesson_pe
+[PE with Mr Grant edit here]
+
+:: Act_shift_grind_barista
+[Shift: Barista at The Daily Grind edit here]
+
+:: Act_talk_chat
+[Have a chat edit here]
+
+:: Act_talk_ask_day
+[Ask about their day edit here]
+
+:: Act_talk_compliment
+[Pay them a compliment edit here]
+
+:: Act_talk_swap_numbers
+[Swap numbers edit here]
+
+:: Act_talk_flirt
+[Flirt a little edit here]
+
+:: Act_talk_talk_coffee
+[Talk about coffee edit here]
+
+:: Act_talk_hang_out
+[Suggest hanging out after school edit here]
+
+:: Act_use_chocolate_bar
+[Eat: Chocolate bar edit here]
+
+:: Act_use_crisps
+[Eat: Packet of crisps edit here]
+
+:: Act_use_apple
+[Eat: Apple edit here]
+
+:: Act_use_banana
+[Eat: Banana edit here]
+
+:: Act_use_cereal_bar
+[Eat: Cereal bar edit here]
+
+:: Act_use_sandwich
+[Eat: Sandwich edit here]
+
+:: Act_use_sausage_roll
+[Eat: Sausage roll edit here]
+
+:: Act_use_water_bottle
+[Drink: Bottle of water edit here]
+
+:: Act_use_cola
+[Drink: Can of cola edit here]
+
+:: Act_use_orange_juice
+[Drink: Orange juice edit here]
+
+:: Act_use_energy_drink
+[Drink: Energy drink edit here]
+
+:: Act_cosplay_club_meeting
+[Join in with the cosplay club edit here]
+
+:: Act_volleyball_sign_up
+[Sign up for Mr Grant's volleyball class edit here]
+
+:: Act_volleyball_class
+[Go to volleyball class edit here]
+
+:: Act_hypnotherapist_session
+[Have a session with Dennis edit here]
+
+:: Act_mmo_clan_play
+[Play Ashen Realms online edit here]
+
+:: Act_go_live
+[Go live on your stream edit here]
+
+:: Act_use_toilet
+[Go for a wee edit here]
+
+:: Act_wash_hands
+[Wash your hands edit here]
+
+:: Act_shower
+[Have a shower edit here]
+
+:: Act_do_makeup
+[Do your makeup edit here]
+
+:: Act_sit_relax
+[Sit and relax edit here]
+
+:: Act_sleep
+[Sleep edit here]
+
+:: Act_read_book
+[Read a book edit here]
+
+:: Act_homework
+[Do homework edit here]
+
+:: Act_scroll_phone
+[Scroll on your phone edit here]
+
+:: Act_brush_teeth
+[Brush your teeth edit here]
+
+:: Act_make_breakfast
+[Make breakfast edit here]
+
+:: Act_make_sandwich
+[Make a sandwich edit here]
+
+:: Act_cook_meal
+[Cook a proper meal edit here]
+
+:: Act_glass_of_water
+[Have a glass of water edit here]
+
+:: Act_make_tea
+[Make a cup of tea edit here]
+
+:: Act_make_coffee
+[Make a coffee edit here]
+
+:: Act_watch_tv
+[Watch TV edit here]
+
+:: Act_nap_sofa
+[Nap on the sofa edit here]
+
+:: Act_go_jogging
+[Go for a jog edit here]
+
+:: Act_walk_green
+[Walk round the green edit here]
+
+:: Act_feed_ducks
+[Feed the ducks edit here]
+
+:: Act_shop_magazines
+[Flick through the magazines edit here]
+
+:: Act_study_library
+[Study edit here]
+
+:: Act_read_library
+[Read quietly edit here]
+
+:: Act_canteen_lunch
+[Buy school lunch edit here]
+
+:: Act_shoot_hoops
+[Shoot some hoops edit here]
+
+:: Act_walk_field
+[Walk laps of the field edit here]
+
+:: Act_cafe_flat_white
+[Order a flat white edit here]
+
+:: Act_cafe_tea
+[Order a pot of tea edit here]
+
+:: Act_cafe_hot_chocolate
+[Order a hot chocolate edit here]
+
+:: Act_cafe_croissant
+[Order a croissant edit here]
+
+:: Act_cafe_toastie
+[Order a cheese toastie edit here]
+
+:: Act_cafe_people_watch
+[People-watch out of the window edit here]
+
+:: Act_pub_pint
+[Order a pint edit here]
+
+:: Act_pub_wine
+[Order a glass of wine edit here]
+
+:: Act_pub_soft_drink
+[Order a soft drink edit here]
+
+:: Act_pub_crisps
+[Buy a packet of crisps edit here]
+
+:: Act_pub_meal
+[Order a pub meal edit here]
+
+:: Act_pub_pool
+[Play a game of pool edit here]
+
+:: Act_pub_fresh_air
+[Get some fresh air edit here]
+
+:: Act_ask_reception
+[Ask about appointments edit here]
+
+:: Act_read_leaflets
+[Read the leaflets edit here]
+
+:: Act_therapy_session
+[Therapy session edit here]
+
+:: Act_threadline_browse
+[Browse the rails edit here]
+
+:: Act_threadline_try_on
+[Try a few things on edit here]
+
+:: Act_gym_day_pass
+[Buy a day pass edit here]
+
+:: Act_gym_workout
+[Work out edit here]
+
+:: Act_window_shop
+[Window-shop edit here]
+
+:: Act_food_court_burger
+[Buy a burger meal edit here]
+
+:: Act_food_court_noodles
+[Buy a noodle box edit here]
+
+:: Act_food_court_bubble_tea
+[Buy a bubble tea edit here]
+
+:: Act_urban_thread_browse
+[Browse the clothes edit here]
+
+:: Act_urban_thread_try_on
+[Try a few things on edit here]
+
+:: Act_cinema_film
+[Watch a film edit here]
+
+:: Act_cinema_popcorn
+[Buy popcorn edit here]
+
+:: Act_haircut_trim
+[Get a trim edit here]
+
+:: Act_haircut_short
+[Get it cut short edit here]
+
+:: Act_haircut_crop
+[Get a buzz cut edit here]
+
+:: Act_dye_blonde
+[Dye your hair blonde edit here]
+
+:: Act_dye_black
+[Dye your hair black edit here]
+
+:: Act_dye_pink
+[Dye your hair pink edit here]
+
+:: Act_dye_blue
+[Dye your hair blue edit here]
+
+:: Act_walk_river
+[Walk along the river edit here]
+
+:: Act_kiosk_ice_cream
+[Buy an ice cream edit here]
+
+:: Act_kiosk_tea
+[Buy a takeaway tea edit here]
+
+:: Act_wait_around
+[Wait edit here]
+
+:: Act_market_browse
+[Browse the market stalls edit here]
+
+:: Act_market_bread
+[Buy a loaf from the bakery stall edit here]
+
+:: Act_watch_fireworks
+[Watch the fireworks edit here]
+
+:: Act_flat_watch_tv
+[Watch TV edit here]
+
+:: Act_chore_washing_up
+[Do the washing up edit here]
+
+:: Act_chore_hoover
+[Hoover the living room edit here]
+
+:: Act_ask_about_work
+[Ask Jess about the job in the window edit here]
+
+:: Act_grind_staff_coffee
+[Make yourself a coffee (staff perk) edit here]
+

@@ -40,6 +40,7 @@ All the game's content is in `src/content/mooresville/`. Each file starts with a
 | Your parents and the letting agent | `town-people.js` |
 | Event text for the job | `src/story/mooresville/work.twee` |
 | School subjects, timetable, lunch, term dates | `town-school.js` |
+| Flavour text for everything you do (action screens) | `src/story/mooresville/actions.twee` |
 | Events around town | `town-events.js` |
 | Event text | `src/story/mooresville/events.twee` |
 | Weather and the climate | `town-weather.js` |
@@ -240,6 +241,15 @@ The game's core loop (decided by the user): **a story event → a task you repea
 - **Things on in town.** A `cityEvent` (`town-events.js`, part 2) says where and when. Its activities are actions with `conditions: { happening: "id" }` and `hidden: true`.
 - **Home.** `town-home.js`: residences, rent and pocket money (bills), furniture (kind `"furniture"`, delivered home), chores and the curfew.
 - **Skill checks.** Use them in actions, events and choices: `<<choice "Talk him down (Barista)" { effects: [{ check: { resolver: "skill", skill: "barista", difficulty: 25, then: [{ goto: "Ev_win" }], else: [{ goto: "Ev_lose" }] } }] }>>`. How likely success is lives in `config.js` → `checks`.
+
+## Action screens (pictures and flavour text for what you do)
+
+Everything you do (an action like a shower or waiting, a lesson, a work shift, talking to someone, eating or using something from your bag) ends on an **action screen**: a picture, GIF or video, your flavour text, what changed, and a **Continue** button. If something else happens instead (a random event, a story moment, the daily summary), that shows instead.
+
+- **The text:** `src/story/mooresville/actions.twee` has one passage per thing, each saying `[<name> edit here]`. Replace that line with your text. The names: `Act_<action id>` (e.g. `Act_shower`), `Act_lesson_<subject>`, `Act_shift_<job>`, `Act_talk_<id>` (or `Act_talk_<id>_<person id>` for one person only, e.g. `Act_talk_chat_priya_shah`), `Act_use_<item id>`.
+- **The picture:** upload it to `assets/media/` (see the README there): `action/shower.gif`, `subject/maths.webp`, `job/grind_barista.mp4`, `interaction/chat.gif`, `item/chocolate_bar/use.gif`. In debug mode the screen shows the exact file name it's looking for.
+- **A new action** gets its screen automatically. Add an `Act_<id>` passage for its text (until then it says `[<name> edit here]`).
+- The text can change with `<<when>>` like any other passage, e.g. different lines when you're tired.
 
 ## Writing text (`.twee` files)
 

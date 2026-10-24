@@ -43,7 +43,8 @@
 		install({ registry, cond, effects, time, bus, ui, fmt }) {
 			registry.defineType("subject", {
 				required: ["label"],
-				defaults: { teacher: "", homeworkDays: null, desc: "" },
+				defaults: { teacher: "", homeworkDays: null, desc: "", passage: null },
+				passages: ["passage"],
 				check: (def) => (def.homeworkDays == null || (Number.isInteger(def.homeworkDays) && def.homeworkDays > 0) ? [] : ["homeworkDays must be whole days > 0 (or null)"]),
 			});
 			registry.defineType("school", {
@@ -263,6 +264,7 @@
 					result.changes.push({ kind: "school", text: `${subj.label}${subj.teacher ? ` with ${subj.teacher}` : ""}: ${fmt.duration(elapsed)}${late ? " (you were late)" : ""}.` });
 					edu.setHomework(l.subject, result, id);
 					bus.emit("school:lesson", { school: id, subject: l.subject, period: l.period, late, ctx: { school: id, subject: l.subject }, result });
+					setup.actions?.illustrate({ title: subjectText(l.subject), media: { type: "subject", id: l.subject }, passage: subj.passage ?? `Act_lesson_${l.subject}` });
 					// The bell: straight on to the break, or out at the end of the day.
 					if (inDay) {
 						const next = edu.nextStep(id);
