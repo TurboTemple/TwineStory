@@ -19,6 +19,7 @@ Put a file in the right folder with the right name and the game uses it automati
 | An event | `storylet/<id>` | `storylet/therapy_interrupted.mp4` |
 | An item (food, clothes…) | `item/<id>` | `item/white_tshirt.webp` |
 | An NPC's profile picture | `npc/<id>` | `npc/dr_okafor.jpg` |
+| An NPC out and about (when you tap them; else their profile picture) | `npc/<id>/here` | `npc/priya_shah/here.gif` |
 | A part of an NPC | `npc/<id>/<part>` | `npc/dr_okafor/hair_colour.webp` |
 | A part of your body, for a look | `bodyPart/<part>/<look>` | `bodyPart/weight/slim.webp`, `bodyPart/hair_colour/dark_brown.webp` |
 | A part of your body, any look | `bodyPart/<part>` | `bodyPart/bust.webp` |

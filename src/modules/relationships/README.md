@@ -1,6 +1,6 @@
 # relationships
 
-How the PC gets on with each NPC, and the **Talk** menu on an NPC's sheet.
+How the PC gets on with each NPC, and the **Talk** menu on the screen you get when you tap someone who's here (after a chat, you're back with them). Also the phone's **People** app (view `app-people`): everyone you've met, each opening their character sheet.
 
 ## Data
 - `relTrack` — `{ id, label, min, max, start, tiers: [{ at, label }], conditions, gain ("relGain"), tags, hidden, order }`. `conditions` decides which NPCs it applies to (romance: `{ ageAtLeast: 18 }`).

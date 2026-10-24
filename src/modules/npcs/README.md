@@ -16,7 +16,7 @@ NPC character sheets, schedules and who is where.
 `$npcs[id] = { met, metAt?, override? }` — created lazily, only when needed.
 
 ## API (`setup.npcs`)
-`get(id)`, `whereIs(id, t?)`, `peopleAt(loc, t?)`, `setOverride(id, at, until?)`, `meet(id)`, `hasMet(id)`, `openSheet(id)`
+`get(id)`, `whereIs(id, t?)`, `peopleAt(loc, t?)`, `setOverride(id, at, until?)`, `meet(id)`, `hasMet(id)`, `approach(id)` (the "with them" screen), `openSheet(id, { back })` (the character sheet; `back` is the passage its Back button returns to)
 
 ## Conditions
 - `{ npcHere: "id" }` — that NPC is at the PC's location now
@@ -28,13 +28,14 @@ NPC character sheets, schedules and who is where.
 ## Meeting
 Decided by the user: **the first encounter counts as meeting.** An NPC is met when the PC arrives where they are, or when they're there as time passes. This emits `npc:met`, which storylets can use for first-meeting scenes.
 
-Other modules add to the character sheet with `setup.npcs.addSheetSection(name, order, (box, npcId) => …)` (relationships adds "You and them" and Talk).
+Other modules add to the character sheet with `setup.npcs.addSheetSection(name, order, (box, npcId) => …)` (relationships adds "You and them"), and to the "with them" screen with `addMeetSection` (relationships adds Talk).
 
 ## Events
 `npc:met { npc }`
 
 ## UI
-"People here" on Here; each name opens the `Npcs_Sheet` character sheet.
+- **"People here"** on Here: tapping a name goes up to them (`Npcs_Meet`, decided by the user): their picture (`assets/media/npc/<id>/here.*`, else their portrait `npc/<id>.*`), your flavour text (passage `Npc_<id>`, or the npc's `passage`; placeholders in `src/story/mooresville/people.twee`), what you can do (Talk…) and Leave. No character sheet here.
+- **Character sheets** (`Npcs_Sheet`) are in the phone's **People** app (view `app-people`, from relationships): everyone you've met.
 
 ## Open decisions
 - The cast and their schedules.

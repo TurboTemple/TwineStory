@@ -161,9 +161,23 @@ async function playTherapy(page) {
 	await click(page, "Next 10:00");
 	await debugRow(page, "Go", "wellbeing_therapy");
 	await expectPassage(page, "Here", /Therapy Room[\s\S]*People here[\s\S]*Dr Maya Okafor/, "therapy room");
+	// Tapping someone: them and what you can do, not their character sheet.
+	await click(page, "Dr Maya Okafor");
+	await expectPassage(page, "Npcs_Meet", /Dr Maya Okafor edit here[\s\S]*Talk[\s\S]*Have a chat[\s\S]*Leave/, "therapist up close");
+	if ((await page.textContent("#passages")).includes("Pronouns")) failures.push("meeting someone shouldn't show their character sheet");
+	await click(page, "Have a chat");
+	await scene(page, /Have a chat: Dr Maya Okafor/, "chat");
+	await expectPassage(page, "Npcs_Meet", /Dr Maya Okafor/, "back with the therapist");
+	await click(page, "Leave");
+	// Character sheets are in the phone's People app.
+	await page.evaluate(() => window.SugarCube.Engine.play("Phone_Home"));
+	await click(page, "People");
 	await click(page, "Dr Maya Okafor");
 	await expectPassage(page, "Npcs_Sheet", /Age\s*46[\s\S]*Met you\s*Yes/, "therapist sheet");
 	await click(page, "Back");
+	await expectPassage(page, "Phone_Home", /Dr Maya Okafor/, "back to the People app");
+	await click(page, "Home screen");
+	await click(page, "Put the phone away");
 	await debugRow(page, "Block", "therapy_interrupted");
 	await click(page, "Therapy session");
 	await scene(page, /Picture: assets\/media\/action\/therapy_session[\s\S]*Therapy session took 2 hours/, "full session");
