@@ -33,6 +33,8 @@ Put a file in the right folder with the right name and the game uses it automati
 - A **room** with no picture of its own uses its place's picture (the pub's toilets show the pub).
 - Anything without a picture still works: places and actions just show text, and items and people show a letter tile.
 
+Pictures Claude finds are listed with their source and licence in `CREDITS.md`.
+
 ## Formats
 
 - **Pictures:** `.webp` is best (small and sharp); `.jpg`, `.png`, `.avif` and `.svg` also work.
