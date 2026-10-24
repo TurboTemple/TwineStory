@@ -109,3 +109,26 @@ test("ambient lines react to the weather and time, and stay put for the hour", (
 	assert.match(setup.world.ambientLine("home_bedroom", setup.time.at(day, "12:00")), /Rain/);
 	assert.equal(setup.world.ambientLine("corner_shop"), null, "no lines, no ambience");
 });
+
+test("journeys: walking between districts, the bus and taxis get an action screen; a short walk and shopping don't", () => {
+	const { setup, played } = bootTown();
+	const uids = setup.inventory.entries("wardrobe").filter((e) => ["white_tshirt", "blue_jeans", "trainers", "socks"].includes(e.item)).map((e) => e.uid);
+	// Getting changed gets one.
+	setup.flow.perform(() => setup.clothing.change({ wear: uids, remove: [] }));
+	assert.equal(played.at(-1), "Actions_Scene");
+	assert.equal(setup.flow.illustration().passage, "Act_get_changed");
+	setup.world.moveTo("home");
+	setup.flow.perform(() => setup.travel.go("elm_road", "walk"));
+	assert.equal(played.at(-1), "Here", "your house to your street: same district");
+	setup.flow.perform(() => setup.travel.go("corner_shop", "walk"));
+	assert.equal(played.at(-1), "Here", "round the corner: same district");
+	setup.flow.perform(() => setup.travel.go("elm_road", "walk"));
+	setup.events.force("bus_traffic", false);
+	setup.flow.perform(() => setup.travel.go("high_street", "bus7"));
+	assert.equal(played.at(-1), "Actions_Scene");
+	assert.deepEqual(plain(setup.flow.illustration().passage), ["Act_travel_bus7_high_street", "Act_travel_bus7"]);
+	assert.deepEqual(plain(setup.flow.illustration().media), { type: "travelMode", id: "bus7" });
+	setup.flow.perform(() => setup.travel.go("elm_road", "walk"));
+	assert.equal(played.at(-1), "Actions_Scene", "the town centre to your street: another district");
+	assert.equal(setup.flow.illustration().title, "Walk to Elm Road");
+});

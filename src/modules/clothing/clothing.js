@@ -166,6 +166,8 @@
 					if (off.length) result.changes.push({ kind: "dress", text: `Took off: ${setup.text.list([...new Set(off)])}.` });
 					result.changes.push({ kind: "dress", text: mins ? `Getting changed took ${setup.fmt.duration(mins)}.${clothing.dressed() ? "" : " You're not dressed to go out."}` : "You didn't change anything." });
 					bus.emit("clothing:changed", {});
+					// The action screen (picture: assets/media/action/get_changed).
+					if (mins) setup.actions?.illustrate({ title: "Getting changed", media: { type: "action", id: "get_changed" }, passage: "Act_get_changed" });
 					return result;
 				},
 
@@ -206,6 +208,7 @@
 					}
 					time.advance(setup.config.clothing?.outfitMins ?? MINS_PER_CHANGE * 3, { reason: "dress" });
 					bus.emit("clothing:changed", {});
+					setup.actions?.illustrate({ title: "Getting changed", media: { type: "action", id: "get_changed" }, passage: "Act_get_changed" });
 					return { ok: true, missing };
 				},
 			};

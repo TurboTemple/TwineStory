@@ -244,10 +244,11 @@ The game's core loop (decided by the user): **a story event → a task you repea
 
 ## Action screens (pictures and flavour text for what you do)
 
-Everything you do (an action like a shower or waiting, a lesson, a work shift, talking to someone, eating or using something from your bag) ends on an **action screen**: a picture, GIF or video, your flavour text, what changed, and a **Continue** button. If something else happens instead (a random event, a story moment, the daily summary), that shows instead.
+Everything you do (an action like a shower or waiting, a lesson, a work shift, talking to someone, eating or using something from your bag, getting changed, a journey across town, the bus or a taxi) ends on an **action screen**: a picture, GIF or video, your flavour text, what changed, and a **Continue** button. If something else happens instead (a random event, a story moment, the daily summary), that shows instead.
 
-- **The text:** `src/story/mooresville/actions.twee` has one passage per thing, each saying `[<name> edit here]`. Replace that line with your text. The names: `Act_<action id>` (e.g. `Act_shower`), `Act_lesson_<subject>`, `Act_shift_<job>`, `Act_talk_<id>` (or `Act_talk_<id>_<person id>` for one person only, e.g. `Act_talk_chat_priya_shah`), `Act_use_<item id>`.
-- **The picture:** upload it to `assets/media/` (see the README there): `action/shower.gif`, `subject/maths.webp`, `job/grind_barista.mp4`, `interaction/chat.gif`, `item/chocolate_bar/use.gif`. In debug mode the screen shows the exact file name it's looking for.
+- **The text:** `src/story/mooresville/actions.twee` has one passage per thing, each saying `[<name> edit here]`. Replace that line with your text. The names: `Act_<action id>` (e.g. `Act_shower`), `Act_lesson_<subject>`, `Act_shift_<job>`, `Act_talk_<id>` (or `Act_talk_<id>_<person id>` for one person only, e.g. `Act_talk_chat_priya_shah`), `Act_use_<item id>`, `Act_get_changed`, `Act_travel_<mode>` (`walk`, `bus7`, `taxi`; or `Act_travel_<mode>_<place id>` for one destination).
+- **Which journeys:** each travel mode's `screen` in `town-map.js`: `"always"` (bus, taxi), `"otherDistrict"` (walking: only from one district to another, e.g. Elm Road to the High Street, not round the shops) or `"never"`. Walking between rooms and shopping never get one.
+- **The picture:** upload it to `assets/media/` (see the README there): `action/shower.gif`, `subject/maths.webp`, `job/grind_barista.mp4`, `interaction/chat.gif`, `item/chocolate_bar/use.gif`, `travelMode/bus7.mp4`, `action/get_changed.gif`. In debug mode the screen shows the exact file name it's looking for.
 - **A new action** gets its screen automatically. Add an `Act_<id>` passage for its text (until then it says `[<name> edit here]`).
 - The text can change with `<<when>>` like any other passage, e.g. different lines when you're tired.
 

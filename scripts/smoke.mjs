@@ -111,7 +111,8 @@ async function playTown(page, label) {
 		await page.locator("#passages label", { hasText: item }).first().click();
 	}
 	await click(page, "Change");
-	await expectPassage(page, "Here", /Put on: [\s\S]*Took off: Pyjamas[\s\S]*Getting changed took 5 minutes[\s\S]*Your Bedroom/, `${label}: changed`);
+	await scene(page, /Getting changed edit here[\s\S]*Put on: [\s\S]*Took off: Pyjamas[\s\S]*Getting changed took 5 minutes/, `${label}: changed`);
+	await expectPassage(page, "Here", /Your Bedroom/, `${label}: back after changing`);
 	// The Me page shows your body and clothes.
 	await page.evaluate(() => window.SugarCube.Engine.play("Character_Me"));
 	await expectPassage(page, "Character_Me", /Height:\s*average[\s\S]*Hair:\s*shoulder-length[\s\S]*Wearing[\s\S]*White T-shirt/, `${label}: me page`);
@@ -140,7 +141,8 @@ async function playTown(page, label) {
 	// Keep the run predictable: no random bus delay.
 	await page.evaluate(() => window.SugarCube.setup.events.force("bus_traffic", false));
 	await click(page, "Mooresville High Street · 13 min, £2");
-	await expectPassage(page, "Here", /Bus \(Route 7\) to Mooresville High Street \(£2\): 13 minutes[\s\S]*heart of town/, `${label}: bus`);
+	await scene(page, /Bus \(Route 7\) to Mooresville High Street[\s\S]*Bus \(Route 7\) edit here[\s\S]*Bus \(Route 7\) to Mooresville High Street \(£2\): 13 minutes/, `${label}: bus`);
+	await expectPassage(page, "Here", /heart of town/, `${label}: off the bus`);
 	if (!(await sidebar(page)).includes("£32")) failures.push(`${label}: cash should be £32 after the chocolate and the fare`);
 }
 
