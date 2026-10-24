@@ -119,7 +119,7 @@ APIs relied on:
 ```
 
 - Media goes in `assets/` (never `src/`, or Tweego will embed it). Reference it with relative paths only. The game is served from `/<repo>/`, so leading-slash paths break.
-- **Media by convention:** `assets/media/<type>/<id>.<ext>` (see `assets/media/README.md`). `scripts/media-manifest.mjs` lists the files into `src/01-engine/media-manifest.js` at build time (gitignored); `setup.media` looks them up. A definition can also set `media` explicitly. Run the manifest script before building in the sandbox too.
+- **Media by convention:** `assets/media/<type>/<id>.<ext>` (see `assets/media/README.md`). `scripts/media-manifest.mjs` lists the files into `src/01-engine/media-manifest.js` at build time (gitignored); `setup.media` looks them up. The same file lists passages still to write and which file defines each thing (for the debug Writing checklist and Tuning pages). A definition can also set `media` explicitly. Run the manifest script before building in the sandbox too.
 - **File order must not matter** (§5.2).
 
 ---
@@ -488,7 +488,7 @@ Branches and pull requests validate, test and build. Only `main` deploys.
 `?debug` in the URL turns on:
 - `Config.debug` and `Config.enableOptionalDebugging`
 - the Eruda console, loaded only in debug mode via `https://cdn.jsdelivr.net/npm/eruda` (pinned to an exact version in `config.js`) and then `eruda.init()`
-- the Debug button in the sidebar → `Test_Index` and `Debug_Tools` (go anywhere, skip time, add money, set stats, force/block events)
+- the Debug button in the sidebar → `Test_Index`, `Debug_Tools` (go anywhere, skip time, add money, set stats, force/block events), `Debug_Tuning` (every number in one place, with its file) and `Debug_Checklist` (text and pictures still to add)
 - the validation banner
 - `window.GAME = setup`
 
@@ -562,6 +562,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-24 | Tapping someone in the world shows them (picture, `Npc_<id>` flavour text in `people.twee`) and what you can do (Talk), not their character sheet; character sheets moved to the phone's People app | Asked for by the user. |
 | 2026-10-24 | Refinements: Writing checklist (debug: passages still to write, pictures to add), `<<oneof>>` varied text, `{ picture }` outcome pictures, people-specific actions (`with`/`withTag`), phone Recent app (`flow:done`, `$journal.recent`), phone apps in groups, one profile (the Me page removed; the sidebar Profile tab holds it all), "Work a shift · 2 hr" label | Asked for by the user. `journal` at version 3; SCHEMA_VERSION 10. |
 | 2026-10-24 | Deep review: event screens show their picture automatically; the checker catches event passages with no way on, broken aliases, room links into other places and derived stats in a circle; conditions take a `text` (your own "Needs:" wording); clearer locked reasons (travel names the destination; dyes, day pass and chores hidden instead of greyed out); the old travel picker removed; module boundaries tidied (`inventory.allPlaces`); keyboard focus ring; headers and docs brought up to date | Asked for by the user. |
+| 2026-10-24 | Debug Tuning page (`Debug_Tuning`): every rate, pay, price, fare, bill, chance and gate in one place, each with the file to edit (the build records which file defines each thing); every effect operator now has plain-English `describe` text | Asked for by the user. Read-only; no gameplay changes. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -608,4 +609,5 @@ User decisions so far:
 - Items are modular and self-contained, in labelled sections: `kind` (what it is), `shops` (where it's sold), `attributes` (what it's like: warm, smart…), `stats` (stat modifiers) and `use`. Clothing is an item of kind `clothing` with `slots`. Shops have no stock lists.
 - Warmth is yes/no: an item has the attribute `warm` or not, and wearing one warm thing keeps the Cold effect off on a cold day (5°C or below). Smartness is the same (`smart`; two smart things = Smartly dressed).
 - Money is whole pounds, no pennies. Prices follow what something gives you, in tiers: clothing £10 basic / £20 cheap (small boost) / £50 good / £100 top; food and drink in steps of £1–£8. Claude set these at the user's request; they can be tuned.
+- Tuning (decided by the user): a debug Tuning page lists every number with the file to edit. Of the ideas from the Twine/SugarCube research, only that was wanted: no installable app (PWA), line banks, NPC routines or memory, accessibility pass, opportunity cards or gifts. Don't propose them again unless asked.
 - Effects (temporary: Cold, Hungry, Tipsy) are kept apart from traits (lasting, earned through habits: e.g. coffee every day for 5 days → Caffeine addicted, which needs a coffee each day or you get a small stat hit).

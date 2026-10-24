@@ -2,6 +2,11 @@
 <h1>Debug tools</h1>
 <<view "debug-tools">>
 
+:: Debug_Tuning [nobr]
+<h1>Tuning</h1>
+<<view "debug-tuning">>
+<<button "Back to the game">><<run setup.flow.go("Here")>><</button>>
+
 :: Debug_Checklist [nobr]
 <h1>Writing checklist</h1>
 <<view "debug-checklist">>

@@ -180,7 +180,7 @@
 				apply(spec, ctx, result) {
 					traits.record(spec, result);
 				},
-				describe: () => "",
+				describe: (spec) => `Counts towards the "${spec}" habit`,
 			});
 
 			// { trait: "id" } — gain a trait;  { traitRemove: "id" } — lose it.
@@ -194,6 +194,7 @@
 				apply(spec) {
 					for (const id of setup.util.toArray(spec)) traits.lose(id);
 				},
+				describe: (spec) => `Lose ${setup.util.toArray(spec).map((id) => registry.tryGet("trait", id)?.label ?? id).join(", ")}`,
 			});
 
 			/* ---- UI --------------------------------------------------------- */

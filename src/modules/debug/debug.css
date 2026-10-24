@@ -1,0 +1,35 @@
+/* Debug pages (Writing checklist, Tuning): collapsible groups, one card per thing. */
+
+.m-debug details {
+	margin: 0.3rem 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.m-debug summary {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.m-debug .tune-row {
+	padding: 0.4rem 0.6rem;
+	margin: 0 0 0.5rem;
+	border-radius: var(--radius);
+	background: var(--chip-neutral);
+}
+
+.m-debug .tune-row .mods {
+	font-size: 1em;
+	color: var(--text);
+}
+
+.m-debug .tune-row .mods li + li {
+	margin-top: 0.2rem;
+}
+
+.m-debug .tune-row .note {
+	margin: 0.3rem 0 0;
+	overflow-wrap: anywhere;
+}

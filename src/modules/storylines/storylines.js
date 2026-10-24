@@ -204,6 +204,11 @@
 				apply(spec, ctx, result) {
 					effects.merge(result, storylines.moveTo(spec.id ?? ctx.storyline, spec.to));
 				},
+				describe: (spec) => {
+					const line = registry.tryGet("storyline", spec.id);
+					const stage = line?.stages.find((s) => s.id === spec.to);
+					return `${line?.label ?? spec.id ?? "This storyline"} moves to "${stage?.label ?? spec.to}"`;
+				},
 			});
 
 			// { progression: { id, min?, max? } } — the storyline's main counter in range.
@@ -221,7 +226,10 @@
 					const { id, add = 1 } = typeof spec === "string" ? { id: spec } : spec;
 					storylines.addCount(id ?? ctx.storyline, "progression", add);
 				},
-				describe: (spec) => `Moves on ${registry.tryGet("storyline", typeof spec === "string" ? spec : spec.id)?.label ?? ""}`,
+				describe: (spec) => {
+					const { id, add = 1 } = typeof spec === "string" ? { id: spec } : spec;
+					return `${registry.tryGet("storyline", id)?.label ?? id ?? "Progression"} ${add >= 0 ? "+" : "−"}${Math.abs(add)}`;
+				},
 			});
 
 			// { storylineCount: { id, key, add } }
@@ -229,6 +237,7 @@
 				apply(spec, ctx) {
 					storylines.addCount(spec.id ?? ctx.storyline, spec.key, spec.add ?? 1);
 				},
+				describe: (spec) => `${registry.tryGet("storyline", spec.id)?.label ?? spec.id ?? "This storyline"}: ${spec.key} ${(spec.add ?? 1) >= 0 ? "+" : "−"}${Math.abs(spec.add ?? 1)}`,
 			});
 
 			// The phone's Diary app (an `app` with view "app-diary"): every

@@ -100,7 +100,7 @@
 						if (got && !ctx.quiet) result.changes.push({ kind: "skill", text: `${registry.get("skill", id).label} skill ${got > 0 ? "+" : "−"}${Math.abs(Math.round(got * 10) / 10)}` });
 					}
 				},
-				describe: (spec) => Object.keys(spec).map((id) => `Improves ${registry.tryGet("skill", id)?.label ?? id}`).join(", "),
+				describe: (spec) => Object.entries(spec).map(([id, n]) => `${registry.tryGet("skill", id)?.label ?? id} skill ${n >= 0 ? "+" : "−"}${Math.abs(n)}`).join(", "),
 			});
 
 			setup.character.addMeSection("skills", 35, (box) => {

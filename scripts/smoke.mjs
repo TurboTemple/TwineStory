@@ -229,8 +229,11 @@ async function playSchool(page) {
 	await click(page, "Home screen");
 }
 
-/** Debug mode: the writing checklist, the phone's Recent app and app groups, and <<oneof>>. */
+/** Debug mode: the writing checklist, the tuning page, the phone's Recent app and app groups, and <<oneof>>. */
 async function playExtras(page) {
+	await page.evaluate(() => window.SugarCube.setup.flow.go("Debug_Tuning"));
+	await expectPassage(page, "Debug_Tuning", /Game-wide settings \(\d+\)[\s\S]*Jobs \(1\)[\s\S]*£11 an hour[\s\S]*Edit in src\/content\/mooresville\/town-work\.js/, "tuning page");
+	await click(page, "Back to the game");
 	await page.evaluate(() => window.SugarCube.setup.flow.go("Debug_Checklist"));
 	await expectPassage(page, "Debug_Checklist", /Text to write \(\d+\)[\s\S]*src\/story\/mooresville\/actions\.twee[\s\S]*Pictures to add \(\d+\)[\s\S]*assets\/media\/action\//, "writing checklist");
 	await click(page, "Back to the game");

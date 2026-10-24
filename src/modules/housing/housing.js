@@ -193,13 +193,17 @@
 			});
 
 			// { moveIn: "id" }, { leaveHome: true }, { evict: true }
-			effects.register("moveIn", { apply: (spec, ctx, result) => effects.merge(result, housing.moveIn(spec)) });
-			effects.register("leaveHome", { apply: (spec, ctx, result) => effects.merge(result, housing.leave()) });
+			effects.register("moveIn", {
+				apply: (spec, ctx, result) => effects.merge(result, housing.moveIn(spec)),
+				describe: (spec) => `Move into ${registry.tryGet("residence", spec)?.label ?? spec}`,
+			});
+			effects.register("leaveHome", { apply: (spec, ctx, result) => effects.merge(result, housing.leave()), describe: () => "Move out" });
 			effects.register("evict", {
 				apply(spec, ctx, result) {
 					effects.merge(result, housing.leave({ evicted: true }));
 					ui.notify("You've been evicted.");
 				},
+				describe: () => "Evicted from where you're renting",
 			});
 
 			/* ---- UI --------------------------------------------------------- */

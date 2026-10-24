@@ -194,7 +194,11 @@
 						if (got && !ctx.quiet) result.changes.push({ kind: "rel", text: `${setup.npcs.get(npc).name}: ${track(t).label} ${got > 0 ? "+" : "−"}${Math.abs(Math.round(got * 10) / 10)}` });
 					}
 				},
-				describe: (spec) => `Changes how ${spec.npc ? setup.npcs.get(spec.npc).name : "they"} feel about you`,
+				describe: (spec) => {
+					const who = spec.npc ? `${registry.tryGet("npc", spec.npc)?.name ?? spec.npc}: ` : "";
+					const parts = Object.entries(spec).filter(([k]) => k !== "npc").map(([t, n]) => `${registry.tryGet("relTrack", t)?.label ?? t} ${n >= 0 ? "+" : "−"}${Math.abs(n)}`);
+					return `${who}${parts.join(", ")}`;
+				},
 			});
 
 			/* ---- UI --------------------------------------------------------- */

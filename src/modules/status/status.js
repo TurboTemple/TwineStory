@@ -205,6 +205,7 @@
 				apply(spec) {
 					for (const id of setup.util.toArray(spec)) status.remove(id);
 				},
+				describe: (spec) => `Ends ${setup.util.toArray(spec).map((id) => registry.tryGet("statusEffect", id)?.label ?? id).join(", ")}`,
 			});
 
 			/** "1h 20m" style for short spaces like the sidebar. */

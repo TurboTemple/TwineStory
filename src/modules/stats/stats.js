@@ -247,7 +247,7 @@
 						if (text && !ctx.quiet) result.changes.push({ kind: "stat", stat: id, text });
 					}
 				},
-				describe: (spec) => Object.entries(spec).map(([id, d]) => `${registry.tryGet("stat", id)?.label ?? id} ${sign(d)}`).join(", "),
+				describe: (spec) => Object.entries(spec).map(([id, d]) => `${registry.tryGet("stat", id)?.label ?? id} ${d >= 0 ? "+" : "−"}${Math.abs(d)}`).join(", "),
 			});
 
 			// { statSet: { bladder: 0 } } — set base values.
@@ -260,6 +260,7 @@
 						if (text && !ctx.quiet) result.changes.push({ kind: "stat", stat: id, text });
 					}
 				},
+				describe: (spec) => Object.entries(spec).map(([id, v]) => `${registry.tryGet("stat", id)?.label ?? id} set to ${v}`).join(", "),
 			});
 		},
 

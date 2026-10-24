@@ -80,8 +80,34 @@ export function loadStoryJs(srcDir, opts = {}) {
 	for (const file of files) {
 		const code = fs.readFileSync(file, "utf8");
 		vm.runInContext(code, context, { filename: file });
+		opts.afterFile?.(file, setup);
 	}
 	return { setup, config, context, files };
+}
+
+/**
+ * Which file defines each piece of content, for the debug Tuning page
+ * ("edit in src/content/…/town-work.js"). Runs every content function
+ * against a recorder instead of the real registry.
+ * @param {string} srcDir
+ * @param {string} root  Paths come out relative to this (the repo root).
+ * @returns {Record<string, string[]>} file → ["type:id", …]
+ */
+export function contentSources(srcDir, root) {
+	const owner = new Map();
+	loadStoryJs(srcDir, {
+		afterFile(file, setup) {
+			for (const fn of setup.__content ?? []) if (!owner.has(fn)) owner.set(fn, path.relative(root, file));
+		},
+	});
+	const out = {};
+	for (const [fn, file] of owner) {
+		fn({
+			define: (type, def) => (out[file] ??= []).push(`${type}:${def.id}`),
+			alias() {},
+		});
+	}
+	return out;
 }
 
 /**

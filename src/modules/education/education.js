@@ -387,7 +387,7 @@
 			});
 
 			// { schoolClearTrouble: true }
-			effects.register("schoolClearTrouble", { apply: () => edu.clearTrouble() });
+			effects.register("schoolClearTrouble", { apply: () => edu.clearTrouble(), describe: () => "Clears the skipped lessons and late homework counted so far" });
 
 			/* ---- UI --------------------------------------------------------- */
 
