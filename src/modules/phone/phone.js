@@ -162,6 +162,7 @@
 					phone.addContact(npc);
 					if (!ctx.quiet) result.changes.push({ kind: "phone", text: `${setup.npcs.get(npc).name} is in your contacts now.` });
 				},
+				describe: (spec) => (spec === true ? "Swap numbers" : `Get ${registry.tryGet("npc", spec)?.name ?? spec}'s number`),
 			});
 
 			// { message: { from, text } } — a text arrives.

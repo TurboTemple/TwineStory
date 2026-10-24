@@ -151,6 +151,7 @@
 				apply(spec) {
 					for (const [id, d] of Object.entries(spec)) body.add(id, d);
 				},
+				describe: (spec) => Object.entries(spec).map(([id, d]) => `${registry.tryGet("bodyPart", id)?.label ?? id} ${d >= 0 ? "+" : "−"}${Math.abs(d)}`).join(", "),
 			});
 
 			// { bodySet: { hair_length: 5, hair_colour: "blonde" } }
@@ -161,6 +162,7 @@
 						if (!ctx.quiet) result.changes.push({ kind: "body", text: `${registry.get("bodyPart", id).label}: ${body.display(id)}` });
 					}
 				},
+				describe: (spec) => Object.entries(spec).map(([id, v]) => `${registry.tryGet("bodyPart", id)?.label ?? id} set to ${v}`).join(", "),
 			});
 
 			/* ---- UI ------------------------------------------------------------ */

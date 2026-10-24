@@ -385,5 +385,6 @@ Open the game with `?debug` on the end: https://turbotemple.github.io/TwineStory
 
 - Red banners at the top list any problems.
 - **Menu → Debug → Writing checklist** lists every passage still saying `[… edit here]` (by file) and every picture you could add (by folder), so you can see what's left.
+- **Menu → Debug → Tuning** shows every number you might want to tune in one place: how fast each stat changes, how long effects last, pay, prices, fares, journey times, bills, event chances, storyline gates and the game-wide settings. Each one says which file to edit (open it on GitHub and search for the name). It only shows numbers; it never changes the game.
 - **Menu → Debug → Debug tools** lets you jump anywhere, skip time, add money, set stats, skills and relationships, give or take away traits, jump a storyline to a stage, force or block events, and see the week's weather.
 - If something looks wrong, take a screenshot and send it to Claude.

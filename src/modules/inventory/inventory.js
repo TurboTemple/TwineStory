@@ -344,7 +344,10 @@
 						if (!r.ok) result.changes.push({ kind: "item", text: r.reason });
 					}
 				},
-				describe: (spec) => `${(spec.qty ?? 1) >= 0 ? "Get" : "Uses"} ${registry.tryGet("item", spec.id)?.name ?? spec.id}`,
+				describe: (spec) => {
+					const n = Math.abs(spec.qty ?? 1);
+					return `${(spec.qty ?? 1) >= 0 ? "Get" : "Uses"} ${n > 1 ? `${n} × ` : ""}${registry.tryGet("item", spec.id)?.name ?? spec.id}`;
+				},
 			});
 
 			// { useUp: "makeup_kit" } — take one go from an item with `uses`.

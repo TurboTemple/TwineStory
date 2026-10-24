@@ -58,12 +58,17 @@
 
 		/* ---- Effects ---------------------------------------------------- */
 
+		/** "Mood +3, Tipsy" for a list of effects, or "nothing" (for describing branches). */
+		const listText = (list) => effects.describe(list).filter(Boolean).join(", ") || "nothing";
+		/** "Energy at least 20 and At work" for a condition. */
+		const condText = (c) => cond.explain(c, {}).map((e) => e.text).join(" and ") || "always";
+
 		// { if: { cond, then: [...], else: [...] } }
 		effects.register("if", {
 			apply(spec, ctx, result) {
 				effects.run(cond.test(spec.cond, ctx) ? spec.then : spec.else, ctx, result);
 			},
-			describe: () => "Depends on the situation",
+			describe: (spec) => `If ${condText(spec.cond)}: ${listText(spec.then)}${spec.else?.length ? `; otherwise: ${listText(spec.else)}` : ""}`,
 		});
 
 		// { random: [{ weight, weightIf?, then: [...] }, ...] } — weighted branches.
@@ -79,7 +84,17 @@
 				const branch = setup.rng.weighted(branches.filter((b) => b.weight > 0));
 				if (branch) effects.run(branch.then, ctx, result);
 			},
-			describe: () => "Something random happens",
+			// "One of: 67% nothing; 22% Barista skill +1, Mood +3 (likelier when…)…"
+			// The percentages use the base weights; weightIf changes are noted.
+			describe(spec) {
+				const branches = Array.isArray(spec) ? spec : spec.branches;
+				const total = branches.reduce((n, b) => n + Math.max(0, b.weight ?? 1), 0) || 1;
+				return `One of: ${branches.map((b) => {
+					const odds = `${Math.round((Math.max(0, b.weight ?? 1) / total) * 100)}%`;
+					const shifts = (b.weightIf ?? []).map((w) => `${w.add >= 0 ? "likelier" : "less likely"} when ${condText(w.when)}`);
+					return `${odds} ${listText(b.then)}${shifts.length ? ` (${shifts.join("; ")})` : ""}`;
+				}).join("; ")}`;
+			},
 		});
 
 		// { check: { resolver: "name", ...spec, label?, then: [...], else: [...] } }
@@ -93,7 +108,11 @@
 				if (spec.label) result.changes.push({ kind: "check", text: `${spec.label}: ${pass ? "success" : "failed"}` });
 				effects.run(pass ? spec.then : spec.else, ctx, result);
 			},
-			describe: (spec) => `Check (${spec.resolver})`,
+			describe: (spec) => {
+				const what = spec[spec.resolver] ?? spec.resolver;
+				const label = setup.registry.tryGet(spec.resolver, what)?.label ?? what;
+				return `${spec.label ? `${spec.label}: ` : ""}a ${label} check${spec.difficulty != null ? ` (difficulty ${spec.difficulty})` : ""}: success → ${listText(spec.then)}; failure → ${listText(spec.else)}`;
+			},
 		});
 
 		// { time: 30 } — queue minutes; the clock advances once after the list.
@@ -112,6 +131,7 @@
 				if (value === null) delete flags[name];
 				else flags[name] = value;
 			},
+			describe: (spec) => (typeof spec === "string" ? `Sets "${spec}"` : `Sets "${spec.name}" to ${JSON.stringify(spec.value)}`),
 		});
 
 		// { counter: { name, add } } or { counter: { name, set } }
@@ -120,6 +140,7 @@
 				const counters = meta().counters;
 				counters[spec.name] = spec.set ?? (counters[spec.name] ?? 0) + (spec.add ?? 1);
 			},
+			describe: (spec) => (spec.set != null ? `"${spec.name}" set to ${spec.set}` : `"${spec.name}" ${(spec.add ?? 1) >= 0 ? "+" : "−"}${Math.abs(spec.add ?? 1)}`),
 		});
 
 		// { goto: "Passage" } or { goto: { passage, priority } }
@@ -129,6 +150,7 @@
 				result.goto = passage;
 				flow.request(passage, priority ?? flow.PRIORITY.result);
 			},
+			describe: (spec) => `Shows ${typeof spec === "string" ? spec : spec.passage}`,
 		});
 
 		// { toast: "text" } — a short notice for the player.
@@ -136,6 +158,7 @@
 			apply(spec, ctx, result) {
 				result.toasts.push(spec);
 			},
+			describe: (spec) => `"${spec}"`,
 		});
 
 		// { note: "text" } — a line in the result summary.
@@ -143,6 +166,7 @@
 			apply(spec, ctx, result) {
 				result.changes.push({ kind: "note", text: spec });
 			},
+			describe: (spec) => `"${spec}"`,
 		});
 
 		// { interrupt: "reason" } — stop the rest of this list and whatever
@@ -154,6 +178,7 @@
 				// Fired while the clock is moving (e.g. a time:hour event): stop it too.
 				else if (time.isAdvancing()) time.interrupt(result.interrupted);
 			},
+			describe: () => "Stops what you're doing",
 		});
 	}
 
