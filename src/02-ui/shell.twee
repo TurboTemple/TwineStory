@@ -11,3 +11,7 @@
 
 :: Sys_Topbar [nobr]
 <<view "topbar">>
+
+:: Sys_Credits [nobr]
+<h1>Credits</h1>
+<<view "credits">>

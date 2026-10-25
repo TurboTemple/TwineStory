@@ -519,6 +519,8 @@ Each phase ends with: validator ✅, tests ✅, build ✅, README updated, phone
 
 ## 15. Never do
 
+- **Send the user's personal information (email address, name or anything else from their account) to any outside site or service, in any request, header, URL or file, unless they explicitly ask for that exact thing.** Requests identify themselves only as the game (e.g. `TwineStoryBot/1.0`), with no contact details.
+
 - Invent game rules, formulas, balance numbers, random-event behaviour, checks or real content. Use hooks and placeholders instead (§0.1) — unless the user asks Claude to design something, as they did for the town.
 - Tell the user to run commands or use a computer. Push to `main` unasked.
 - Edit or commit `dist/`. Change the IFID. Rename shipped ids without an alias.
@@ -567,6 +569,7 @@ Keep this up to date so a new session knows where things stand.
 | 2026-10-24 | Action pass: action `cooldown` ($acts, `actions` v2; SCHEMA_VERSION 11) on small treats, with a small reward; walking journeys use energy and drink (travelMode `during: "on_foot"`); every workout via one `workout()` helper (gym kit, Energy 20+, glow, habit, Getting fit) building new body parts arms/legs/stomach/bum (curls, squats, treadmill, core at PulseFit); personal training with Kyle (£20, a week's plan ×1.5 gains, storyline "Training with Kyle" with placeholder events); gates (homework/study energy, swim not very drunk via `status` level condition, studio Beauty 50+, no coat to sunbathe, flirt/hang out not unwashed or bursting); club queue skipped when dressed up; tea/coffee use groceries away from your parents'; pay in all cash (`moneyMove`); bath; wash and blow-dry; Calm Waters magazine; community centre clubs (yoga, art, choir, board games); watch the boats | Asked for by the user. Story actions left alone. |
 | 2026-10-24 | Picture frames always show: every action screen, event and person without a picture shows a "Picture goes here" frame in normal play too (debug mode adds the file name), via `setup.media.slot` | Asked for by the user. |
 | 2026-10-24 | First picture: `location/home_bedroom.webp` (CC0, rawpixel via Openverse), recorded in `assets/media/CREDITS.md` | Asked for by the user as a test. Network: Openverse and rawpixel work; Wikimedia rate-limits the shared IP; StockSnap and Pixabay CDNs are blocked. Only CC0/public-domain pictures, each listed in CREDITS.md. |
+| 2026-10-25 | Pictures for 79 of 83 places and rooms (Openverse: CC0, public domain and CC BY/BY-SA/BY-NC/BY-NC-SA, no watermarks; photographers' names cropped off where printed); `assets/media/credits.json` → `setup.__mediaCredits` → **Menu → Credits** page; `CREDITS.md` | Asked for by the user ("use any images you can even if they require credit, no watermarks"). Rooms without a picture use their building's. NC pictures would need replacing if the game is ever sold. |
 
 **Working agreement:** the user has said Claude may merge its own PRs without asking. Merge once CI is green on the PR head.
 
@@ -615,4 +618,5 @@ User decisions so far:
 - Money is whole pounds, no pennies. Prices follow what something gives you, in tiers: clothing £10 basic / £20 cheap (small boost) / £50 good / £100 top; food and drink in steps of £1–£8. Claude set these at the user's request; they can be tuned.
 - Tuning (decided by the user): a debug Tuning page lists every number with the file to edit. Of the ideas from the Twine/SugarCube research, only that was wanted: no installable app (PWA), line banks, NPC routines or memory, accessibility pass, opportunity cards or gifts. Don't propose them again unless asked.
 - Action pass (decided by the user): story activities (cosplay, volleyball, Dennis, the MMO, streaming) keep no stat changes for now; bars never refuse a drink (a blackout event is planned, so getting blackout drunk must stay possible); the film studio wants Beauty 50+ (it's a film and modelling studio); no window-shopping on the High Street.
+- Pictures (decided by the user): any openly licensed photo is fine, including ones that need credit; never watermarked. Every picture's credit goes in `assets/media/credits.json` (shown on Menu → Credits).
 - Effects (temporary: Cold, Hungry, Tipsy) are kept apart from traits (lasting, earned through habits: e.g. coffee every day for 5 days → Caffeine addicted, which needs a coffee each day or you get a small stat hit).
