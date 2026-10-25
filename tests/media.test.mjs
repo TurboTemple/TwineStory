@@ -81,3 +81,15 @@ test("the build lists passages still saying [… edit here], with their files", 
 	assert.deepEqual(findPlaceholders(root, parseTwee), { Act_one: "src/story/a.twee" });
 	assert.match(manifestScript({}, { Act_one: "src/story/a.twee" }), /setup.__placeholders = \{[\s\S]*Act_one/);
 });
+
+test("every picture credit points at a picture in the game, with its licence and source", async () => {
+	const { readCredits } = await import("../scripts/lib/media.mjs");
+	const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
+	const all = JSON.parse(fs.readFileSync(path.join(root, "assets/media/credits.json"), "utf8"));
+	for (const [file, c] of Object.entries(all)) {
+		assert.ok(fs.existsSync(path.join(root, "assets/media", file)), `${file} is missing`);
+		assert.ok(c.license && c.license_url && c.foreign_landing_url, `${file} needs its licence and source`);
+	}
+	assert.deepEqual(Object.keys(readCredits(root)), Object.keys(all));
+	assert.match(manifestScript({}, {}, {}, { "location/a.webp": { title: "A" } }), /setup\.__mediaCredits = \{"location\/a\.webp"/);
+});

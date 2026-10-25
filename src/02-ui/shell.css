@@ -275,3 +275,19 @@ body {
 		transition: none;
 	}
 }
+
+/* Menu → Credits: one row per picture. */
+.m-shell.credits .credits-list {
+	list-style: none;
+	padding: 0;
+}
+
+.m-shell.credits .credits-list li {
+	padding: 0.5rem 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.m-shell.credits .credits-list p {
+	margin: 0.2rem 0 0;
+	overflow-wrap: anywhere;
+}

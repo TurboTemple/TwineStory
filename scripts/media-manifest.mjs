@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildManifest, findPlaceholders, manifestScript } from "./lib/media.mjs";
+import { buildManifest, findPlaceholders, manifestScript, readCredits } from "./lib/media.mjs";
 import { parseTwee } from "./lib/twee.mjs";
 import { contentSources } from "./lib/load.mjs";
 
@@ -18,5 +18,5 @@ const manifest = buildManifest(root);
 const out = path.join(root, "src/01-engine/media-manifest.js");
 const placeholders = findPlaceholders(root, parseTwee);
 const sources = contentSources(path.join(root, "src"), root);
-fs.writeFileSync(out, manifestScript(manifest, placeholders, sources));
+fs.writeFileSync(out, manifestScript(manifest, placeholders, sources, readCredits(root)));
 console.log(`Media manifest: ${Object.keys(manifest).length} file(s); ${Object.keys(placeholders).length} passage(s) still to write.`);

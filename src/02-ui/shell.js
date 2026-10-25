@@ -145,6 +145,39 @@
 				menuButtons.sort((a, b) => a.order - b.order);
 			};
 
+			/*
+			 * Picture credits (Menu → Credits): every picture with a credit in
+			 * assets/media/credits.json (built into setup.__mediaCredits), with
+			 * its title, creator, licence and where it came from. Many licences
+			 * (CC BY…) require this credit, so keep credits.json up to date when
+			 * adding pictures that need one.
+			 */
+			const LICENCE = { cc0: "CC0 (public domain)", pdm: "Public domain", by: "CC BY", "by-sa": "CC BY-SA", "by-nc": "CC BY-NC", "by-nc-sa": "CC BY-NC-SA" };
+			ui.view("credits", (box) => {
+				box.classList.add("m-shell", "credits");
+				const credits = setup.__mediaCredits ?? {};
+				box.append(ui.el("p", { class: "note", text: "The pictures in this game are by these photographers, used under the licences shown. Thank you to all of them." }));
+				const name = (file) => {
+					const [type, rest] = file.split("/");
+					const id = rest.replace(/\.[a-z0-9]+$/, "");
+					const def = setup.registry.tryGet(type, id);
+					// Rooms show their building: "The Red Lion › Toilets".
+					const parent = type === "location" && def?.parent ? setup.registry.tryGet("location", setup.world.site(def.id)) : null;
+					return `${parent ? `${parent.name} › ` : ""}${def?.name ?? def?.label ?? id}`;
+				};
+				const link = (text, href) => (href ? ui.el("a", { text, attrs: { href, target: "_blank", rel: "noopener noreferrer" } }) : document.createTextNode(text));
+				const ul = ui.el("ul", { class: "credits-list" });
+				for (const [file, c] of Object.entries(credits).sort(([a], [b]) => name(a).localeCompare(name(b)))) {
+					const licence = `${LICENCE[c.license] ?? String(c.license).toUpperCase()}${c.license_version && !["cc0", "pdm"].includes(c.license) ? ` ${c.license_version}` : ""}`;
+					ul.append(ui.el("li", {},
+						ui.el("strong", { text: name(file) }),
+						ui.el("p", {}, link(`"${c.title || "Untitled"}"`, c.foreign_landing_url), document.createTextNode(c.creator ? " by " : ""), c.creator ? link(c.creator, c.creator_url) : document.createTextNode(""),
+							document.createTextNode(", "), link(licence, c.license_url), document.createTextNode(c.source ? ` (via ${c.source})` : ""))));
+				}
+				box.append(ul);
+				box.append(ui.button("Back to the game", () => flow.go(flow.home)));
+			});
+
 			shell.addSection("menu", 90, (box) => {
 				const nav = ui.el("nav", { class: "menu", attrs: { "aria-label": "Game menu" } });
 				const go = (label, passage) => ui.button(label, () => {
@@ -170,6 +203,7 @@
 						setup.sc.restart();
 					}),
 				);
+				if (Object.keys(setup.__mediaCredits ?? {}).length) nav.append(go("Credits", "Sys_Credits"));
 				if (config.debug && setup.sc.hasPassage("Test_Index")) {
 					nav.append(ui.button("Debug", () => {
 						close();
